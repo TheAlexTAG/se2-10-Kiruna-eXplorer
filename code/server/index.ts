@@ -26,16 +26,10 @@ const DAO = new UserDAO();
 
 // set up the "username and password" login strategy with a function to verify username and password
 passport.use(
-  new LocalStrategy(async function verify(
-    username: string,
-    password: string,
-    callback: any
-  ) {
+  new LocalStrategy(async function verify(username: string,password: string,callback: any){
     const user = await DAO.getUser(username, password);
     if (!user) {
-      return callback(null, false, {
-        message: "Incorrect username or password",
-      });
+      return callback(null, false, {message: "Incorrect username or password"});
     }
     return callback(null, user);
   })
@@ -58,17 +52,15 @@ const isLoggedIn = (req: any, res: any, next: any) => {
   if (req.isAuthenticated()) {
     return next();
   }
-  return res.status(401).json({ error: "Not authorized" });
+  return res.status(401).json({error: "Not authorized"});
 };
 
-app.use(
-  session({
-    secret: "team10-project",
-    resave: false,
-    saveUninitialized: false,
-    cookie: { httpOnly: true },
-  })
-);
+app.use(session({
+  secret: "team10-project",
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true }
+}));
 
 // init passport
 app.use(passport.initialize());

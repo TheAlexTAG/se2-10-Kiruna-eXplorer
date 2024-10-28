@@ -21,9 +21,11 @@ class UserDAO {
       db.get(sql, [id], (err: Error | null, row: any) => {
         if (err) {
           reject(err);
-        } else if (row === undefined) {
+        } 
+        else if (row === undefined) {
           resolve({ error: "User not found." });
-        } else {
+        } 
+        else {
           const user = new User(DOMPurify.sanitize(row.userID),DOMPurify.sanitize(row.username),DOMPurify.sanitize(row.role));
           resolve(user);
         }
@@ -38,13 +40,13 @@ class UserDAO {
    * @returns A Promise that resolves the information of the requested user
    */
   getUser(username: string, password: string): Promise<any> {
-
     return new Promise((resolve, reject) => {
       const sql = "SELECT * FROM user WHERE username = ?";
       db.get(sql, [username], (err: Error | null, row: any) => {
         if (err) {
           return reject(err);
-        } else if (row === undefined) {
+        } 
+        else if (row === undefined) {
           return resolve(false);
         }
         const user = new User(DOMPurify.sanitize(row.userID),DOMPurify.sanitize(row.username),DOMPurify.sanitize(row.role));
