@@ -2,7 +2,9 @@ import express from "express";
 import { DocumentController } from "../controllers/documentController";
 import { body } from "express-validator";
 import ErrorHandler from "../helper";
-
+/**
+ * Router for handling all the http requests for the documents
+ */
 class DocumentRoutes {
     private app: express.Application
     private controller: DocumentController
@@ -14,8 +16,13 @@ class DocumentRoutes {
         this.errorHandler = new ErrorHandler();
         this.initRoutes();
     }
-
+/**
+ * function for initializing all the routes
+ */
     initRoutes(): void {
+        /**
+         * route for inserting a document node into the database. It returns the id of the last document node created
+         */
         this.app.post("/api/document", 
             body("title").isString().notEmpty(),
             body("icon").isString().notEmpty(),
@@ -34,7 +41,7 @@ class DocumentRoutes {
         .then((lastID:number) => res.status(200).json(lastID))
         .catch((err: Error) => res.status(500).json(err)))
 
-
+        
     }
 }
 
