@@ -1,5 +1,6 @@
 import express from "express";
 import { UserDAO } from "./src/dao/userDAO";
+import {UserRoutes} from "./src/routers/userRoutes";
 
 
 const morgan = require("morgan"); // logging middleware
@@ -67,6 +68,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 /* ROUTES */
+new UserRoutes(app, passport, isLoggedIn);
 
 
 /*** Other express-related instructions ***/
