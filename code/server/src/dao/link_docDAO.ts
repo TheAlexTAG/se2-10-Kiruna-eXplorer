@@ -15,13 +15,15 @@ class LinkDocumentDAO {
                 if (err) {
                     return reject(err);
                 }
-                if (!row || row.tot === undefined) {
+                if (row.tot === undefined) {
                     return reject(new Error('Document not found!'));
                 }
-                return resolve(row.tot);
+                return resolve(+DOMPurify.sanitize(row.tot));
             }
           );
         }
       );
     }
 }
+
+export {LinkDocumentDAO};
