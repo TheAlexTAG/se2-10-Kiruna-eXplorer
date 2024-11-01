@@ -136,7 +136,11 @@ class DocumentDAO {
             })
         })
     }
-
+/**
+ * Retrieves all the documents in the database
+ * @returns a list of documents
+ * @throws generic error if the database query fails
+ */
     getDocumentsFull(): Promise<Document[]> {
         return new Promise((resolve, reject) => {
             const sql = `WITH link_counts AS (

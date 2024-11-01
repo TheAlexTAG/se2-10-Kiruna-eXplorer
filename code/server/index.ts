@@ -1,6 +1,6 @@
 import express from "express";
 import { UserDAO } from "./src/dao/userDAO";
-
+import {DocumentRoutes} from "./src/routers/documentRoutes"
 
 const morgan = require("morgan"); // logging middleware
 const cors = require("cors");
@@ -67,7 +67,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 /* ROUTES */
-
+new DocumentRoutes(app);
 
 /*** Other express-related instructions ***/
 // activate the server
