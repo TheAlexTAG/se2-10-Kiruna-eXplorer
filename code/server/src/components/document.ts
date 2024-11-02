@@ -54,7 +54,7 @@ class Document {
      * @param connections number of connections the document has
     */
     constructor(id: number, title: string,icon: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null,
-        stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: number | null, connections: number) {
+        stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: number | null, connections: number, attachment: string[] = [], resource: string[] = []) {
         this.id = id;
         this.title = title;
         this.icon = icon;
@@ -69,8 +69,8 @@ class Document {
         this.language = language;
         this.pages = pages;
         this.connections= connections;
-        this.attachment= [];
-        this.resource= [];
+        this.attachment= attachment;
+        this.resource= resource;
     }
 }
     
