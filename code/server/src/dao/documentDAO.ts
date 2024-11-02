@@ -1,6 +1,6 @@
 import { Document } from "../components/document";
 import db from "../db/db";
-import { DocumentNotFoundError } from "../errors/documentErrors";
+import { DocumentNotFoundError, DocumentZoneNotFoundError } from "../errors/documentErrors";
 /**
  * DAO for interactions with document table
  */
@@ -183,6 +183,16 @@ class DocumentDAO {
                     }
                     resolve(documents); 
                 }
+            })
+        })
+    }
+
+    getDocumentZoneCoordinates(zoneID: number): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const sql = `SELECT coordinates FROM document d, zone z WHERE d.zoneID = z.zoneID AND d.zoneID = ?`
+            db.get(sql, zoneID, (err: Error, row: any) => {
+                if(err) reject(err);
+                row ? resolve(row.coordinates) : reject(new DocumentZoneNotFoundError())
             })
         })
     }

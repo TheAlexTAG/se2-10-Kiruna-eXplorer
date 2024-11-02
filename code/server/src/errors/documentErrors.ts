@@ -1,12 +1,38 @@
 class DocumentNotFoundError extends Error {
-    customMessage: string
-    customCode: number
+    code: number
 
     constructor() {
-        super();
-        this.customMessage = "Document not Found";
-        this.customCode = 404;
+        super("Document not found");
+        this.code = 404;
     }
 }
 
-export {DocumentNotFoundError};
+class WrongGeoreferenceError extends Error {
+    code: number
+
+    constructor() {
+        super("Wrong georeference format");
+        this.code = 400;
+    }
+} 
+
+
+class DocumentZoneNotFoundError extends Error {
+    code: number
+
+    constructor() {
+        super("The zone inserted was not found")
+        this.code = 404;
+    }
+}
+
+class InvalidDocumentZoneError extends Error {
+    code: number
+
+    constructor() {
+        super("The zone inserted is not valid")
+        this.code = 400;
+    }
+}
+
+export {DocumentNotFoundError, WrongGeoreferenceError, DocumentZoneNotFoundError, InvalidDocumentZoneError};

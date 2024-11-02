@@ -1,6 +1,9 @@
-import { title } from "process";
 import { Document } from "../components/document";
 import { DocumentDAO } from "../dao/documentDAO";
+import { InvalidDocumentZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
+import * as turf from '@turf/turf';
+
+const wellknown = require('wellknown');
 /**
  * Controller for handling document operations
  */
@@ -9,6 +12,7 @@ class DocumentController {
     constructor() {
         this.dao = new DocumentDAO
     }
+
 /**
  * Hadles the comunication between the route and the dao of the document node creation
  * @param title the title of the document
@@ -25,11 +29,23 @@ class DocumentController {
  * @param pages number of pages. Can also be an interval of pages
  * @returns the documentID of the lastly inserted document
  * @throws generic error if the database query fails
+ * @throws DocumentZoneNotFoundError if the zone specified is not in the database
+ * @throws WrongGeoreferenceError if the georeference format is not valid
+ * @throws InvalidDocumentZoneError if the specified zone is not a polygon
  */
     async createNode (title: string, icon: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
         try {
-            let lastID = await this.dao.createDocumentNode(title, icon, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages);
-            return lastID;
+            if(!zoneID && latitude && longitude) {
+                let lastID = await this.dao.createDocumentNode(title, icon, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages);
+                return lastID;
+            }
+            else if(zoneID && !latitude && !longitude) {
+                let zonePolygon = await this.dao.getDocumentZoneCoordinates(zoneID);
+                let randCoordinates = await this.getRandCoordinates(zonePolygon);
+                let lastID = await this.dao.createDocumentNode(title, icon, description, zoneID, randCoordinates.latitude, randCoordinates.longitude, stakeholders, scale, issuanceDate, type, language, pages);
+                return lastID;
+            }
+            else throw new WrongGeoreferenceError();
         }
         catch(err) {
             throw err;
@@ -79,6 +95,34 @@ class DocumentController {
             throw err;
         }
     }
+/**
+ * 
+ * @param polygon a WKT polygon 
+ * @returns random coordinates in the poygon in {lat, lon} format
+ * @throws InvalidDocumentZoneError if the specified zone is not a polygon
+ * 
+ */
+    private async getRandCoordinates(polygon: string): Promise<{latitude: number, longitude: number}> {
+        return new Promise((resolve, reject) => {
+            const geoJsonPolygon = wellknown(polygon);
+            const bbox = turf.bbox(geoJsonPolygon);
+            const gridPoints = turf.pointGrid(bbox, 0.001, {
+                units: 'degrees',
+                mask: geoJsonPolygon
+            });
+            if (gridPoints.features.length === 0) {
+                reject(new InvalidDocumentZoneError())
+            }
+            else {
+                const randomIndex = Math.floor(Math.random() * gridPoints.features.length);
+                const randomPoint = gridPoints.features[randomIndex].geometry.coordinates;
+                resolve({
+                    latitude: randomPoint[1],
+                    longitude: randomPoint[0]
+                })
+            }
+        })
+    } 
 }
 
 export {DocumentController};
