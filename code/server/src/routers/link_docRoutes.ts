@@ -4,6 +4,11 @@ import { LinkDocumentController } from '../controllers/link_daoController';
 import { LinkDocument } from '../components/link_doc';
 
 const {body, validationResult} = require('express-validator'); // validation middleware
+/* Sanitize input */
+const createDOMPurify = require("dompurify");
+const { JSDOM } = require("jsdom");
+const window = new JSDOM("").window;
+const DOMPurify = createDOMPurify(window);
 
 class LinkDocumentRoutes {
     private app: express.Application;
@@ -31,7 +36,7 @@ class LinkDocumentRoutes {
                 }
 
                 try {
-                    const result: LinkDocument= await this.controller.creatLink(req.body.firstDoc,req.body.secondDoc,req.body.relationship);
+                    const result: LinkDocument= await this.controller.creatLink(+DOMPurify.sanitize(req.body.firstDoc),+DOMPurify.sanitize(req.body.secondDoc),DOMPurify.sanitize(req.body.relationship));
                     res.status(200).json(result);
                 } catch (err: any) {
                     return res.status(err.code).json({error: err.message});

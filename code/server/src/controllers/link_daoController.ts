@@ -1,6 +1,6 @@
 import { LinkDocument } from '../components/link_doc';
 import { LinkDocumentDAO } from '../dao/link_docDAO';
-import { DocumentsError } from '../errors';
+import { DocumentsError } from '../errors/link_docError';
 
 class LinkDocumentController{
     private dao: LinkDocumentDAO;
