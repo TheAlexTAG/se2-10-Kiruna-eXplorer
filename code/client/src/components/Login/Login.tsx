@@ -3,10 +3,13 @@ import "./Login.css";
 import { useState } from "react";
 import API from "../../API/API";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/GlobalStateProvider";
 export const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+
+  const { login } = useAuth();
 
   const navigate = useNavigate();
 
@@ -18,7 +21,7 @@ export const Login = () => {
       return;
     }
 
-    API.login(username, password)
+    login(username, password)
       .then(() => {
         navigate("/");
         setError("");
