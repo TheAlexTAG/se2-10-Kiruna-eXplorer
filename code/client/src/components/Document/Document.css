@@ -1,0 +1,28 @@
+.document-form {
+    max-width: 700px;
+    margin: 20px auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+}
+
+.document-container {
+    padding-bottom: 0;
+    margin-bottom: 0;
+    background-color: white; /* Assicurati che lo sfondo non sia nero */
+}
+
+.document-form .form-label {
+    font-weight: bold;
+}
+
+.document-form .form-control {
+    border-radius: 4px;
+}
+
+.document-form button {
+    width: 100%;
+    font-size: 1.1em;
+    padding: 10px;
+}

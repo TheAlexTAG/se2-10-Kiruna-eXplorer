@@ -46,5 +46,31 @@ const currentUser = async () => {
   return await response.json();
 };
 
-const API = { login, logout, currentUser };
+const createDocumentNode = async (documentData: any) => {
+  console.log(documentData);
+  
+  try {
+    const response = await fetch(`${SERVER_URL}/document`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(documentData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error creating document:", errorData);
+      throw new Error(errorData.message || "Document creation failed");
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Network error:", error);
+    throw new Error("An error occurred while creating the document");
+  }
+}
+
+const API = { login, logout, currentUser, createDocumentNode };
 export default API;

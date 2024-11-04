@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 import { Login } from "./components/Login/Login";
 import { TopBar } from "./components/TopBar/TopBar";
-import { Document } from "./components/Document/Document";
+import  Document  from "./components/Document/Document";
 import { Map } from "./components/Map/Map";
 import API from "./API/API";
 import { useAuth } from "./contexts/GlobalStateProvider";

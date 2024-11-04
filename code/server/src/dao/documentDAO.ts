@@ -24,6 +24,7 @@ class DocumentDAO {
  */
     createDocumentNode(title: string, icon: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
         return new Promise((resolve, reject) => {
+            console.log("Creating document node")
             const sql = `INSERT INTO document(documentID, title, icon, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
             VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, DATE(?), ?, ?, ?)`
             db.run(sql, [title, icon, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages], function(this: any, err: Error) {
