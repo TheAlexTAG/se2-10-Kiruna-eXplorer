@@ -1,3 +1,5 @@
+import { CoordinatesOutOfBoundsError } from "../../../server/src/errors/documentErrors";
+
 const SERVER_URL = "http://localhost:3001/api";
 
 const login = async (username: string, password: string) => {
@@ -65,8 +67,12 @@ const createDocumentNode = async (documentData: any) => {
     const result = await response.json();
     return result;
   } catch (error) {
-    console.error("Network error:", error);
+    if(error.message === "Coordinates out of bound") {
+      throw new CoordinatesOutOfBoundsError();
+    }
+    else{
     throw new Error("An error occurred while creating the document");
+    }
   }
 }
 

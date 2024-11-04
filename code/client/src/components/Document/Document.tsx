@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Form, Row, Col, Button } from 'react-bootstrap';
+import { Form, Row, Col, Button, Alert } from 'react-bootstrap';
 import API from '../../API/API';
 import './Document.css';
+import { CoordinatesOutOfBoundsError } from '../../../../server/src/errors/documentErrors';
 
 export default function Document() {
     const [title, setTitle] = useState('');
@@ -16,12 +17,13 @@ export default function Document() {
     const [type, setType] = useState('');
     const [language, setLanguage] = useState<string | null>(null);
     const [pages, setPages] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null); // Stato per gestire l'errore
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!title || !icon || !description || !stakeholders || !scale || !issuanceDate || !type) {
-            alert('The fields Title, Icon, Description, Stakeholders, Scale, Issuance Date and Type are mandatory.');
+            setErrorMessage('The fields Title, Icon, Description, Stakeholders, Scale, Issuance Date, and Type are mandatory.');
             return;
         }
 
@@ -43,13 +45,18 @@ export default function Document() {
         try {
             const response = await API.createDocumentNode(documentData);
             if (response.message === "Coordinates out of bound") {
-                alert("Enter the coordinates inside the zone");
+                setErrorMessage("Enter the coordinates inside the zone");
                 return;
             }
             alert(`Creation of document ${title} successful!`);
+            setErrorMessage(null); 
         } catch (error) {
             console.error('Error during creation of document:', error);
-            alert('An error occurred while creating the document');
+            if (CoordinatesOutOfBoundsError) {
+                setErrorMessage("Enter the coordinates inside the zone");
+            } else {
+                setErrorMessage('An error occurred while creating the document');
+            }
         }
     };
 
@@ -86,6 +93,13 @@ export default function Document() {
           <h1>Insert Document</h1>
 
           <Form onSubmit={handleSubmit} className="document-form">
+
+              {errorMessage && (
+                  <Alert variant="danger" onClose={() => setErrorMessage(null)} dismissible>
+                      {errorMessage}
+                  </Alert>
+              )}
+
               <Row className="mb-3">
                   <Form.Group as={Col} controlId="formTitle">
                       <Form.Label>Title</Form.Label>
