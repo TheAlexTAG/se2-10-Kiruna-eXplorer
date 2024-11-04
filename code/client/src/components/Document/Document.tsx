@@ -21,7 +21,7 @@ export default function Document() {
         e.preventDefault();
 
         if (!title || !icon || !description || !stakeholders || !scale || !issuanceDate || !type) {
-            alert('I campi Title, Icon, Description, Stakeholders, Scale, Issuance Date e Type sono obbligatori.');
+            alert('The fields Title, Icon, Description, Stakeholders, Scale, Issuance Date and Type are mandatory.');
             return;
         }
 
@@ -41,11 +41,15 @@ export default function Document() {
         };
 
         try {
-            await API.createDocumentNode(documentData);
+            const response = await API.createDocumentNode(documentData);
+            if (response.message === "Coordinates out of bound") {
+                alert("Enter the coordinates inside the zone");
+                return;
+            }
             alert(`Creation of document ${title} successful!`);
         } catch (error) {
-            console.error('Errore nella creazione del documento:', error);
-            alert('Si è verificato un errore durante la creazione del documento');
+            console.error('Error during creation of document:', error);
+            alert('An error occurred while creating the document');
         }
     };
 
