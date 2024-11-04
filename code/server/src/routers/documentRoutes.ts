@@ -88,6 +88,13 @@ class DocumentRoutes {
         .then((coordinates: {documentID: number, icon: string, geoJson: turf.AllGeoJSON}[]) => res.status(200).json(coordinates))
         .catch((err: Error) => res.status(500).json(err.message))
         )
+
+        this.app.delete("/api/documents/delete/all",
+            Utilities.prototype.isAdmin,
+        (req: any, res: any, next: any) => this.controller.deleteAllDocuments()
+        .then(() => res.status(200).json())
+        .catch((err: Error) => res.status(500).json(err.message))
+        )
     }
 
 }

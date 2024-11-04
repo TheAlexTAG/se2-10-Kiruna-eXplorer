@@ -235,6 +235,20 @@ class DocumentDAO {
             })
         })
     }
+/**
+ * Deletes all the entries of the document table
+ * @returns a void promise
+ * @throws generic error if the database query fails
+ */
+    deleteAllDocuments(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const sql = `DELETE FROM document`
+            db.run(sql, [], (err: Error) => {
+                if(err) reject(err);
+                else resolve();
+            })
+        }) 
+    }
 }
 
 

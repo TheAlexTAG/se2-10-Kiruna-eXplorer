@@ -116,6 +116,20 @@ class DocumentController {
             throw err;
         }
     }
+/**
+ * Deletes all document entries
+ * @returns a void promise
+ * @throws generic error if the database query fails
+ */
+    async deleteAllDocuments(): Promise<void> {
+        try {
+            await this.dao.deleteAllDocuments();
+            return;
+        }
+        catch(err) {
+            throw err;
+        }
+    }
 
 /**
  * 
