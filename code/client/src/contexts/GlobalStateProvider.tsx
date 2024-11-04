@@ -30,37 +30,27 @@ export const GlobalAuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (username: string, password: string) => {
     try {
-      API.login(username, password)
-        .then((res) => {
-          setUser(res);
-        })
-        .catch((err) => {
-          console.log(err);
-          setUser(null);
-        });
-    } catch (error) {
-      console.error("Error logging in:", error);
+      const res = await API.login(username, password);
+      setUser(res);
+    } catch (error: any) {
+      console.error("Error logging in:", error?.message);
+      setUser(null);
+      throw new Error(error?.message || "Unknown error");
     }
   };
 
   const logout = async () => {
     try {
-      API.logout().then(() => {
-        fetchCurrentUser();
-      });
+      await API.logout();
+      fetchCurrentUser();
     } catch (error) {
       console.error("Error logging out:", error);
     }
   };
   const fetchCurrentUser = async () => {
     try {
-      API.currentUser()
-        .then((res) => {
-          setUser(res);
-        })
-        .catch((err) => {
-          setUser(null);
-        });
+      const res = await API.currentUser();
+      setUser(res);
     } catch (error) {
       console.error("Error fetching current user:", error);
       setUser(null);
