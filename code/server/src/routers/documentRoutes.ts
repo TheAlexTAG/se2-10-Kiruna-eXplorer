@@ -4,6 +4,8 @@ import { body, param } from "express-validator";
 import ErrorHandler from "../helper";
 import { Document } from "../components/document";
 import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, MissingKirunaZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
+import * as turf from '@turf/turf';
+import {Utilities} from '../utilities'
 /**
  * Router for handling all the http requests for the documents
  */
@@ -34,10 +36,11 @@ class DocumentRoutes {
             body("longitude").optional({nullable:true}).isFloat(),
             body("stakeholders").isString().notEmpty(),
             body("scale").isString().notEmpty(),
-            body("issuanceDate").isString().notEmpty(),
+            body("issuanceDate").matches(/^(?:(?:\d{2}\/\d{2}\/\d{4})|(?:\d{2}\/\d{4})|(?:\d{4}))$/),
             body("type").isString().notEmpty(),
             body("language").optional({nullable:true}).isString(),
             body("pages").optional({nullable:true}).isString(),
+            Utilities.prototype.isUrbanPlanner,
             this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => this.controller.createNode(req.body.title, req.body.icon, req.body.description, req.body.zoneID, req.body.latitude, req.body.longitude, req.body.stakeholders, req.body.scale, req.body.issuanceDate, req.body.type, req.body.language, req.body.pages)
         .then((lastID:number) => res.status(200).json(lastID))
@@ -65,6 +68,7 @@ class DocumentRoutes {
  * route for retrieving all the documents titles and their ids
  */
         this.app.get("/api/document/titles/get",
+            Utilities.prototype.isUrbanPlanner,
         (req: any, res: any, next: any) => this.controller.getDocumentsTitles()
         .then((titles: {documentID: number, title: string}[]) => res.status(200).json(titles))
         .catch((err: Error) => res.status(500).json(err.message)))
@@ -72,9 +76,18 @@ class DocumentRoutes {
  * route for retrieving all the documents in the database
  */
         this.app.get("/api/documents",
+            Utilities.prototype.isAdmin,
         (req: any, res: any, next: any) => this.controller.getAllDocuments()
         .then((documents: Document[]) => res.status(200).json(documents))
         .catch((err: Error) => res.status(500).json(err.message)))
+/**
+ * route for retrieving all the documents and their coordinates
+ */
+        this.app.get("/api/documents/coordinates",
+        (req: any, res: any, next: any) => this.controller.getAllDocumentsCoordinates()
+        .then((coordinates: {documentID: number, icon: string, geoJson: turf.AllGeoJSON}[]) => res.status(200).json(coordinates))
+        .catch((err: Error) => res.status(500).json(err.message))
+        )
     }
 
 }
