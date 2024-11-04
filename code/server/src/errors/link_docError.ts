@@ -34,4 +34,4 @@ class InternalServerError extends Error {
     }
 }
 
-export {LinkError,DocumentsError,InternalServerError}
+export {LinkError,DocumentsError,InternalServerError};

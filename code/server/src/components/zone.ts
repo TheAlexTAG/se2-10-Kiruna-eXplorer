@@ -12,7 +12,7 @@ class Zone {
      * @param name name of the zone 
      * @param coordinates coordinates of the zone expressed in well known text
     */ 
-    constructor(id: number, name: string | null, coordinates: string) {
+    constructor(id: number, name: string | null, coordinates: string= "") {
         this.id = id;
         this.name = name;
         this.coordinates= coordinates;

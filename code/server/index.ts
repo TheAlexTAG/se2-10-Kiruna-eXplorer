@@ -4,6 +4,8 @@ import {DocumentRoutes} from "./src/routers/documentRoutes"
 import {UserController} from "./src/controllers/userController";
 import {UserRoutes} from "./src/routers/userRoutes";
 import {LinkDocumentRoutes} from "./src/routers/link_docRoutes";
+import {ZoneRoutes} from "./src/routers/zoneRoutes";
+
 
 const morgan = require("morgan"); // logging middleware
 const cors = require("cors");
@@ -74,6 +76,7 @@ app.use(passport.session());
 new DocumentRoutes(app);
 new UserRoutes(app, passport, isLoggedIn);
 new LinkDocumentRoutes(app);
+new ZoneRoutes(app);
 
 /*** Other express-related instructions ***/
 // activate the server
