@@ -9,6 +9,8 @@ const { JSDOM } = require("jsdom");
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
+const wellknown = require('wellknown');
+
 class ZoneDAO {
 
     getZone(id: number): Promise<any> {
@@ -19,9 +21,9 @@ class ZoneDAO {
               return reject(new InternalServerError(err.message));
             }
             if (!row) {
-              return resolve(null);
+              return reject(new ZoneError());
             }
-            return resolve(new Zone(+DOMPurify.sanitize(row.zoneID), DOMPurify.sanitize(row.zoneName), DOMPurify.sanitize(row.coordinates)));
+            return resolve(new Zone(+DOMPurify.sanitize(row.zoneID), DOMPurify.sanitize(row.zoneName), wellknown.parse(DOMPurify.sanitize(row.coordinates))));
           }
          );
         }

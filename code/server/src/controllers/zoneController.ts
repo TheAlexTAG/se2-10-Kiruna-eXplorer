@@ -1,3 +1,4 @@
+import { Zone } from "../components/zone";
 import { ZoneDAO } from "../dao/zoneDAO";
 
 class ZoneController{
@@ -7,7 +8,11 @@ class ZoneController{
         this.dao= new ZoneDAO();
     }
 
-    async getAllZone(){
+    async getZone(id: number): Promise<Zone>{
+        return await this.dao.getZone(id);
+    }
+
+    async getAllZone(): Promise<Zone[]>{
         return await this.dao.getAllZone();
     }
 }

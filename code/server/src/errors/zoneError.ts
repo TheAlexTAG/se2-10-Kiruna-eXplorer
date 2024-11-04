@@ -5,7 +5,7 @@ class ZoneError extends Error {
     code: number
 
     constructor() {
-        super('Error with zone!');
+        super('Error with zone! Zone not found.');
         this.code = 404;
     }
 }
