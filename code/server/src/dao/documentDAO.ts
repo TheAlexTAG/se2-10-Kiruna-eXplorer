@@ -1,6 +1,6 @@
 import { Document } from "../components/document";
 import db from "../db/db";
-import { DocumentNotFoundError, DocumentZoneNotFoundError } from "../errors/documentErrors";
+import { DocumentNotFoundError, DocumentZoneNotFoundError, MissingKirunaZoneError } from "../errors/documentErrors";
 /**
  * DAO for interactions with document table
  */
@@ -194,6 +194,16 @@ class DocumentDAO {
             db.get(sql, zoneID, (err: Error, row: any) => {
                 if(err) reject(err);
                 row ? resolve(row.coordinates) : reject(new DocumentZoneNotFoundError())
+            })
+        })
+    }
+
+    getKirunaPolygon(): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const sql = `SELECT coordinates FROM zone WHERE zoneName = 'Kiruna municipal area'`
+            db.get(sql, [], (err: Error, row: any) => {
+                if(err) reject(err);
+                row ? resolve(row.coordinates) : reject(new MissingKirunaZoneError())
             })
         })
     }

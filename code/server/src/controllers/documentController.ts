@@ -1,6 +1,7 @@
+import { rejects } from "assert";
 import { Document } from "../components/document";
 import { DocumentDAO } from "../dao/documentDAO";
-import { InvalidDocumentZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
+import { CoordinatesOutOfBoundsError, InvalidDocumentZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
 import * as turf from '@turf/turf';
 
 const wellknown = require('wellknown');
@@ -36,8 +37,12 @@ class DocumentController {
     async createNode (title: string, icon: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
         try {
             if(!zoneID && latitude && longitude) {
-                let lastID = await this.dao.createDocumentNode(title, icon, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages);
-                return lastID;
+                const checkCoordinates = await this.checkCoordinatesValidity(longitude, latitude);
+                if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
+                else {
+                    let lastID = await this.dao.createDocumentNode(title, icon, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages);
+                    return lastID;
+                }
             }
             else if(zoneID && !latitude && !longitude) {
                 let zonePolygon = await this.dao.getDocumentZoneCoordinates(zoneID);
@@ -122,7 +127,20 @@ class DocumentController {
                 })
             }
         })
-    } 
+    }
+
+    private async checkCoordinatesValidity(lon: number, lat: number): Promise<boolean> {
+        try {
+            let kirunaPolygon = await this.dao.getKirunaPolygon();
+            const kirunaPolygonGeoJSON = wellknown.parse(kirunaPolygon);
+            const point = turf.point([lon, lat]);
+            const checkInside = turf.booleanPointInPolygon(point, kirunaPolygonGeoJSON);
+            return checkInside;
+        }
+        catch(err) {
+            throw err;
+        }
+    }
 }
 
 export {DocumentController};
