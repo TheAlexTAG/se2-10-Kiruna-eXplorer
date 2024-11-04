@@ -3,7 +3,7 @@ import { DocumentController } from "../controllers/documentController";
 import { body, param } from "express-validator";
 import ErrorHandler from "../helper";
 import { Document } from "../components/document";
-import { DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
+import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, MissingKirunaZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
 /**
  * Router for handling all the http requests for the documents
  */
@@ -45,6 +45,8 @@ class DocumentRoutes {
             if(err instanceof WrongGeoreferenceError) res.status(err.code).json(err.message);
             else if (err instanceof DocumentZoneNotFoundError) res.status(err.code).json(err.message);
             else if (err instanceof InvalidDocumentZoneError) res.status(err.code).json(err.message);
+            else if (err instanceof MissingKirunaZoneError) res.status(err.code).json(err.message);
+            else if (err instanceof CoordinatesOutOfBoundsError) res.status(err.code).json(err.message);
             else res.status(500).json(err.message);
         }))
 /**
