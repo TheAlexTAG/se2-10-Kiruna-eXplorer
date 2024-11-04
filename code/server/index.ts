@@ -1,6 +1,9 @@
 import express from "express";
 import { UserDAO } from "./src/dao/userDAO";
 import {DocumentRoutes} from "./src/routers/documentRoutes"
+import {UserController} from "./src/controllers/userController";
+import {UserRoutes} from "./src/routers/userRoutes";
+import {LinkDocumentRoutes} from "./src/routers/link_docRoutes";
 
 const morgan = require("morgan"); // logging middleware
 const cors = require("cors");
@@ -22,12 +25,12 @@ app.use(morgan("dev"));
 app.use(express.json()); // To automatically decode incoming json
 
 /*** Passport ***/
-const DAO = new UserDAO();
+const controller = new UserController();
 
 // set up the "username and password" login strategy with a function to verify username and password
 passport.use(
   new LocalStrategy(async function verify(username: string,password: string,callback: any){
-    const user = await DAO.getUser(username, password);
+    const user = await controller.getUser(username, password);
     if (!user) {
       return callback(null, false, {message: "Incorrect username or password"});
     }
@@ -41,7 +44,7 @@ passport.serializeUser((user: any, callback: any) => {
 
 passport.deserializeUser(async function (id: number, callback: any) {
   try {
-    const user = await DAO.getUserById(id);
+    const user = await controller.getUserById(id);
     callback(null, user);
   } catch (err) {
     callback(err, null);
@@ -67,7 +70,10 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 /* ROUTES */
+
 new DocumentRoutes(app);
+new UserRoutes(app, passport, isLoggedIn);
+new LinkDocumentRoutes(app);
 
 /*** Other express-related instructions ***/
 // activate the server
