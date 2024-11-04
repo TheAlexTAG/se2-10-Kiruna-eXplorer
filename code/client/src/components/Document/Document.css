@@ -10,7 +10,7 @@
 .document-container {
     padding-bottom: 0;
     margin-bottom: 0;
-    background-color: white; /* Assicurati che lo sfondo non sia nero */
+    background-color: white; 
 }
 
 .document-form .form-label {

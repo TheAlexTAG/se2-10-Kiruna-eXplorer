@@ -46,9 +46,7 @@ const currentUser = async () => {
   return await response.json();
 };
 
-const createDocumentNode = async (documentData: any) => {
-  console.log(documentData);
-  
+const createDocumentNode = async (documentData: any) => {  
   try {
     const response = await fetch(`${SERVER_URL}/document`, {
       method: "POST",

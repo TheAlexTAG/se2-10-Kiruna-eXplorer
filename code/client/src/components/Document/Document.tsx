@@ -17,17 +17,14 @@ export default function Document() {
     const [language, setLanguage] = useState<string | null>(null);
     const [pages, setPages] = useState<string | null>(null);
 
-    // Funzione per gestire l'invio del form
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Controllo dei campi obbligatori
         if (!title || !icon || !description || !stakeholders || !scale || !issuanceDate || !type) {
             alert('I campi Title, Icon, Description, Stakeholders, Scale, Issuance Date e Type sono obbligatori.');
             return;
         }
 
-        // Oggetto dati da inviare al server
         const documentData = {
             title,
             icon,
@@ -44,7 +41,6 @@ export default function Document() {
         };
 
         try {
-            // Richiesta POST per creare il documento
             await API.createDocumentNode(documentData);
             alert(`Creation of document ${title} successful!`);
         } catch (error) {
@@ -53,24 +49,20 @@ export default function Document() {
         }
     };
 
-    // Gestire la selezione di ZoneID
     const handleZoneIDChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const selectedZoneID = e.target.value ? parseInt(e.target.value) : null;
         setZoneID(selectedZoneID);
         
-        // Se ZoneID è impostato, resetta i campi latitudine e longitudine e disabilitali
         if (selectedZoneID !== null) {
             setLatitude(null);
             setLongitude(null);
         }
     };
 
-    // Gestire il cambiamento di Latitudine e Longitudine
     const handleLatitudeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newLatitude = e.target.value ? parseFloat(e.target.value) : null;
         setLatitude(newLatitude);
         
-        // Se la latitudine è impostata, resetta ZoneID e disabilitalo
         if (newLatitude !== null) {
             setZoneID(null);
         }
@@ -80,7 +72,6 @@ export default function Document() {
         const newLongitude = e.target.value ? parseFloat(e.target.value) : null;
         setLongitude(newLongitude);
         
-        // Se la longitudine è impostata, resetta ZoneID e disabilitalo
         if (newLongitude !== null) {
             setZoneID(null);
         }
