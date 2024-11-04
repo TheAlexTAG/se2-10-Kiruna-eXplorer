@@ -3,6 +3,7 @@ import { Document } from "../components/document";
 import { DocumentDAO } from "../dao/documentDAO";
 import { CoordinatesOutOfBoundsError, InvalidDocumentZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
 import * as turf from '@turf/turf';
+import { GeoJSONFeature, GeoJSONPoint } from "wellknown";
 
 const wellknown = require('wellknown');
 /**
@@ -100,6 +101,36 @@ class DocumentController {
             throw err;
         }
     }
+
+    async getAllDocumentsCoordinates(): Promise<{documentID: number, icon: string, geoJson: turf.AllGeoJSON}[]> {
+        try {
+            let data = await this.dao.getAllDocumentsCoordinates();
+            let coordinates = data.map(coord => {return {
+                documentID: coord.documentID,
+                icon: coord.icon,
+                geoJson: turf.point([coord.lon, coord.lat])
+            }})
+                return coordinates;
+        }
+        catch(err) {
+            throw err;
+        }
+    }
+/**
+ * Deletes all document entries
+ * @returns a void promise
+ * @throws generic error if the database query fails
+ */
+    async deleteAllDocuments(): Promise<void> {
+        try {
+            await this.dao.deleteAllDocuments();
+            return;
+        }
+        catch(err) {
+            throw err;
+        }
+    }
+
 /**
  * 
  * @param polygon a WKT polygon 
@@ -128,7 +159,13 @@ class DocumentController {
             }
         })
     }
-
+/**
+ * Checks the validity of the coordinates by looking if they are in the Kiruna square
+ * @param lon longitude of the point
+ * @param lat latitude of the point
+ * @returns true if the coordinates are in the Kiruna area, false otherwise
+ * @throws generic error if the database query fails
+ */
     private async checkCoordinatesValidity(lon: number, lat: number): Promise<boolean> {
         try {
             let kirunaPolygon = await this.dao.getKirunaPolygon();
