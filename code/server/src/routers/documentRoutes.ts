@@ -85,7 +85,7 @@ class DocumentRoutes {
  */
         this.app.get("/api/documents/coordinates",
         (req: any, res: any, next: any) => this.controller.getAllDocumentsCoordinates()
-        .then((coordinates: {documentID: number, icon: string, geoJson: turf.AllGeoJSON}[]) => res.status(200).json(coordinates))
+        .then((coordinates: {documentID: number, title: string, icon: string, geoJson: turf.AllGeoJSON}[]) => res.status(200).json(coordinates))
         .catch((err: Error) => res.status(500).json(err.message))
         )
 

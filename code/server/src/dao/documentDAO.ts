@@ -223,14 +223,14 @@ class DocumentDAO {
  * @returns a list of id associated with coordinates (lon, lat)
  * @throws generic error if the database query fails
  */
-    getAllDocumentsCoordinates(): Promise<{documentID: number, icon: string, lon: number, lat: number}[]> {
+    getAllDocumentsCoordinates(): Promise<{documentID: number, title: string, icon: string, lon: number, lat: number}[]> {
         return new Promise((resolve, reject) => {
-            const sql = `SELECT documentID, icon, longitude, latitude FROM document`
+            const sql = `SELECT documentID, title, icon, longitude, latitude FROM document`
             db.all(sql, [], (err: Error, rows: any[]) => {
                 if(err) reject(err);
                 else {
-                    let documents: {documentID: number, icon: string, lon: number, lat: number}[] = [];
-                    if(rows) documents = rows.map((row: any) => {return {documentID: row.documentID, icon: row.icon, lon: row.longitude, lat: row.latitude}});
+                    let documents: {documentID: number, title: string, icon: string, lon: number, lat: number}[] = [];
+                    if(rows) documents = rows.map((row: any) => {return {documentID: row.documentID, title: row.title, icon: row.icon, lon: row.longitude, lat: row.latitude}});
                     resolve(documents);
                 }
             })
