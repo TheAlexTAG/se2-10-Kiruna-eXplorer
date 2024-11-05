@@ -103,18 +103,22 @@ class DocumentController {
         }
     }
 
-    async getAllDocumentsCoordinates(): Promise<{documentID: number, title: string, icon: string, geoJson: turf.AllGeoJSON}[]> {
+    async getAllDocumentsCoordinates(): Promise<turf.AllGeoJSON> {
         try {
             let data = await this.dao.getAllDocumentsCoordinates();
-            let coordinates = data.map(coord => {return {
-                documentID: coord.documentID,
-                title: coord.title,
-                icon: coord.icon,
-                geoJson: turf.point([coord.lon, coord.lat])
-            }})
-                return coordinates;
-        }
-        catch(err) {
+            let features = data.map(coord => 
+                turf.point(
+                    [coord.lon, coord.lat],
+                    {
+                        documentID: coord.documentID,
+                        title: coord.title,
+                        icon: coord.icon
+                    }
+                )
+            );
+    
+            return turf.featureCollection(features);
+        } catch (err) {
             throw err;
         }
     }
