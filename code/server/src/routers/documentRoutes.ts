@@ -6,6 +6,7 @@ import { Document } from "../components/document";
 import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, MissingKirunaZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
 import * as turf from '@turf/turf';
 import {Utilities} from '../utilities'
+import { ZoneError } from "../errors/zoneError";
 /**
  * Router for handling all the http requests for the documents
  */
@@ -47,7 +48,7 @@ class DocumentRoutes {
         .catch((err: Error) => {
             if(err instanceof WrongGeoreferenceError) res.status(err.code).json(err.message);
             else if (err instanceof DocumentZoneNotFoundError) res.status(err.code).json(err.message);
-            else if (err instanceof InvalidDocumentZoneError) res.status(err.code).json(err.message);
+            else if (err instanceof ZoneError) res.status(err.code).json(err.message);
             else if (err instanceof MissingKirunaZoneError) res.status(err.code).json(err.message);
             else if (err instanceof CoordinatesOutOfBoundsError) res.status(err.code).json(err.message);
             else res.status(500).json(err.message);

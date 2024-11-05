@@ -3,7 +3,8 @@ import { Document } from "../components/document";
 import { DocumentDAO } from "../dao/documentDAO";
 import { CoordinatesOutOfBoundsError, InvalidDocumentZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
 import * as turf from '@turf/turf';
-import { GeoJSONFeature, GeoJSONPoint } from "wellknown";
+import { GeoJSONFeature, GeoJSONGeometry, GeoJSONPoint } from "wellknown";
+import { ZoneDAO } from "../dao/zoneDAO";
 
 const wellknown = require('wellknown');
 /**
@@ -46,8 +47,8 @@ class DocumentController {
                 }
             }
             else if(zoneID && !latitude && !longitude) {
-                let zonePolygon = await this.dao.getDocumentZoneCoordinates(zoneID);
-                let randCoordinates = await this.getRandCoordinates(zonePolygon);
+                let zone = await ZoneDAO.prototype.getZone(zoneID);
+                let randCoordinates = await this.getRandCoordinates(zone.coordinates);
                 let lastID = await this.dao.createDocumentNode(title, icon, description, zoneID, randCoordinates.latitude, randCoordinates.longitude, stakeholders, scale, issuanceDate, type, language, pages);
                 return lastID;
             }
@@ -134,18 +135,17 @@ class DocumentController {
 
 /**
  * 
- * @param polygon a WKT polygon 
+ * @param polygon a geojson polygon 
  * @returns random coordinates in the poygon in {lat, lon} format
  * @throws InvalidDocumentZoneError if the specified zone is not a polygon
  * 
  */
-    private async getRandCoordinates(polygon: string): Promise<{latitude: number, longitude: number}> {
+    private async getRandCoordinates(polygon: any): Promise<{latitude: number, longitude: number}> {
         return new Promise((resolve, reject) => {
-            const geoJsonPolygon = wellknown(polygon);
-            const bbox = turf.bbox(geoJsonPolygon);
+            const bbox = turf.bbox(polygon);
             const gridPoints = turf.pointGrid(bbox, 0.001, {
                 units: 'degrees',
-                mask: geoJsonPolygon
+                mask: polygon
             });
             if (gridPoints.features.length === 0) {
                 reject(new InvalidDocumentZoneError())

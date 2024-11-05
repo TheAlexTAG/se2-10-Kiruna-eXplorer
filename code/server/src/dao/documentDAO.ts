@@ -101,7 +101,7 @@ class DocumentDAO {
         })
     }
 /**
- * Gets all the attachments links for the document
+ * Gets all the attachments links for the document, 
  * @param documentID the id of the document whose attachments has to be returned
  * @returns an array of string representing the links of the attachments
  * @throws generic error if the database query fails
@@ -187,22 +187,7 @@ class DocumentDAO {
             })
         })
     }
-/**
- * Retrieves the document zone as a WKT polygon
- * @param zoneID the id of the document zone
- * @returns the wkt string of the zone polygon
- * @throws DocumentZoneNotFoundError if the zone is not in the database
- * @throws generic error if the database query fails
- */
-    getDocumentZoneCoordinates(zoneID: number): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const sql = `SELECT coordinates FROM zone WHERE zoneID = ?`
-            db.get(sql, zoneID, (err: Error, row: any) => {
-                if(err) reject(err);
-                row ? resolve(row.coordinates) : reject(new DocumentZoneNotFoundError())
-            })
-        })
-    }
+
 /**
  * Retrieves the whole Kiruna area as a WKT polygon
  * @returns the wkt string of the Kiruna polygon
