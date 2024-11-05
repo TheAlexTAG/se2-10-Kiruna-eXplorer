@@ -2,6 +2,8 @@ import { Zone } from "../components/zone";
 import db from "../db/db";
 import { InternalServerError } from "../errors/link_docError";
 import { ZoneError } from "../errors/zoneError";
+import { GeoJSON } from 'geojson';
+
 
 /* Sanitize input */
 const createDOMPurify = require("dompurify");
@@ -23,7 +25,16 @@ class ZoneDAO {
             if (!row) {
               return reject(new ZoneError());
             }
-            return resolve(new Zone(+DOMPurify.sanitize(row.zoneID), DOMPurify.sanitize(row.zoneName), wellknown.parse(DOMPurify.sanitize(row.coordinates))));
+            const zoneName: string=  DOMPurify.sanitize(row.zoneName);
+            const geoJson: GeoJSON = {
+              type: "Feature",
+              geometry: wellknown.parse(DOMPurify.sanitize(row.coordinates)),
+              properties: {
+                name: zoneName
+              }
+            };
+
+            return resolve(new Zone(+DOMPurify.sanitize(row.zoneID),zoneName,geoJson));
           }
          );
         }
