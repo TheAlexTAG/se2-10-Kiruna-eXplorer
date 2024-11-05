@@ -176,7 +176,7 @@ export default function Document({ userInfo }: userProps) {
                 <Row className="mb-3">
                     <Form.Group as={Col} controlId="formIssuanceDate">
                         <Form.Label>Date of Issue</Form.Label>
-                        <Form.Control type="date" value={issuanceDate} onChange={(e) => setIssuanceDate(e.target.value)} required />
+                        <Form.Control type="text" value={issuanceDate} onChange={(e) => setIssuanceDate(e.target.value)} required />
                     </Form.Group>
 
                     <Form.Group as={Col} controlId="formType">
