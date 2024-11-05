@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Form, Row, Col, Button, Alert } from 'react-bootstrap';
 import API from '../../API/API';
 import './Document.css';
 import { CoordinatesOutOfBoundsError } from '../../../../server/src/errors/documentErrors';
 
-export default function Document() {
+interface userProps {
+    userInfo: { username: string; role: string };
+}
+
+export default function Document({ userInfo }: userProps) {
     const [title, setTitle] = useState('');
     const [icon, setIcon] = useState('');
     const [description, setDescription] = useState('');
@@ -17,7 +21,21 @@ export default function Document() {
     const [type, setType] = useState('');
     const [language, setLanguage] = useState<string | null>(null);
     const [pages, setPages] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null); // Stato per gestire l'errore
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [zones, setZones] = useState<{ id: number, name: string }[]>([]);
+
+    useEffect(() => {
+        const fetchZones = async () => {
+            try {
+                const zonesData = await API.getZones();
+                setZones(zonesData);
+            } catch (error) {
+                console.error('Error fetching zones:', error);
+                setErrorMessage('Failed to load zones.');
+            }
+        };
+        fetchZones();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,6 +43,13 @@ export default function Document() {
         if (!title || !icon || !description || !stakeholders || !scale || !issuanceDate || !type) {
             setErrorMessage('The fields Title, Icon, Description, Stakeholders, Scale, Issuance Date, and Type are mandatory.');
             return;
+        }
+
+        if (!zoneID) {
+            if (latitude === null || longitude === null) {
+                setErrorMessage('Please provide valid coordinates if no zone is selected.');
+                return;
+            }
         }
 
         const documentData = {
@@ -43,13 +68,9 @@ export default function Document() {
         };
 
         try {
-            const response = await API.createDocumentNode(documentData);
-            if (response.message === "Coordinates out of bound") {
-                setErrorMessage("Enter the coordinates inside the zone");
-                return;
-            }
+            await API.createDocumentNode(documentData);
             alert(`Creation of document ${title} successful!`);
-            setErrorMessage(null); 
+            setErrorMessage(null);
         } catch (error) {
             console.error('Error during creation of document:', error);
             if (CoordinatesOutOfBoundsError) {
@@ -84,99 +105,102 @@ export default function Document() {
         setLongitude(newLongitude);
         
         if (newLongitude !== null) {
+
             setZoneID(null);
         }
     };
 
     return (
-      <div className="document-container">
-          <h1>Insert Document</h1>
+        <div className="document-container">
+            <h1>Insert Document</h1>
+            <Form onSubmit={handleSubmit} className="document-form">
+                {errorMessage && (
+                    <Alert variant="danger" onClose={() => setErrorMessage(null)} dismissible>
+                        {errorMessage}
+                    </Alert>
+                )}
 
-          <Form onSubmit={handleSubmit} className="document-form">
+                <Row className="mb-3">
+                    <Form.Group as={Col} controlId="formTitle">
+                        <Form.Label>Title</Form.Label>
+                        <Form.Control type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                    </Form.Group>
 
-              {errorMessage && (
-                  <Alert variant="danger" onClose={() => setErrorMessage(null)} dismissible>
-                      {errorMessage}
-                  </Alert>
-              )}
+                    <Form.Group as={Col} controlId="formIcon">
+                        <Form.Label>Icon</Form.Label>
+                        <Form.Control type="text" value={icon} onChange={(e) => setIcon(e.target.value)} required />
+                    </Form.Group>
+                </Row>
 
-              <Row className="mb-3">
-                  <Form.Group as={Col} controlId="formTitle">
-                      <Form.Label>Title</Form.Label>
-                      <Form.Control type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                  </Form.Group>
+                <Form.Group className="mb-3" controlId="formDescription">
+                    <Form.Label>Description</Form.Label>
+                    <Form.Control as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} required />
+                </Form.Group>
 
-                  <Form.Group as={Col} controlId="formIcon">
-                      <Form.Label>Icon</Form.Label>
-                      <Form.Control type="text" value={icon} onChange={(e) => setIcon(e.target.value)} required />
-                  </Form.Group>
-              </Row>
+                <Row className="mb-3">
+                    <Form.Group as={Col} controlId="formZoneID">
+                        <Form.Label>Zone Name</Form.Label>
+                        <Form.Select value={zoneID ?? ''} onChange={handleZoneIDChange} disabled={latitude !== null || longitude !== null}>
+                            <option value="">Select a Zone</option>
+                            {zones.map((zone) => (
+                                <option key={zone.id} value={zone.id}>
+                                    {zone.name}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
 
-              <Form.Group className="mb-3" controlId="formDescription">
-                  <Form.Label>Description</Form.Label>
-                  <Form.Control as="textarea" rows={3} value={description} onChange={(e) => setDescription(e.target.value)} required />
-              </Form.Group>
+                    <Form.Group as={Col} controlId="formLatitude">
+                        <Form.Label>Latitude</Form.Label>
+                        <Form.Control type="number" step="0.0001" value={latitude ?? ''} onChange={handleLatitudeChange} disabled={zoneID !== null} />
+                    </Form.Group>
 
-              <Row className="mb-3">
-                  <Form.Group as={Col} controlId="formZoneID">
-                      <Form.Label>Zone Name</Form.Label>
-                      <Form.Select value={zoneID ?? ''} onChange={handleZoneIDChange} disabled={latitude !== null || longitude !== null}>
-                          <option value="">Select a Zone</option>
-                          <option value="1">Zone 1</option>
-                      </Form.Select>
-                  </Form.Group>
+                    <Form.Group as={Col} controlId="formLongitude">
+                        <Form.Label>Longitude</Form.Label>
+                        <Form.Control type="number" step="0.0001" value={longitude ?? ''} onChange={handleLongitudeChange} disabled={zoneID !== null} />
+                    </Form.Group>
+                </Row>
 
-                  <Form.Group as={Col} controlId="formLatitude">
-                      <Form.Label>Latitude</Form.Label>
-                      <Form.Control type="number" step="0.0001" value={latitude ?? ''} onChange={handleLatitudeChange} disabled={zoneID !== null} />
-                  </Form.Group>
+                <Row className="mb-3">
+                    <Form.Group as={Col} controlId="formStakeholders">
+                        <Form.Label>Stakeholders</Form.Label>
+                        <Form.Control type="text" value={stakeholders} onChange={(e) => setStakeholders(e.target.value)} required />
+                    </Form.Group>
 
-                  <Form.Group as={Col} controlId="formLongitude">
-                      <Form.Label>Longitude</Form.Label>
-                      <Form.Control type="number" step="0.0001" value={longitude ?? ''} onChange={handleLongitudeChange} disabled={zoneID !== null} />
-                  </Form.Group>
-              </Row>
+                    <Form.Group as={Col} controlId="formScale">
+                        <Form.Label>Scale</Form.Label>
+                        <Form.Control type="text" value={scale} onChange={(e) => setScale(e.target.value)} required />
+                    </Form.Group>
+                </Row>
 
-              <Row className="mb-3">
-                  <Form.Group as={Col} controlId="formStakeholders">
-                      <Form.Label>Stakeholders</Form.Label>
-                      <Form.Control type="text" value={stakeholders} onChange={(e) => setStakeholders(e.target.value)} required />
-                  </Form.Group>
+                <Row className="mb-3">
+                    <Form.Group as={Col} controlId="formIssuanceDate">
+                        <Form.Label>Date of Issue</Form.Label>
+                        <Form.Control type="date" value={issuanceDate} onChange={(e) => setIssuanceDate(e.target.value)} required />
+                    </Form.Group>
 
-                  <Form.Group as={Col} controlId="formScale">
-                      <Form.Label>Scale</Form.Label>
-                      <Form.Control type="text" value={scale} onChange={(e) => setScale(e.target.value)} required />
-                  </Form.Group>
-              </Row>
+                    <Form.Group as={Col} controlId="formType">
+                        <Form.Label>Type</Form.Label>
+                        <Form.Control type="text" value={type} onChange={(e) => setType(e.target.value)} required />
+                    </Form.Group>
+                </Row>
 
-              <Row className="mb-3">
-                  <Form.Group as={Col} controlId="formIssuanceDate">
-                      <Form.Label>Date of Issue</Form.Label>
-                      <Form.Control type="date" value={issuanceDate} onChange={(e) => setIssuanceDate(e.target.value)} required />
-                  </Form.Group>
+                <Row className="mb-3">
+                    <Form.Group as={Col} controlId="formLanguage">
+                        <Form.Label>Language</Form.Label>
+                        <Form.Control type="text" value={language ?? ''} onChange={(e) => setLanguage(e.target.value || null)} />
+                    </Form.Group>
 
-                  <Form.Group as={Col} controlId="formType">
-                      <Form.Label>Type</Form.Label>
-                      <Form.Control type="text" value={type} onChange={(e) => setType(e.target.value)} required />
-                  </Form.Group>
-              </Row>
+                    <Form.Group as={Col} controlId="formPages">
+                        <Form.Label>Pages</Form.Label>
+                        <Form.Control type="text" value={pages ?? ''} onChange={(e) => setPages(e.target.value || null)} />
+                    </Form.Group>
+                </Row>
 
-              <Row className="mb-3">
-                  <Form.Group as={Col} controlId="formLanguage">
-                      <Form.Label>Language</Form.Label>
-                      <Form.Control type="text" value={language ?? ''} onChange={(e) => setLanguage(e.target.value || null)} />
-                  </Form.Group>
-
-                  <Form.Group as={Col} controlId="formPages">
-                      <Form.Label>Pages</Form.Label>
-                      <Form.Control type="text" value={pages ?? ''} onChange={(e) => setPages(e.target.value || null)} />
-                  </Form.Group>
-              </Row>
-
-              <Button variant="primary" type="submit">
-                  Create Document
-              </Button>
-          </Form>
-      </div>
+                <Button variant="primary" type="submit">
+                    Create Document
+                </Button>
+            </Form>
+        </div>
     );
-};
+}

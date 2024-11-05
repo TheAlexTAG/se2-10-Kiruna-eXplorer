@@ -48,10 +48,12 @@ const currentUser = async () => {
   return await response.json();
 };
 
-const createDocumentNode = async (documentData: any) => {  
+const createDocumentNode = async (documentData: any) => { 
+  console.log(documentData); 
   try {
     const response = await fetch(`${SERVER_URL}/document`, {
       method: "POST",
+      credentials: 'include',
       headers: {
         "Content-Type": "application/json",
       },
@@ -76,5 +78,24 @@ const createDocumentNode = async (documentData: any) => {
   }
 }
 
-const API = { login, logout, currentUser, createDocumentNode };
+const getZones = async () => {
+  const response = await fetch(`${SERVER_URL}/zones`, {
+    method: "GET",
+    credentials: 'include',
+    headers: {
+      "Content-Type": "application/json",
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error getting zones:", errorData);
+    throw new Error(errorData.message || "Failed to get zones");
+  }
+
+  return await response.json();
+};
+
+
+const API = { login, logout, currentUser, createDocumentNode, getZones };
 export default API;
