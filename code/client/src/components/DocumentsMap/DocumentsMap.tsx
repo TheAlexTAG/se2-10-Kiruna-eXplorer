@@ -32,7 +32,7 @@ const DocumentsMap: React.FC = () => {
     fetchDocuments();
 
     if (mapRef.current === null) {
-      mapRef.current = L.map("documents-map").setView([67.8558, 20.2253], 13);
+      mapRef.current = L.map("documents-map").setView([67.85, 20.2253], 13);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
