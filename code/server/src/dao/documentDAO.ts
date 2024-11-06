@@ -1,6 +1,6 @@
 import { Document } from "../components/document";
 import db from "../db/db";
-import { DocumentNotFoundError, DocumentZoneNotFoundError, MissingKirunaZoneError } from "../errors/documentErrors";
+import { DocumentNotFoundError, DocumentZoneNotFoundError } from "../errors/documentErrors";
 /**
  * DAO for interactions with document table
  */
@@ -101,7 +101,7 @@ class DocumentDAO {
         })
     }
 /**
- * Gets all the attachments links for the document
+ * Gets all the attachments links for the document, 
  * @param documentID the id of the document whose attachments has to be returned
  * @returns an array of string representing the links of the attachments
  * @throws generic error if the database query fails
@@ -187,50 +187,21 @@ class DocumentDAO {
             })
         })
     }
-/**
- * Retrieves the document zone as a WKT polygon
- * @param zoneID the id of the document zone
- * @returns the wkt string of the zone polygon
- * @throws DocumentZoneNotFoundError if the zone is not in the database
- * @throws generic error if the database query fails
- */
-    getDocumentZoneCoordinates(zoneID: number): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const sql = `SELECT coordinates FROM zone WHERE zoneID = ?`
-            db.get(sql, zoneID, (err: Error, row: any) => {
-                if(err) reject(err);
-                row ? resolve(row.coordinates) : reject(new DocumentZoneNotFoundError())
-            })
-        })
-    }
-/**
- * Retrieves the whole Kiruna area as a WKT polygon
- * @returns the wkt string of the Kiruna polygon
- * @throws MissingKirunaZoneError if the Kiruna area is not in the database
- * @throws generic error if the database query fails
- */
-    getKirunaPolygon(): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const sql = `SELECT coordinates FROM zone WHERE zoneName = 'Kiruna municipal area'`
-            db.get(sql, [], (err: Error, row: any) => {
-                if(err) reject(err);
-                row ? resolve(row.coordinates) : reject(new MissingKirunaZoneError())
-            })
-        })
-    }
+
+
 /**
  * Retrieves all the documents coordinates associated to their document id
  * @returns a list of id associated with coordinates (lon, lat)
  * @throws generic error if the database query fails
  */
-    getAllDocumentsCoordinates(): Promise<{documentID: number, icon: string, lon: number, lat: number}[]> {
+    getAllDocumentsCoordinates(): Promise<{documentID: number, title: string, icon: string, lon: number, lat: number}[]> {
         return new Promise((resolve, reject) => {
-            const sql = `SELECT documentID, icon, longitude, latitude FROM document`
+            const sql = `SELECT documentID, title, icon, longitude, latitude FROM document`
             db.all(sql, [], (err: Error, rows: any[]) => {
                 if(err) reject(err);
                 else {
-                    let documents: {documentID: number, icon: string, lon: number, lat: number}[] = [];
-                    if(rows) documents = rows.map((row: any) => {return {documentID: row.documentID, icon: row.icon, lon: row.longitude, lat: row.latitude}});
+                    let documents: {documentID: number, title: string, icon: string, lon: number, lat: number}[] = [];
+                    if(rows) documents = rows.map((row: any) => {return {documentID: row.documentID, title: row.title, icon: row.icon, lon: row.longitude, lat: row.latitude}});
                     resolve(documents);
                 }
             })

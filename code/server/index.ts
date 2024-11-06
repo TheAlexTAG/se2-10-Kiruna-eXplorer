@@ -76,7 +76,8 @@ app.use(passport.session());
 new DocumentRoutes(app);
 new UserRoutes(app, passport, isLoggedIn);
 new LinkDocumentRoutes(app);
-new ZoneRoutes(app);
+const zone= new ZoneRoutes(app);
+zone.checkKiruna();
 
 /*** Other express-related instructions ***/
 // activate the server

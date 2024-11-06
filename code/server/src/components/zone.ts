@@ -1,10 +1,12 @@
+import { GeoJSON } from 'geojson';
+
 /**
  * Represents a zone in the database
 */
 class Zone {
     id: number; 
     name: string | null;
-    coordinates: string; // well known text
+    coordinates: GeoJSON | null; // well known text
 
     /**
      * Creates a new instance of the Zone class.
@@ -12,7 +14,7 @@ class Zone {
      * @param name name of the zone 
      * @param coordinates coordinates of the zone expressed in well known text
     */ 
-    constructor(id: number, name: string | null, coordinates: string= "") {
+    constructor(id: number, name: string | null, coordinates: GeoJSON | null=null) {
         this.id = id;
         this.name = name;
         this.coordinates= coordinates;

@@ -3,9 +3,11 @@ import { DocumentController } from "../controllers/documentController";
 import { body, param } from "express-validator";
 import ErrorHandler from "../helper";
 import { Document } from "../components/document";
-import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, MissingKirunaZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
+import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
+import { MissingKirunaZoneError } from "../errors/zoneError";
 import * as turf from '@turf/turf';
 import {Utilities} from '../utilities'
+import { ZoneError } from "../errors/zoneError";
 /**
  * Router for handling all the http requests for the documents
  */
@@ -47,7 +49,7 @@ class DocumentRoutes {
         .catch((err: Error) => {
             if(err instanceof WrongGeoreferenceError) res.status(err.code).json(err.message);
             else if (err instanceof DocumentZoneNotFoundError) res.status(err.code).json(err.message);
-            else if (err instanceof InvalidDocumentZoneError) res.status(err.code).json(err.message);
+            else if (err instanceof ZoneError) res.status(err.code).json(err.message);
             else if (err instanceof MissingKirunaZoneError) res.status(err.code).json(err.message);
             else if (err instanceof CoordinatesOutOfBoundsError) res.status(err.code).json(err.message);
             else res.status(500).json(err.message);
@@ -76,7 +78,6 @@ class DocumentRoutes {
  * route for retrieving all the documents in the database
  */
         this.app.get("/api/documents",
-            Utilities.prototype.isAdmin,
         (req: any, res: any, next: any) => this.controller.getAllDocuments()
         .then((documents: Document[]) => res.status(200).json(documents))
         .catch((err: Error) => res.status(500).json(err.message)))
@@ -85,7 +86,7 @@ class DocumentRoutes {
  */
         this.app.get("/api/documents/coordinates",
         (req: any, res: any, next: any) => this.controller.getAllDocumentsCoordinates()
-        .then((coordinates: {documentID: number, icon: string, geoJson: turf.AllGeoJSON}[]) => res.status(200).json(coordinates))
+        .then((coordinates: turf.AllGeoJSON) => res.status(200).json(coordinates))
         .catch((err: Error) => res.status(500).json(err.message))
         )
 

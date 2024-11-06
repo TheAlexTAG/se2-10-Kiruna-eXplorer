@@ -2,6 +2,7 @@ import express from 'express';
 import { ZoneController } from '../controllers/zoneController';
 import { Utilities } from '../utilities';
 import { Zone } from '../components/zone';
+import db from '../db/db';
 
 const {param, validationResult} = require('express-validator'); // validation middleware
 
@@ -39,12 +40,20 @@ class ZoneRoutes {
             }
 
             try {
-                const zone: Zone = await this.controller.getZone(req.params.id);
+                const zone: Zone = await this.controller.getZone(+req.params.id);
                 return res.json(zone);
 
             } catch (err: any) {
                 return res.status(err.code).json({error: err.message});
             }
+        });
+    }
+
+    checkKiruna(): void{
+        this.controller.checkKiruna()
+        .catch((err: any)=>{
+            console.error(`Error code:${err.code}\nMessage:${err.message}`);
+            db.close();
         });
     }
 
