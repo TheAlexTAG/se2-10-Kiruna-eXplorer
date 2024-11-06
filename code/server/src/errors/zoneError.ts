@@ -10,4 +10,12 @@ class ZoneError extends Error {
     }
 }
 
-export {ZoneError};
+class MissingKirunaZoneError extends Error {
+    code: number
+
+    constructor() {
+        super("Cannot find Kiruna main area")
+        this.code = 404;
+    }
+}
+export {ZoneError, MissingKirunaZoneError};

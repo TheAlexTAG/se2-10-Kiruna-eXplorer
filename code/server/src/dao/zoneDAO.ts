@@ -61,7 +61,23 @@ class ZoneDAO {
           );
         }
       );
-    }   
+    }
+    
+  /**
+ * Retrieves the whole Kiruna area as a WKT polygon
+ * @returns the wkt string of the Kiruna polygon
+ * @throws MissingKirunaZoneError if the Kiruna area is not in the database
+ * @throws generic error if the database query fails
+ */
+    getKirunaPolygon(): Promise<string> {
+      return new Promise((resolve, reject) => {
+          const sql = `SELECT coordinates FROM zone WHERE zoneName = 'Kiruna municipal area'`
+          db.get(sql, [], (err: Error, row: any) => {
+              if(err) reject(err);
+              row ? resolve(row.coordinates) : resolve('')
+          })
+      })
+  }
 
 }
 

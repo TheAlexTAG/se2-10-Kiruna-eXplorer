@@ -1,6 +1,6 @@
 import { Document } from "../components/document";
 import db from "../db/db";
-import { DocumentNotFoundError, DocumentZoneNotFoundError, MissingKirunaZoneError } from "../errors/documentErrors";
+import { DocumentNotFoundError, DocumentZoneNotFoundError } from "../errors/documentErrors";
 /**
  * DAO for interactions with document table
  */
@@ -188,21 +188,7 @@ class DocumentDAO {
         })
     }
 
-/**
- * Retrieves the whole Kiruna area as a WKT polygon
- * @returns the wkt string of the Kiruna polygon
- * @throws MissingKirunaZoneError if the Kiruna area is not in the database
- * @throws generic error if the database query fails
- */
-    getKirunaPolygon(): Promise<string> {
-        return new Promise((resolve, reject) => {
-            const sql = `SELECT coordinates FROM zone WHERE zoneName = 'Kiruna municipal area'`
-            db.get(sql, [], (err: Error, row: any) => {
-                if(err) reject(err);
-                row ? resolve(row.coordinates) : reject(new MissingKirunaZoneError())
-            })
-        })
-    }
+
 /**
  * Retrieves all the documents coordinates associated to their document id
  * @returns a list of id associated with coordinates (lon, lat)

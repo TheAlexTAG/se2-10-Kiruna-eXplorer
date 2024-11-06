@@ -35,15 +35,6 @@ class InvalidDocumentZoneError extends Error {
     }
 }
 
-class MissingKirunaZoneError extends Error {
-    code: number
-
-    constructor() {
-        super("Cannot find Kiruna main area")
-        this.code = 404;
-    }
-}
-
 class CoordinatesOutOfBoundsError extends Error {
     code: number
 
@@ -53,4 +44,4 @@ class CoordinatesOutOfBoundsError extends Error {
     }
 }
 
-export {DocumentNotFoundError, WrongGeoreferenceError, DocumentZoneNotFoundError, InvalidDocumentZoneError, MissingKirunaZoneError, CoordinatesOutOfBoundsError};
+export {DocumentNotFoundError, WrongGeoreferenceError, DocumentZoneNotFoundError, InvalidDocumentZoneError, CoordinatesOutOfBoundsError};
