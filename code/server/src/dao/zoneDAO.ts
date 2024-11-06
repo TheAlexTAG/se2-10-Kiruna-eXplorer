@@ -84,12 +84,12 @@ class ZoneDAO {
       const sql = "insert into zone(zoneName,coordinates) VALUES('Kiruna municipal area','POLYGON((20.1570 67.8223, 20.1701 67.8223, 20.1900 67.8238, 20.2235 67.8280, 20.2235 67.8325, 20.2780 67.8372, 20.2780 67.8554, 20.2111 67.8516, 20.2111 67.8556, 20.1570 67.8223))')";
       db.run(sql, [], async function (err: Error | null) {
         if (err) {
+          if(err.message.includes('UNIQUE constraint failed')){
+            return resolve(false);
+          }
           return reject(new InternalServerError(err.message));
         }
-        if (this.lastID) {
-          return resolve(true);
-        }
-        return resolve(false);
+        return resolve(true);
       }
      );
     }
