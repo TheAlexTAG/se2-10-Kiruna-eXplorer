@@ -78,7 +78,6 @@ class DocumentRoutes {
  * route for retrieving all the documents in the database
  */
         this.app.get("/api/documents",
-            Utilities.prototype.isAdmin,
         (req: any, res: any, next: any) => this.controller.getAllDocuments()
         .then((documents: Document[]) => res.status(200).json(documents))
         .catch((err: Error) => res.status(500).json(err.message)))
