@@ -38,7 +38,7 @@ class DocumentRoutes {
             body("longitude").optional({nullable:true}).isFloat(),
             body("stakeholders").isString().notEmpty(),
             body("scale").isString().notEmpty(),
-            body("issuanceDate").matches(/^(?:(?:\d{2}\/\d{2}\/\d{4})|(?:\d{2}\/\d{4})|(?:\d{4}))$/),
+            body("issuanceDate").matches(/^(?:(?:31\/(0[13578]|1[02])\/\d{4})|(?:30\/(0[1-9]|1[0-2])\/\d{4})|(?:29\/02\/(?:(?:\d{2}(?:0[48]|[2468][048]|[13579][26]))|(?:[048]00)))|(?:0[1-9]|1\d|2[0-8])\/(0[1-9]|1[0-2])\/\d{4}|(?:0[1-9]|1[0-2])\/\d{4}|\d{4})$/),
             body("type").isString().notEmpty(),
             body("language").optional({nullable:true}).isString(),
             body("pages").optional({nullable:true}).isString(),
