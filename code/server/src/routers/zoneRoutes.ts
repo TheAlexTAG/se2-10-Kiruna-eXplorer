@@ -2,6 +2,7 @@ import express from 'express';
 import { ZoneController } from '../controllers/zoneController';
 import { Utilities } from '../utilities';
 import { Zone } from '../components/zone';
+import db from '../db/db';
 
 const {param, validationResult} = require('express-validator'); // validation middleware
 
@@ -50,7 +51,10 @@ class ZoneRoutes {
 
     checkKiruna(): void{
         this.controller.checkKiruna()
-        .catch((err: any)=>{console.log(`Error code:${err.code}\nMessage:${err.message}`)});
+        .catch((err: any)=>{
+            console.error(`Error code:${err.code}\nMessage:${err.message}`);
+            db.close();
+        });
     }
 
 }

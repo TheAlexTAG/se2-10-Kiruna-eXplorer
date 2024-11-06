@@ -32,7 +32,7 @@ class ZoneController{
                 attempts++;
 
                 if (attempts >= maxRetries) {
-                    throw new DatabaseConnectionError();
+                    throw new DatabaseConnectionError(err.message);
                 }
                 await ZoneController.delay(delayMs);
             }

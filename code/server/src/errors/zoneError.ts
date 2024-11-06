@@ -22,8 +22,8 @@ class MissingKirunaZoneError extends Error {
 class DatabaseConnectionError extends Error {
     code: number
 
-    constructor() {
-        super('Error connecting to database');
+    constructor(message: string) {
+        super(message);
         this.code = 503;
     }
 }
