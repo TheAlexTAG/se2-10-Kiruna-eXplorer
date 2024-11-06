@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import "./App.css";
 import {
   BrowserRouter as Router,
@@ -9,11 +8,11 @@ import {
 } from "react-router-dom";
 import { Login } from "./components/Login/Login";
 import { TopBar } from "./components/TopBar/TopBar";
-import Document from "./components/Document/Document";
+
 import { Map } from "./components/Map/Map";
-import API from "./API/API";
 import { useAuth } from "./contexts/GlobalStateProvider";
-import { Alert } from "react-bootstrap";  // Importa l'Alert di react-bootstrap
+import { Alert } from "react-bootstrap"; // Importa l'Alert di react-bootstrap
+import { DocumentList } from "./components/Document/DocumentList";
 
 function App() {
   const location = useLocation();
@@ -28,8 +27,8 @@ function App() {
         <Route
           path="/document"
           element={
-            user?.role === "Urban Planner" ? (
-              <Document userInfo={user} />
+            user?.role === "Urban Planner" || user?.role === "Admin" ? (
+              <DocumentList userInfo={user} />
             ) : (
               <div className="center-alert">
                 <Alert variant="danger">
