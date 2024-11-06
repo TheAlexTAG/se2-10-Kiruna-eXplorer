@@ -1,16 +1,9 @@
 import "./App.css";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  useLocation,
-  Navigate,
-} from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { Login } from "./components/Login/Login";
 import { TopBar } from "./components/TopBar/TopBar";
-import API from "./API/API";
 import { useAuth } from "./contexts/GlobalStateProvider";
-import GeoreferenceDocument from "./components/Georeference/Georeference";
+import GeoreferenceDocument from "./components/DocumentsMap/DocumentsMap";
 import { Alert } from "react-bootstrap"; // Importa l'Alert di react-bootstrap
 import { DocumentList } from "./components/Document/DocumentList";
 
