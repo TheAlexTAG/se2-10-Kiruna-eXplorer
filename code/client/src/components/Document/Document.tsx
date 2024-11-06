@@ -112,7 +112,7 @@ export default function Document({ userInfo }: userProps) {
 
     return (
         <div className="document-container">
-            <h1>Insert Document</h1>
+            <h1 className = "title">Insert Document</h1>
             <Form onSubmit={handleSubmit} className="document-form">
                 {errorMessage && (
                     <Alert variant="danger" onClose={() => setErrorMessage(null)} dismissible>

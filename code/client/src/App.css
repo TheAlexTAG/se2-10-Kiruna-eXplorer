@@ -24,3 +24,10 @@
 .read-the-docs {
   color: #888;
 }
+
+.center-alert {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}

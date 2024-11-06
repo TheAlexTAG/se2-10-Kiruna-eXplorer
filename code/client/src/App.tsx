@@ -13,6 +13,7 @@ import Document from "./components/Document/Document";
 import { Map } from "./components/Map/Map";
 import API from "./API/API";
 import { useAuth } from "./contexts/GlobalStateProvider";
+import { Alert } from "react-bootstrap";  // Importa l'Alert di react-bootstrap
 
 function App() {
   const location = useLocation();
@@ -30,7 +31,11 @@ function App() {
             user?.role === "Urban Planner" ? (
               <Document userInfo={user} />
             ) : (
-              <div>Access denied. Only the urban planner can access this page</div>
+              <div className="center-alert">
+                <Alert variant="danger">
+                  Access denied. Only the urban planner can access this page
+                </Alert>
+              </div>
             )
           }
         />
