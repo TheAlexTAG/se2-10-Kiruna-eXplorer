@@ -32,6 +32,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onLocationSelect }) => {
         });
 
         L.marker([lat, lng]).addTo(map);
+        L.marker([67.8558, 20.2253]).addTo(map);
       });
     }
 
