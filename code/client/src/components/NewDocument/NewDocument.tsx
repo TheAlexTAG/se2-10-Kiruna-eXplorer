@@ -3,6 +3,7 @@ import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
 import API from "../../API/API";
 import "./NewDocument.css";
 import { CoordinatesOutOfBoundsError } from "../../../../server/src/errors/documentErrors";
+import MapComponent from "../Map/MapComponent";
 
 interface userProps {
   userInfo: { username: string; role: string };
@@ -26,7 +27,15 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
   const [zones, setZones] = useState<{ id: number; name: string }[]>([]);
 
   const [show, setShow] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
 
+  const [tempCoordinates, setTempCoordinates] = useState<{
+    lat: number | null;
+    lng: number | null;
+  }>({
+    lat: null,
+    lng: null,
+  });
   const handleClose = () => {
     setTitle("");
     setIcon("");
@@ -102,10 +111,10 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
     };
 
     try {
-      await API.createDocumentNode(documentData).then(() => {
-        updateTable();
-        handleClose();
-      });
+      await API.createDocumentNode(documentData);
+      updateTable();
+      handleClose();
+
       alert(`Creation of document ${title} successful!`);
       setErrorMessage(null);
     } catch (error) {
@@ -144,6 +153,14 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
     if (newLongitude !== null) {
       setZoneID(null);
     }
+  };
+
+  const handleLocationSelect = () => {
+    if (tempCoordinates.lat !== null && tempCoordinates.lng !== null) {
+      setLatitude(tempCoordinates.lat);
+      setLongitude(tempCoordinates.lng);
+    }
+    setShowMapModal(false); // Close the modal when "OK" is clicked
   };
 
   return (
@@ -242,6 +259,15 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                   disabled={zoneID !== null}
                 />
               </Form.Group>
+              <Form.Group as={Col} controlId="formLongitude">
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowMapModal(true)}
+                  disabled={zoneID !== null}
+                >
+                  Choose Location on Map
+                </Button>
+              </Form.Group>
             </Row>
 
             <Row className="mb-3">
@@ -315,6 +341,32 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
           </Button>
           <Button variant="primary" onClick={(e) => handleSubmit(e)}>
             Create Document
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      {/* Map Modal */}
+      <Modal
+        show={showMapModal}
+        onHide={() => setShowMapModal(false)}
+        size="lg"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Select Location</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <MapComponent
+            onLocationSelect={handleLocationSelect}
+            tempCoordinates={tempCoordinates}
+            setTempCoordinates={setTempCoordinates}
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowMapModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleLocationSelect}>
+            OK
           </Button>
         </Modal.Footer>
       </Modal>
