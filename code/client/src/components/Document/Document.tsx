@@ -10,7 +10,7 @@ interface userProps {
 
 export default function Document({ userInfo }: userProps) {
     const [title, setTitle] = useState('');
-    const [icon, setIcon] = useState('https://it.cleanpng.com/png-9psxjc/');
+    const [icon, setIcon] = useState('../../../public/img/icon.webp');
     const [description, setDescription] = useState('');
     const [zoneID, setZoneID] = useState<number | null>(null);
     const [latitude, setLatitude] = useState<number | null>(null);
@@ -129,7 +129,7 @@ export default function Document({ userInfo }: userProps) {
                     <Form.Group as={Col} controlId="formIcon">
                         <Form.Label>Icon</Form.Label>
                         <Form.Select value={icon} onChange={(e) => setIcon(e.target.value)} required>
-                            <option value="https://it.cleanpng.com/png-9psxjc/">Document Icon</option>
+                            <option value="../../../public/img/icon.webp">Document Icon</option>
                         </Form.Select>
                     </Form.Group>
                 </Row>
