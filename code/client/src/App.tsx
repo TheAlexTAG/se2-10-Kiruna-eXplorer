@@ -6,6 +6,7 @@ import { useAuth } from "./contexts/GlobalStateProvider";
 import GeoreferenceDocument from "./components/DocumentsMap/DocumentsMap";
 import { Alert } from "react-bootstrap"; // Importa l'Alert di react-bootstrap
 import { DocumentList } from "./components/Document/DocumentList";
+import { Home } from "./components/Home/Home";
 
 function App() {
   const location = useLocation();
@@ -15,7 +16,7 @@ function App() {
     <>
       {location.pathname !== "/login" && <TopBar user={user} logout={logout} />}
       <Routes>
-        <Route path="/" element={<div>Home</div>} />
+        <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/map" element={<GeoreferenceDocument />} />
 
