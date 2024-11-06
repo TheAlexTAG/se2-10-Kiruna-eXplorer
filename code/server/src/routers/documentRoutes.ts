@@ -3,7 +3,8 @@ import { DocumentController } from "../controllers/documentController";
 import { body, param } from "express-validator";
 import ErrorHandler from "../helper";
 import { Document } from "../components/document";
-import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, MissingKirunaZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
+import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
+import { MissingKirunaZoneError } from "../errors/zoneError";
 import * as turf from '@turf/turf';
 import {Utilities} from '../utilities'
 import { ZoneError } from "../errors/zoneError";

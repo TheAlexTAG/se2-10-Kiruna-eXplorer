@@ -3,8 +3,8 @@ import { Document } from "../components/document";
 import { DocumentDAO } from "../dao/documentDAO";
 import { CoordinatesOutOfBoundsError, InvalidDocumentZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
 import * as turf from '@turf/turf';
-import { GeoJSONFeature, GeoJSONGeometry, GeoJSONPoint } from "wellknown";
 import { ZoneDAO } from "../dao/zoneDAO";
+import { MissingKirunaZoneError } from "../errors/zoneError";
 
 const wellknown = require('wellknown');
 /**
@@ -173,7 +173,8 @@ class DocumentController {
  */
     private async checkCoordinatesValidity(lon: number, lat: number): Promise<boolean> {
         try {
-            let kirunaPolygon = await this.dao.getKirunaPolygon();
+            let kirunaPolygon = await ZoneDAO.prototype.getKirunaPolygon();
+            if(!kirunaPolygon) throw new MissingKirunaZoneError();
             const kirunaPolygonGeoJSON = wellknown.parse(kirunaPolygon);
             const point = turf.point([lon, lat]);
             const checkInside = turf.booleanPointInPolygon(point, kirunaPolygonGeoJSON);
