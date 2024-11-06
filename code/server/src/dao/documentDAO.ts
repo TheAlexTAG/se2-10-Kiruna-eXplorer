@@ -142,45 +142,68 @@ class DocumentDAO {
  * @returns a list of documents
  * @throws generic error if the database query fails
  */
-    getDocumentsFull(): Promise<Document[]> {
+    getDocumentsFull(): Promise<{document: Document, links: number[]}[]> {
         return new Promise((resolve, reject) => {
             const sql = `WITH link_counts AS (
                 SELECT d.documentID,
-                COUNT(*) AS total_connections
+                COUNT(*) AS total_connections,
+                GROUP_CONCAT(
+                    CASE
+                        WHEN l.firstDoc = d.documentID THEN l.secondDoc
+                        ELSE l.firstDoc
+                     END
+                    ) AS linked_documents
                 FROM link l
                 JOIN document d ON l.firstDoc = d.documentID OR l.secondDoc = d.documentID
-                GROUP BY d.documentID)
-            SELECT d.documentID, d.title, d.icon, d.description, d.zoneID, d.latitude, d.longitude, d.stakeholders, d.scale, d.issuanceDate, d.type, d.language, d.pages,
-            COALESCE(lc.total_connections, 0) AS connections, 
-            COALESCE(GROUP_CONCAT(DISTINCT r.link), '') AS resources,
-            COALESCE(GROUP_CONCAT(DISTINCT a.link), '') AS attachments
-            FROM document d
-            LEFT JOIN link_counts lc ON d.documentID = lc.documentID
-            LEFT JOIN resource r ON d.documentID = r.documentID
-            LEFT JOIN attachment a ON d.documentID = a.documentID
-            GROUP BY d.documentID`
+                GROUP BY d.documentID
+                )
+        SELECT d.documentID, 
+            d.title, 
+            d.icon, 
+            d.description, 
+            d.zoneID, 
+            d.latitude, 
+            d.longitude, 
+            d.stakeholders, 
+            d.scale, 
+            d.issuanceDate, 
+            d.type, 
+            d.language, 
+            d.pages,
+        COALESCE(lc.total_connections, 0) AS connections, 
+        COALESCE(GROUP_CONCAT(DISTINCT r.link), '') AS resources,
+        COALESCE(GROUP_CONCAT(DISTINCT a.link), '') AS attachments,
+        COALESCE(lc.linked_documents, '') AS linked_document_ids
+        FROM document d
+        LEFT JOIN link_counts lc ON d.documentID = lc.documentID
+        LEFT JOIN resource r ON d.documentID = r.documentID
+        LEFT JOIN attachment a ON d.documentID = a.documentID
+        GROUP BY d.documentID;`
             db.all(sql, [], (err: Error, rows: any[]) => {
                 if(err) reject(err);
                 else {
-                    let documents: Document[] = [];
+                    let documents: {document: Document, links: number[]}[] = [];
                     if(rows) {
-                        documents = rows.map((row: any) => new Document(
-                        row.documentID,
-                        row.title,
-                        row.icon,
-                        row.description, row.zoneID,
-                        row.latitude,
-                        row.longitude,
-                        row.stakeholders,
-                        row.scale,
-                        row.issuanceDate,
-                        row.type,
-                        row.language,
-                        row.pages,
-                        row.connections,
-                        row.attachments ? row.attachments.split(",").map((url: string) => url.trim()): [],
-                        row.resources ? row.resources.split(",").map((url: string) => url.trim()) : []
-                        ))
+                        documents = rows.map((row: any) => {return {
+                            document: new Document(
+                                row.documentID,
+                                row.title,
+                                row.icon,
+                                row.description, row.zoneID,
+                                row.latitude,
+                                row.longitude,
+                                row.stakeholders,
+                                row.scale,
+                                row.issuanceDate,
+                                row.type,
+                                row.language,
+                                row.pages,
+                                row.connections,
+                                row.attachments ? row.attachments.split(",").map((url: string) => url.trim()): [],
+                                row.resources ? row.resources.split(",").map((url: string) => url.trim()) : []
+                                ),
+                                links: row.linked_document_ids ? row.linked_document_ids.split(",").map((id: string) => parseInt(id.trim(), 10)) : []
+                        }})
                     }
                     resolve(documents); 
                 }

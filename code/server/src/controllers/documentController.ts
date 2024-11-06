@@ -93,7 +93,7 @@ class DocumentController {
  * @returns a list of documents
  * @throws generic error if the database query fails
  */
-    async getAllDocuments(): Promise<Document[]> {
+    async getAllDocuments(): Promise<{document: Document, links: number[]}[]> {
         try {
             let documents = await this.dao.getDocumentsFull();
             return documents;
