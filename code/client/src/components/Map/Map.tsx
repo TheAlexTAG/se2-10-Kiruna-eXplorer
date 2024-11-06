@@ -11,7 +11,6 @@ const MapComponent: React.FC<MapComponentProps> = ({ onLocationSelect }) => {
 
   useEffect(() => {
     if (mapRef.current === null) {
-      // Initialize map
       const map = L.map("map").setView([67.8558, 20.2253], 13);
       mapRef.current = map;
 
@@ -19,20 +18,18 @@ const MapComponent: React.FC<MapComponentProps> = ({ onLocationSelect }) => {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(map);
 
-      // Click event to capture location
       map.on("click", (e: L.LeafletMouseEvent) => {
         const { lat, lng } = e.latlng;
         onLocationSelect(lat, lng);
 
-        // Clear existing markers and add a new one
+        // Clear any existing markers and add a new marker at the clicked location
         map.eachLayer((layer) => {
-          if (layer instanceof L.Marker) {
+          if ((layer as L.Marker).getLatLng) {
             map.removeLayer(layer);
           }
         });
 
         L.marker([lat, lng]).addTo(map);
-        L.marker([67.8558, 20.2253]).addTo(map);
       });
     }
 
@@ -44,7 +41,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onLocationSelect }) => {
     };
   }, [onLocationSelect]);
 
-  return <div id="map" style={{ height: "80vh", width: "100%" }}></div>;
+  return <div id="map" style={{ height: "300px", width: "100%" }}></div>;
 };
 
 export default MapComponent;

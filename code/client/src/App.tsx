@@ -18,19 +18,19 @@ import { Alert } from "react-bootstrap"; // Importa l'Alert di react-bootstrap
 function App() {
   const location = useLocation();
   const { user, logout } = useAuth();
+
   return (
     <>
       {location.pathname !== "/login" && <TopBar user={user} logout={logout} />}
       <Routes>
         <Route path="/" element={<div>Home</div>} />
         <Route path="/login" element={<Login />} />
-        <Route path="/document" element={<Document />} />
         <Route path="/map" element={<GeoreferenceDocument />} />
         <Route
           path="/document"
           element={
             user?.role === "Urban Planner" ? (
-              <Document /*userInfo={user} */ />
+              <Document userInfo={user} />
             ) : (
               <div className="center-alert">
                 <Alert variant="danger">

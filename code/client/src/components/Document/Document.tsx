@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Form, Row, Col, Button, Alert } from "react-bootstrap";
+import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
 import API from "../../API/API";
 import "./Document.css";
 import { CoordinatesOutOfBoundsError } from "../../../../server/src/errors/documentErrors";
+import MapComponent from "../Map/Map";
 
 interface userProps {
   userInfo: { username: string; role: string };
@@ -14,7 +15,7 @@ interface User {
   username: string;
 }
 
-export default function Document(/*{ userInfo }: userProps*/) {
+export default function Document({ userInfo }: userProps) {
   const [title, setTitle] = useState("");
   const [icon, setIcon] = useState("../../../public/img/icon.webp");
   const [description, setDescription] = useState("");
@@ -29,6 +30,7 @@ export default function Document(/*{ userInfo }: userProps*/) {
   const [pages, setPages] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [zones, setZones] = useState<{ id: number; name: string }[]>([]);
+  const [showMapModal, setShowMapModal] = useState(false);
 
   useEffect(() => {
     const fetchZones = async () => {
@@ -42,6 +44,13 @@ export default function Document(/*{ userInfo }: userProps*/) {
     };
     fetchZones();
   }, []);
+
+  const handleLocationSelect = (lat: number, lng: number) => {
+    setLatitude(lat);
+    setLongitude(lng);
+    setZoneID(null); // Clear zone if coordinates are selected
+    setShowMapModal(false); // Close modal after selection
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -215,6 +224,15 @@ export default function Document(/*{ userInfo }: userProps*/) {
               disabled={zoneID !== null}
             />
           </Form.Group>
+          <Form.Group as={Col} controlId="formLongitude">
+            <Button
+              variant="secondary"
+              onClick={() => setShowMapModal(true)}
+              disabled={zoneID !== null}
+            >
+              Choose Location on Map
+            </Button>
+          </Form.Group>
         </Row>
 
         <Row className="mb-3">
@@ -285,6 +303,20 @@ export default function Document(/*{ userInfo }: userProps*/) {
           Create Document
         </Button>
       </Form>
+      {/* Map Modal */}
+      <Modal
+        show={showMapModal}
+        onHide={() => setShowMapModal(false)}
+        size="lg"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Select Location</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <MapComponent onLocationSelect={handleLocationSelect} />
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }
