@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import MapComponent from "../Map/Map";
+import MapComponent from "../Map/MapComponent";
 
 interface Coordinates {
   lat: number | null;
