@@ -19,12 +19,12 @@ export const DocumentList = ({ userInfo }: userProps) => {
   return (
     <div className="mx-4">
       <div className="my-4 d-flex justify-content-between align-items-center">
-        <h1>Documents</h1>
+        <h2>Documents</h2>
         {userInfo.role == "Urban Planner" && (
           <NewDocument updateTable={fetchDocuments} userInfo={userInfo} />
         )}
       </div>
-      <div>
+      <div style={{ overflow: "auto" }}>
         <Table striped bordered hover className="text-center">
           <thead>
             <tr>

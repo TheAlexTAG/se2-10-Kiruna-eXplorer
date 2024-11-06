@@ -1,6 +1,6 @@
 import { Alert, Button, Col, Form, Row } from "react-bootstrap";
 import "./Login.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import API from "../../API/API";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/GlobalStateProvider";
@@ -12,6 +12,14 @@ export const Login = () => {
   const { login } = useAuth();
 
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const root = document.getElementById("root");
+    root.style.height = "100vh";
+    return () => {
+      root.style.height = "";
+    };
+  }, []);
 
   const handleSubmit = (event: any) => {
     event.preventDefault();
