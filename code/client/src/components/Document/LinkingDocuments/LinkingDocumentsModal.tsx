@@ -34,11 +34,17 @@ export const LinkingDocumentsModal = ({
   const handleShow = () => setShow(true);
 
   const handleSecletDocument = (id: number) => {
-    setSelectedDocument(documents.find((document: any) => document.id === id));
+    setSelectedDocument(
+      documents.find((document: any) => document.document.id === id).document
+    );
   };
 
   const handleSubmit = () => {
-    API.connectDocuments(currentDocument.id, selectedDocument.id, relationship)
+    API.connectDocuments(
+      currentDocument.document.id,
+      selectedDocument.id,
+      relationship
+    )
       .then(() => {
         updateTable();
         handleClose();
@@ -66,7 +72,7 @@ export const LinkingDocumentsModal = ({
             <div className="d-flex justify-content-around ">
               <div className="mx-4">
                 <div>First document:</div>
-                <div>Title: {currentDocument.title}</div>
+                <div>Title: {currentDocument.document.title}</div>
               </div>
               <div className="mx-4">
                 Second document:
@@ -77,13 +83,19 @@ export const LinkingDocumentsModal = ({
 
                   <Dropdown.Menu>
                     {documents
-                      .filter((item: any) => item.id !== currentDocument.id)
+                      .filter(
+                        (item: any) =>
+                          item.document.id !== currentDocument.document.id &&
+                          !currentDocument.links.includes(item.document.id)
+                      )
                       .map((document: any, index: number) => (
                         <Dropdown.Item
                           key={index}
-                          onClick={() => handleSecletDocument(document.id)}
+                          onClick={() =>
+                            handleSecletDocument(document.document.id)
+                          }
                         >
-                          {document.title}
+                          {document.document.title}
                         </Dropdown.Item>
                       ))}
                   </Dropdown.Menu>
@@ -92,14 +104,16 @@ export const LinkingDocumentsModal = ({
             </div>
             <div className="d-flex justify-content-around mt-4">
               <div>
-                <div>Title: {currentDocument.title}</div>
-                <div>Description: {currentDocument.description}</div>
-                <div>Stakeholders: {currentDocument.stakeholders}</div>
-                <div>Scale: {currentDocument.scale}</div>
-                <div>Issuance Date: {currentDocument.issuanceDate}</div>
-                <div>Type: {currentDocument.type}</div>
-                <div>Language: {currentDocument.language}</div>
-                <div>Pages: {currentDocument.pages}</div>
+                <div>Title: {currentDocument.document.title}</div>
+                <div>Description: {currentDocument.document.description}</div>
+                <div>Stakeholders: {currentDocument.document.stakeholders}</div>
+                <div>Scale: {currentDocument.document.scale}</div>
+                <div>
+                  Issuance Date: {currentDocument.document.issuanceDate}
+                </div>
+                <div>Type: {currentDocument.document.type}</div>
+                <div>Language: {currentDocument.document.language}</div>
+                <div>Pages: {currentDocument.document.pages}</div>
               </div>
               <div>
                 <div>

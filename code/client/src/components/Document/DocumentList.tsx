@@ -11,7 +11,6 @@ export const DocumentList = ({ userInfo }: userProps) => {
   const fetchDocuments = async () => {
     API.getDocuments().then((data) => {
       setDocuments(data);
-      console.log(data);
     });
   };
   useEffect(() => {
