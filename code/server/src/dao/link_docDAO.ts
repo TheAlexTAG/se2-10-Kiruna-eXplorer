@@ -13,7 +13,7 @@ class LinkDocumentDAO {
 
   getLink(firstDoc: number, secondDoc: number): Promise<any> {
     return new Promise<any>((resolve, reject) => {
-      const sql = "SELECT * FROM link WHERE (firstDoc=? AND secondDoc=?) OR (firstDoc=? AND secondDoc=?)"
+      const sql = "SELECT * FROM link WHERE (firstDoc=? AND secondDoc=?) OR (firstDoc=? AND secondDoc=?)";
       db.get(sql, [firstDoc, secondDoc, secondDoc, firstDoc], (err: Error | null, row: any) => {
         if (err) {
           return reject(new InternalServerError(err.message));
@@ -30,7 +30,7 @@ class LinkDocumentDAO {
 
   getDocumentConnections(documentID: number): Promise<number> {
     return new Promise<number>((resolve, reject) => {
-      const sql = "SELECT count(*) as tot FROM link WHERE firstDoc=? OR secondDoc=?"
+      const sql = "SELECT count(*) as tot FROM link WHERE firstDoc=? OR secondDoc=?";
       db.get(sql, [documentID, documentID], (err: Error | null, row: any) => {
         if (err) {
           return reject(new InternalServerError(err.message));
@@ -47,7 +47,7 @@ class LinkDocumentDAO {
 
   checkDocuments(first: number, secondDoc: number): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      const sql = "SELECT count(*) as tot FROM document WHERE documentID=? OR documentID=?"
+      const sql = "SELECT count(*) as tot FROM document WHERE documentID=? OR documentID=?";
       db.get(sql, [first, secondDoc], (err: Error | null, row: any) => {
         if (err) {
           return reject(new InternalServerError(err.message));
@@ -69,7 +69,7 @@ class LinkDocumentDAO {
 
   insertLink(firstDoc: number, secondDoc: number, relationship: string): Promise<LinkDocument> {
     return new Promise<LinkDocument>(function (resolve, reject) {
-      const sql = "insert into link(firstDoc, secondDoc, relationship) VALUES(?,?,?)"
+      const sql = "insert into link(firstDoc, secondDoc, relationship) VALUES(?,?,?)";
       db.run(sql, [firstDoc, secondDoc, relationship], async function (err: Error | null) {
         if (err) {
           return reject(new InternalServerError(err.message));

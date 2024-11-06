@@ -39,13 +39,18 @@ class ZoneRoutes {
             }
 
             try {
-                const zone: Zone = await this.controller.getZone(req.params.id);
+                const zone: Zone = await this.controller.getZone(+req.params.id);
                 return res.json(zone);
 
             } catch (err: any) {
                 return res.status(err.code).json({error: err.message});
             }
         });
+    }
+
+    checkKiruna(): void{
+        this.controller.checkKiruna()
+        .catch((err: any)=>{console.log(`Error code:${err.code}\nMessage:${err.message}`)});
     }
 
 }

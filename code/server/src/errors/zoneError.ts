@@ -18,4 +18,13 @@ class MissingKirunaZoneError extends Error {
         this.code = 404;
     }
 }
-export {ZoneError, MissingKirunaZoneError};
+
+class DatabaseConnectionError extends Error {
+    code: number
+
+    constructor() {
+        super('Error connecting to database');
+        this.code = 503;
+    }
+}
+export {ZoneError, MissingKirunaZoneError,DatabaseConnectionError};
