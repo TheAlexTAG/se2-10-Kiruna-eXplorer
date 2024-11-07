@@ -5,7 +5,8 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet.markercluster";
 import API from "../../API/API";
-import "./DocumentMap.css";
+import "./DocumentsMap.css";
+import { DocumentCard } from "../DocumentCard/DocumentCard";
 
 interface DocumentData {
   title: string;
@@ -21,7 +22,11 @@ interface Document {
 
 const DocumentsMap: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(
+    null
+  );
   const mapRef = useRef<L.Map | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const customIcon = L.icon({
     iconUrl: "/img/doc.png",
@@ -54,6 +59,13 @@ const DocumentsMap: React.FC = () => {
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(mapRef.current);
+
+      // Clear `selectedDocument` on popup close with a delay
+      mapRef.current.on("popupclose", () => {
+        timeoutRef.current = setTimeout(() => {
+          setSelectedDocument(null);
+        }, 100); // Adjust delay if needed
+      });
     }
   }, []);
 
@@ -100,8 +112,23 @@ const DocumentsMap: React.FC = () => {
         if (latitude && longitude) {
           const marker = L.marker([latitude, longitude], {
             icon: customIcon,
-          }).bindPopup(`<b>${title}</b><br/>Type: ${type}`);
+          }).bindPopup(
+            `<b>${title}</b><br/>Type: ${type}<br/>
+               <div class="moreBtn" data-id="${item.id}">more</div>`
+          );
           markers.addLayer(marker);
+
+          marker.on("popupopen", () => {
+            // Cancel any ongoing timeout to avoid resetting `selectedDocument` unexpectedly
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
+            const moreBtn = document.querySelector(
+              `.moreBtn[data-id="${item.id}"]`
+            );
+            moreBtn?.addEventListener("click", () => {
+              handleMoreClick(item);
+            });
+          });
         }
       });
 
@@ -109,18 +136,25 @@ const DocumentsMap: React.FC = () => {
     }
   }, [documents]);
 
+  const handleMoreClick = (item: Document) => {
+    setSelectedDocument(item);
+  };
+
   return (
-    <div
-      id="documents-map"
-      style={{
-        position: "fixed",
-        top: "60px",
-        left: 0,
-        height: "calc(100vh - 60px)",
-        width: "100vw",
-        zIndex: 0,
-      }}
-    ></div>
+    <>
+      <div
+        id="documents-map"
+        style={{
+          position: "fixed",
+          top: "60px",
+          left: 0,
+          height: "calc(100vh - 60px)",
+          width: "100vw",
+          zIndex: 0,
+        }}
+      ></div>
+      {selectedDocument && <DocumentCard cardInfo={selectedDocument} />}
+    </>
   );
 };
 
