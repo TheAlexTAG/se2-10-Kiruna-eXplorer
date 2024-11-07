@@ -80,12 +80,8 @@ class DocumentController {
         }
       } else if (zoneID && !latitude && !longitude) {
         let zone = await ZoneDAO.prototype.getZone(zoneID);
-        //let randCoordinates = await this.getRandCoordinates(zone.coordinates);
-        //console.log(randCoordinates);
-        let randCoordinates = {
-          latitude: 67.84905775407694,
-          longitude: 20.302734375000004,
-        };
+        let randCoordinates = await this.getRandCoordinates(zone.coordinates);
+
         let lastID = await this.dao.createDocumentNode(
           title,
           icon,
