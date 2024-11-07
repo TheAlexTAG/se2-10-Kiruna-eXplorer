@@ -1,7 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import "leaflet.markercluster";
 import API from "../../API/API";
+import "./DocumentMap.css";
 
 interface DocumentData {
   title: string;
@@ -18,6 +22,19 @@ interface Document {
 const DocumentsMap: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const mapRef = useRef<L.Map | null>(null);
+
+  const customIcon = L.icon({
+    iconUrl: "/img/doc.png",
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+    popupAnchor: [0, -15],
+  });
+
+  // Coordinates for the "whole municipality area" hotspot
+  const hotSpotCoordinates = {
+    latitude: 67.84905775407694,
+    longitude: 20.302734375000004,
+  };
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -42,14 +59,53 @@ const DocumentsMap: React.FC = () => {
 
   useEffect(() => {
     if (mapRef.current) {
+      // Create marker cluster group with custom iconCreateFunction
+      const markers = L.markerClusterGroup({
+        iconCreateFunction: (cluster) => {
+          const childMarkers = cluster.getAllChildMarkers();
+          const isHotSpotCluster = childMarkers.some((marker) => {
+            const latLng = marker.getLatLng();
+            return (
+              latLng.lat === hotSpotCoordinates.latitude &&
+              latLng.lng === hotSpotCoordinates.longitude
+            );
+          });
+
+          if (isHotSpotCluster) {
+            // Unique style for the hotspot cluster
+            return L.divIcon({
+              html: `<div class="hotspot-cluster-icon"><span>${cluster.getChildCount()}</span></div>`,
+              className: "hotspot-cluster",
+              iconSize: L.point(50, 50, true), // Customize size
+            });
+          } else {
+            // Default style for other clusters
+            const count = cluster.getChildCount();
+            let sizeClass = "small-cluster";
+            if (count > 10) sizeClass = "medium-cluster";
+            if (count > 50) sizeClass = "large-cluster";
+
+            return L.divIcon({
+              html: `<div class="custom-cluster-icon ${sizeClass}"><span>${count}</span></div>`,
+              className: "custom-cluster",
+              iconSize: L.point(40, 40, true),
+            });
+          }
+        },
+      });
+
+      // Add each document as a marker to the cluster group
       documents.forEach((item) => {
         const { latitude, longitude, title, type } = item.document;
         if (latitude && longitude) {
-          L.marker([latitude, longitude])
-            .addTo(mapRef.current as L.Map)
-            .bindPopup(`<b>${title}</b><br/>Type: ${type}`);
+          const marker = L.marker([latitude, longitude], {
+            icon: customIcon,
+          }).bindPopup(`<b>${title}</b><br/>Type: ${type}`);
+          markers.addLayer(marker);
         }
       });
+
+      mapRef.current.addLayer(markers);
     }
   }, [documents]);
 
