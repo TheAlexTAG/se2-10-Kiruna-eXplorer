@@ -8,7 +8,10 @@ export const Home = () => {
           <Row className="w-100" style={{ marginBottom: "2rem" }}>
             <Col className="d-flex align-items-center">
               <div>
-                <img src="./src/assets/kiruna.webp" style={{ width: "100%" }} />
+                <img
+                  src="./src/assets/kiruna.webp"
+                  style={{ width: "100%", borderRadius: "12px" }}
+                />
               </div>
             </Col>
             <Col className="d-flex align-items-center">
@@ -54,7 +57,7 @@ export const Home = () => {
               <div>
                 <img
                   src="./src/assets/kiruna-move.jpg"
-                  style={{ width: "100%" }}
+                  style={{ width: "100%", borderRadius: "12px" }}
                 />
               </div>
             </Col>
