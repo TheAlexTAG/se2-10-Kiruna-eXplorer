@@ -45,6 +45,7 @@ export const Login = () => {
           <div className="image-cover"></div>
           <div className="d-flex justify-content-center align-items-center login-form">
             <div className="w-100 m-4">
+              <i className="bi bi-house" onClick={() => navigate("/")}></i>
               <div className="text-center mb-4">
                 <h1>Login</h1>
               </div>

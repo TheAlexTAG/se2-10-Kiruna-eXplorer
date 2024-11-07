@@ -41,6 +41,11 @@ const DocumentsMap: React.FC = () => {
     longitude: 20.302734375000004,
   };
 
+  const bounds = L.latLngBounds([
+    [67.8, 20.1], // Southwest corner
+    [67.9, 20.4], // Northeast corner
+  ]);
+
   useEffect(() => {
     const fetchDocuments = async () => {
       const data = await API.getDocuments();
@@ -54,7 +59,13 @@ const DocumentsMap: React.FC = () => {
     fetchDocuments();
 
     if (mapRef.current === null) {
-      mapRef.current = L.map("documents-map").setView([67.85, 20.2253], 13);
+      mapRef.current = L.map("documents-map", {
+        maxBounds: bounds,
+        maxBoundsViscosity: 1,
+        minZoom: 13,
+        maxZoom: 18,
+        zoomControl: true,
+      }).setView([67.85, 20.2253], 13);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "&copy; OpenStreetMap contributors",
