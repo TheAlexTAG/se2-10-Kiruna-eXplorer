@@ -1,5 +1,10 @@
 import express from "express";
 import { UserDAO } from "./src/dao/userDAO";
+import {DocumentRoutes} from "./src/routers/documentRoutes"
+import {UserController} from "./src/controllers/userController";
+import {UserRoutes} from "./src/routers/userRoutes";
+import {LinkDocumentRoutes} from "./src/routers/link_docRoutes";
+import {ZoneRoutes} from "./src/routers/zoneRoutes";
 
 
 const morgan = require("morgan"); // logging middleware
@@ -22,20 +27,14 @@ app.use(morgan("dev"));
 app.use(express.json()); // To automatically decode incoming json
 
 /*** Passport ***/
-const DAO = new UserDAO();
+const controller = new UserController();
 
 // set up the "username and password" login strategy with a function to verify username and password
 passport.use(
-  new LocalStrategy(async function verify(
-    username: string,
-    password: string,
-    callback: any
-  ) {
-    const user = await DAO.getUser(username, password);
+  new LocalStrategy(async function verify(username: string,password: string,callback: any){
+    const user = await controller.getUser(username, password);
     if (!user) {
-      return callback(null, false, {
-        message: "Incorrect username or password",
-      });
+      return callback(null, false, {message: "Incorrect username or password"});
     }
     return callback(null, user);
   })
@@ -47,7 +46,7 @@ passport.serializeUser((user: any, callback: any) => {
 
 passport.deserializeUser(async function (id: number, callback: any) {
   try {
-    const user = await DAO.getUserById(id);
+    const user = await controller.getUserById(id);
     callback(null, user);
   } catch (err) {
     callback(err, null);
@@ -58,17 +57,15 @@ const isLoggedIn = (req: any, res: any, next: any) => {
   if (req.isAuthenticated()) {
     return next();
   }
-  return res.status(401).json({ error: "Not authorized" });
+  return res.status(401).json({error: "Not authorized"});
 };
 
-app.use(
-  session({
-    secret: "team10-project",
-    resave: false,
-    saveUninitialized: false,
-    cookie: { httpOnly: true },
-  })
-);
+app.use(session({
+  secret: "team10-project",
+  resave: false,
+  saveUninitialized: false,
+  cookie: { httpOnly: true }
+}));
 
 // init passport
 app.use(passport.initialize());
@@ -76,6 +73,11 @@ app.use(passport.session());
 
 /* ROUTES */
 
+new DocumentRoutes(app);
+new UserRoutes(app, passport, isLoggedIn);
+new LinkDocumentRoutes(app);
+const zone= new ZoneRoutes(app);
+zone.checkKiruna();
 
 /*** Other express-related instructions ***/
 // activate the server

@@ -24,8 +24,8 @@ class User {
  * The values present in this enum are the only valid values for the role of a user.
  */
 enum Role {
-    URBAN_PLANNER = "Urban Planner",
-    URBAN_DEVELOPER = "Urban Developer",
+    PLANNER = "Urban Planner",
+    DEVELOPER = "Urban Developer",
     ADMIN= "Admin"
 }
 

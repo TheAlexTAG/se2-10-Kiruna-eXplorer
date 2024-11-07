@@ -1,0 +1,33 @@
+.navbar-component {
+  height: 53px;
+}
+.navbar-component .btn {
+  text-decoration: none;
+}
+.navbar-list-icon {
+  display: none;
+}
+@media (max-width: 768px) {
+  .navbar-mobile {
+    display: block;
+    position: absolute;
+    top: 15px;
+    width: 140px;
+    background-color: white;
+    border: 1px solid gray;
+    border-radius: 8px;
+    z-index: 1;
+  }
+  .navbar-mobile-hide {
+    display: none;
+  }
+
+  .navbar-list-icon {
+    font-size: 30px;
+    display: flex;
+    width: 45px;
+    justify-content: center;
+    border: 1px solid gray;
+    border-radius: 8px;
+  }
+}
