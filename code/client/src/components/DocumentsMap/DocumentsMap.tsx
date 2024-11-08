@@ -68,10 +68,10 @@ const DocumentsMap: React.FC = () => {
       mapRef.current = L.map("documents-map", {
         maxBounds: bounds,
         maxBoundsViscosity: 1,
-        minZoom: 13,
+        minZoom: 12,
         maxZoom: 18,
         zoomControl: true,
-      }).setView([67.85, 20.2253], 13);
+      }).setView([67.85, 20.2253], 12);
 
       tileLayerRef.current = L.tileLayer(defaultTileLayer, {
         attribution: "&copy; OpenStreetMap contributors",
