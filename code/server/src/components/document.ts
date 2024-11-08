@@ -4,7 +4,6 @@
 class Document {
     id: number;
     title: string;
-    icon: string;
     description: string;
     zoneID: number | null;
     latitude: number | null;
@@ -39,12 +38,11 @@ class Document {
      * @param attachment list of attachment URLs related to the document
      * @param resource list of resource URLs related to the document
     */
-    constructor(id: number, title: string,icon: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null,
+    constructor(id: number, title: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null,
         stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: number | null, connections: number, 
         attachment: string[] = [], resource: string[] = []) {
         this.id = id;
         this.title = title;
-        this.icon = icon;
         this.description = description;
         this.zoneID = zoneID;
         this.latitude = latitude;

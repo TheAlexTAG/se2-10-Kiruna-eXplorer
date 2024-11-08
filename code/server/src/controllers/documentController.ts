@@ -40,65 +40,22 @@ class DocumentController {
    * @throws WrongGeoreferenceError if the georeference format is not valid
    * @throws InvalidDocumentZoneError if the specified zone is not a polygon
    */
-  async createNode(
-    title: string,
-    icon: string,
-    description: string,
-    zoneID: number | null,
-    latitude: number | null,
-    longitude: number | null,
-    stakeholders: string,
-    scale: string,
-    issuanceDate: string,
-    type: string,
-    language: string | null,
-    pages: string | null
-  ): Promise<number> {
+  async createNode(title: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
     try {
-      if (!zoneID && latitude && longitude) {
-        const checkCoordinates = await this.checkCoordinatesValidity(
-          longitude,
-          latitude
-        );
+      if (zoneID == null && latitude != null && longitude != null) {
+        const checkCoordinates = await this.checkCoordinatesValidity(longitude, latitude);
         if (!checkCoordinates) throw new CoordinatesOutOfBoundsError();
         else {
-          let lastID = await this.dao.createDocumentNode(
-            title,
-            icon,
-            description,
-            zoneID,
-            latitude,
-            longitude,
-            stakeholders,
-            scale,
-            issuanceDate,
-            type,
-            language,
-            pages
-          );
+          let lastID = await this.dao.createDocumentNode(title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages);
           return lastID;
         }
-      } else if (zoneID && !latitude && !longitude) {
+      } 
+      else if (zoneID != null && latitude == null && longitude == null) {
         let zone = await ZoneDAO.prototype.getZone(zoneID);
-        let randCoordinates = await this.getRandCoordinates(zone.coordinates);
-        /*let randCoordinates = {
-          latitude: 67.84905775407694,
-          longitude: 20.302734375000004,
-        };*/
-        let lastID = await this.dao.createDocumentNode(
-          title,
-          icon,
-          description,
-          zoneID,
-          randCoordinates.latitude,
-          randCoordinates.longitude,
-          stakeholders,
-          scale,
-          issuanceDate,
-          type,
-          language,
-          pages
-        );
+        let randCoordinates: {latitude: number, longitude: number};
+        if (zoneID != 0) randCoordinates = {latitude: 67.84905775407694, longitude: 20.302734375000004} 
+        else randCoordinates = await this.getRandCoordinates(zone.coordinates);
+        let lastID = await this.dao.createDocumentNode(title, description, zoneID, randCoordinates.latitude, randCoordinates.longitude, stakeholders, scale, issuanceDate, type, language, pages); 
         return lastID;
       } else throw new WrongGeoreferenceError();
     } catch (err) {
@@ -154,7 +111,6 @@ class DocumentController {
         turf.point([coord.lon, coord.lat], {
           documentID: coord.documentID,
           title: coord.title,
-          icon: coord.icon,
         })
       );
 
@@ -201,7 +157,6 @@ class DocumentController {
         );
         const randomPoint =
           gridPoints.features[randomIndex].geometry.coordinates;
-        console.log(randomPoint);
         resolve({
           latitude: randomPoint[1],
           longitude: randomPoint[0],
@@ -221,7 +176,7 @@ class DocumentController {
     lat: number
   ): Promise<boolean> {
     try {
-      let kirunaPolygon = await ZoneDAO.prototype.getKirunaPolygon();
+      let kirunaPolygon = await ZoneDAO.prototype.getZone(0);
       if (!kirunaPolygon) throw new MissingKirunaZoneError();
       const kirunaPolygonGeoJSON = wellknown.parse(kirunaPolygon);
       const point = turf.point([lon, lat]);
