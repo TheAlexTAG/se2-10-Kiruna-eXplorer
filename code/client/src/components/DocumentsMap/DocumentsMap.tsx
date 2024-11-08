@@ -7,7 +7,7 @@ import "leaflet.markercluster";
 import API from "../../API/API";
 import "./DocumentsMap.css";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
-import { Button } from "react-bootstrap";
+import { BsMap, BsMapFill } from "react-icons/bs";
 
 interface DocumentData {
   title: string;
@@ -44,8 +44,8 @@ const DocumentsMap: React.FC = () => {
   };
 
   const bounds = L.latLngBounds([
-    [67.8, 20.1], // Southwest corner
-    [67.9, 20.4], // Northeast corner
+    [67.8, 20.1],
+    [67.9, 20.4],
   ]);
 
   const defaultTileLayer = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -85,20 +85,22 @@ const DocumentsMap: React.FC = () => {
     }
   }, []);
 
-  const toggleSatelliteView = () => {
+  useEffect(() => {
     if (mapRef.current && tileLayerRef.current) {
       mapRef.current.removeLayer(tileLayerRef.current);
-      const newTileLayerUrl = isSatelliteView
-        ? defaultTileLayer
-        : satelliteTileLayer;
-      tileLayerRef.current = L.tileLayer(newTileLayerUrl, {
-        attribution: isSatelliteView
-          ? "&copy; OpenStreetMap contributors"
-          : "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
-      }).addTo(mapRef.current);
-
-      setIsSatelliteView(!isSatelliteView);
+      tileLayerRef.current = L.tileLayer(
+        isSatelliteView ? satelliteTileLayer : defaultTileLayer,
+        {
+          attribution: isSatelliteView
+            ? "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+            : "&copy; OpenStreetMap contributors",
+        }
+      ).addTo(mapRef.current);
     }
+  }, [isSatelliteView]);
+
+  const toggleSatelliteView = () => {
+    setIsSatelliteView((prev) => !prev);
   };
 
   useEffect(() => {
@@ -181,14 +183,23 @@ const DocumentsMap: React.FC = () => {
         }}
       ></div>
       {selectedDocument && <DocumentCard cardInfo={selectedDocument} />}
-      <Button
+      <div
         onClick={toggleSatelliteView}
-        style={{ position: "absolute", top: 10, left: 10, zIndex: 1000 }}
+        className="map-toggle-btn"
+        style={{
+          position: "absolute",
+          bottom: "20px",
+          right: "10px",
+          zIndex: 1000,
+        }}
       >
-        {isSatelliteView
-          ? "Switch to Default View"
-          : "Switch to Satellite View"}
-      </Button>
+        {isSatelliteView ? <BsMapFill size={20} /> : <BsMap size={20} />}
+        <span className="tooltip">
+          {isSatelliteView
+            ? "Switch to Default View"
+            : "Switch to Satellite View"}
+        </span>
+      </div>
     </>
   );
 };
