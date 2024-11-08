@@ -20,7 +20,7 @@ class ZoneRoutes {
 
     initRoutes(): void{
         // GET api/zones
-        this.app.get('/api/zones', this.utility.isUrbanPlanner, async (req: any, res: any) => {
+        this.app.get('/api/zones', async (req: any, res: any) => {
             try {
                 const zones: Zone[] = await this.controller.getAllZone();
                 return res.json(zones);
@@ -32,7 +32,7 @@ class ZoneRoutes {
 
         // GET api/document/zone/:id
         this.app.get('/api/document/zone/:id',[
-            param('id').isInt({min: 1})
+            param('id').isInt({min: 0})
         ], async (req: any, res: any) => {
             const errors= validationResult(req);
             if (!errors.isEmpty()) {

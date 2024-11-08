@@ -15,54 +15,70 @@ const wellknown = require('wellknown');
 
 class ZoneDAO {
 
-    getZone(id: number): Promise<any> {
-        return new Promise<any>((resolve, reject) => {
-          const sql = "SELECT * FROM zone WHERE zoneID=?";
-          db.get(sql, [id], (err: Error | null, row: any) => {
-            if (err) {
-              return reject(new InternalServerError(err.message));
-            }
-            if (!row) {
-              return reject(new ZoneError());
-            }
-            const zoneName: string=  DOMPurify.sanitize(row.zoneName);
-            const geoJson: GeoJSON = {
-              type: "Feature",
-              geometry: wellknown.parse(DOMPurify.sanitize(row.coordinates)),
-              properties: {
-                name: zoneName
-              }
-            };
-
-            return resolve(new Zone(+DOMPurify.sanitize(row.zoneID),zoneName,geoJson));
-          }
-         );
-        }
-      );
-    };
-
-    getAllZone(): Promise<Zone[]> {
-        return new Promise<Zone[]>((resolve, reject) => {
-            const sql = "SELECT * FROM zone";
-            db.all(sql, [], (err: Error | null, rows: any) => {
-                const res: Zone[] = [];
-                if (err) {
-                    return reject(new InternalServerError(err.message));
-                }
-                if (!rows || rows.length === 0) {
-                    return reject(new ZoneError());
-                }
-
-                for (let row of rows) {
-                    res.push(new Zone(+DOMPurify.sanitize(row.zoneID), DOMPurify.sanitize(row.zoneName)));
-                }
-                return resolve(res);
-            }
-          );
-        }
-      );
+  static createGeoJSON(coordinates: string): GeoJSON{
+    const geo= wellknown.parse(DOMPurify.sanitize(coordinates));
+    if(!geo){
+      return geo; // in this case geo= null;
     }
     
+    const geoJson: GeoJSON= {
+      type: "Feature",
+      geometry: geo,
+      properties: {
+        name: "Custom zone"
+      }
+    };
+    return geoJson;
+  }
+
+  getZone(id: number): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+      const sql= "SELECT * FROM zone WHERE zoneID=?";
+      db.get(sql, [id], (err: Error | null, row: any) => {
+        if(err){
+          return reject(new InternalServerError(err.message));
+        }
+        if(!row){
+          return reject(new ZoneError());
+        }
+        const geo= ZoneDAO.createGeoJSON(row.coordinates);
+        if(!geo){
+          return reject(new ZoneError());
+        }
+
+        return resolve(new Zone(+DOMPurify.sanitize(row.zoneID), geo));
+      }
+     );
+    }
+   );
+  };
+
+  getAllZone(): Promise<Zone[]> {
+    return new Promise<Zone[]>((resolve, reject) => {
+      const sql= "SELECT * FROM zone";
+      db.all(sql, [], (err: Error | null, rows: any) => {
+        const res: Zone[]= [];
+        if (err) {
+          return reject(new InternalServerError(err.message));
+        }
+        if (!rows || rows.length=== 0) {
+          return reject(new ZoneError());
+        }
+
+        for (let row of rows) {
+          const geo= ZoneDAO.createGeoJSON(row.coordinates);
+          if(!geo){
+            return reject(new ZoneError());
+          }
+          res.push(new Zone(+DOMPurify.sanitize(row.zoneID), geo));
+        }
+        return resolve(res);
+      }
+     );
+    }
+   );
+  }
+
   /**
    * Retrieves the whole Kiruna area as a WKT polygon
    * @returns the wkt string of the Kiruna polygon
