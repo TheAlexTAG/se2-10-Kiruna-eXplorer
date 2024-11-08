@@ -7,6 +7,7 @@ import "leaflet.markercluster";
 import API from "../../API/API";
 import "./DocumentsMap.css";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
+import { BsMap, BsMapFill } from "react-icons/bs";
 
 interface DocumentData {
   title: string;
@@ -25,7 +26,9 @@ const DocumentsMap: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
     null
   );
+  const [isSatelliteView, setIsSatelliteView] = useState(false);
   const mapRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const customIcon = L.icon({
@@ -35,16 +38,19 @@ const DocumentsMap: React.FC = () => {
     popupAnchor: [0, -15],
   });
 
-  // Coordinates for the "whole municipality area" hotspot
   const hotSpotCoordinates = {
     latitude: 67.84905775407694,
     longitude: 20.302734375000004,
   };
 
   const bounds = L.latLngBounds([
-    [67.8, 20.1], // Southwest corner
-    [67.9, 20.4], // Northeast corner
+    [67.8, 20.1],
+    [67.9, 20.4],
   ]);
+
+  const defaultTileLayer = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const satelliteTileLayer =
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -62,27 +68,43 @@ const DocumentsMap: React.FC = () => {
       mapRef.current = L.map("documents-map", {
         maxBounds: bounds,
         maxBoundsViscosity: 1,
-        minZoom: 13,
+        minZoom: 12,
         maxZoom: 18,
         zoomControl: true,
-      }).setView([67.85, 20.2253], 13);
+      }).setView([67.85, 20.2253], 12);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      tileLayerRef.current = L.tileLayer(defaultTileLayer, {
         attribution: "&copy; OpenStreetMap contributors",
       }).addTo(mapRef.current);
 
-      // Clear `selectedDocument` on popup close with a delay
       mapRef.current.on("popupclose", () => {
         timeoutRef.current = setTimeout(() => {
           setSelectedDocument(null);
-        }, 100); // Adjust delay if needed
+        }, 100);
       });
     }
   }, []);
 
   useEffect(() => {
+    if (mapRef.current && tileLayerRef.current) {
+      mapRef.current.removeLayer(tileLayerRef.current);
+      tileLayerRef.current = L.tileLayer(
+        isSatelliteView ? satelliteTileLayer : defaultTileLayer,
+        {
+          attribution: isSatelliteView
+            ? "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
+            : "&copy; OpenStreetMap contributors",
+        }
+      ).addTo(mapRef.current);
+    }
+  }, [isSatelliteView]);
+
+  const toggleSatelliteView = () => {
+    setIsSatelliteView((prev) => !prev);
+  };
+
+  useEffect(() => {
     if (mapRef.current) {
-      // Create marker cluster group with custom iconCreateFunction
       const markers = L.markerClusterGroup({
         iconCreateFunction: (cluster) => {
           const childMarkers = cluster.getAllChildMarkers();
@@ -95,14 +117,12 @@ const DocumentsMap: React.FC = () => {
           });
 
           if (isHotSpotCluster) {
-            // Unique style for the hotspot cluster
             return L.divIcon({
               html: `<div class="hotspot-cluster-icon"><span>${cluster.getChildCount()}</span></div>`,
               className: "hotspot-cluster",
-              iconSize: L.point(50, 50, true), // Customize size
+              iconSize: L.point(50, 50, true),
             });
           } else {
-            // Default style for other clusters
             const count = cluster.getChildCount();
             let sizeClass = "small-cluster";
             if (count > 10) sizeClass = "medium-cluster";
@@ -117,7 +137,6 @@ const DocumentsMap: React.FC = () => {
         },
       });
 
-      // Add each document as a marker to the cluster group
       documents.forEach((item) => {
         const { latitude, longitude, title, type } = item.document;
         if (latitude && longitude) {
@@ -125,12 +144,11 @@ const DocumentsMap: React.FC = () => {
             icon: customIcon,
           }).bindPopup(
             `<b>${title}</b><br/>Type: ${type}<br/>
-               <div class="moreBtn" data-id="${item.id}">more</div>`
+             <div class="moreBtn" data-id="${item.id}">more</div>`
           );
           markers.addLayer(marker);
 
           marker.on("popupopen", () => {
-            // Cancel any ongoing timeout to avoid resetting `selectedDocument` unexpectedly
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
             const moreBtn = document.querySelector(
@@ -165,6 +183,23 @@ const DocumentsMap: React.FC = () => {
         }}
       ></div>
       {selectedDocument && <DocumentCard cardInfo={selectedDocument} />}
+      <div
+        onClick={toggleSatelliteView}
+        className="map-toggle-btn"
+        style={{
+          position: "absolute",
+          bottom: "20px",
+          right: "10px",
+          zIndex: 1000,
+        }}
+      >
+        {isSatelliteView ? <BsMapFill size={20} /> : <BsMap size={20} />}
+        <span className="tooltip">
+          {isSatelliteView
+            ? "Switch to Default View"
+            : "Switch to Satellite View"}
+        </span>
+      </div>
     </>
   );
 };
