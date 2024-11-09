@@ -176,7 +176,7 @@ class DocumentController {
     lat: number
   ): Promise<boolean> {
     try {
-      let kirunaPolygon = await ZoneDAO.prototype.getZone(0);
+      let kirunaPolygon = await ZoneDAO.prototype.getKirunaPolygon();
       if (!kirunaPolygon) throw new MissingKirunaZoneError();
       const kirunaPolygonGeoJSON = wellknown.parse(kirunaPolygon);
       const point = turf.point([lon, lat]);
