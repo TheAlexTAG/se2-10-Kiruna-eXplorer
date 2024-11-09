@@ -22,12 +22,12 @@ class DocumentDAO {
  * @returns the documentID of the lastly inserted document
  * @throws generic error if the database query fails
  */
-    createDocumentNode(title: string, icon: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
+    createDocumentNode(title: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
         return new Promise((resolve, reject) => {
             console.log("Creating document node")
-            const sql = `INSERT INTO document(documentID, title, icon, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
-            VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-            db.run(sql, [title, icon, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages], function(this: any, err: Error) {
+            const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
+            VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            db.run(sql, [title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages], function(this: any, err: Error) {
                 if(err) reject(err);
                 else resolve(this.lastID);
             })
@@ -48,7 +48,7 @@ class DocumentDAO {
                 FROM link l
                 JOIN document d ON l.firstDoc = d.documentID OR l.secondDoc = d.documentID
                 GROUP BY d.documentID)
-            SELECT d.documentID, d.title, d.icon, d.description, d.zoneID, d.latitude, d.longitude, d.stakeholders, d.scale, d.issuanceDate, d.type, d.language, d.pages,
+            SELECT d.documentID, d.title, d.description, d.zoneID, d.latitude, d.longitude, d.stakeholders, d.scale, d.issuanceDate, d.type, d.language, d.pages,
             COALESCE(lc.total_connections, 0) AS connections, 
             COALESCE(GROUP_CONCAT(DISTINCT r.link), '') AS resources,
             COALESCE(GROUP_CONCAT(DISTINCT a.link), '') AS attachments
@@ -65,7 +65,6 @@ class DocumentDAO {
                     resolve(new Document(
                         documentID,
                         row.title,
-                        row.icon,
                         row.description,
                         row.zoneID, row.latitude,
                         row.longitude, row.stakeholders,
@@ -158,8 +157,7 @@ class DocumentDAO {
                 GROUP BY d.documentID
                 )
         SELECT d.documentID, 
-            d.title, 
-            d.icon, 
+            d.title,
             d.description, 
             d.zoneID, 
             d.latitude, 
@@ -188,7 +186,6 @@ class DocumentDAO {
                             document: new Document(
                                 row.documentID,
                                 row.title,
-                                row.icon,
                                 row.description, row.zoneID,
                                 row.latitude,
                                 row.longitude,
@@ -217,14 +214,14 @@ class DocumentDAO {
  * @returns a list of id associated with coordinates (lon, lat)
  * @throws generic error if the database query fails
  */
-    getAllDocumentsCoordinates(): Promise<{documentID: number, title: string, icon: string, lon: number, lat: number}[]> {
+    getAllDocumentsCoordinates(): Promise<{documentID: number, title: string, lon: number, lat: number}[]> {
         return new Promise((resolve, reject) => {
-            const sql = `SELECT documentID, title, icon, longitude, latitude FROM document`
+            const sql = `SELECT documentID, title, longitude, latitude FROM document`
             db.all(sql, [], (err: Error, rows: any[]) => {
                 if(err) reject(err);
                 else {
-                    let documents: {documentID: number, title: string, icon: string, lon: number, lat: number}[] = [];
-                    if(rows) documents = rows.map((row: any) => {return {documentID: row.documentID, title: row.title, icon: row.icon, lon: row.longitude, lat: row.latitude}});
+                    let documents: {documentID: number, title: string, lon: number, lat: number}[] = [];
+                    if(rows) documents = rows.map((row: any) => {return {documentID: row.documentID, title: row.title, lon: row.longitude, lat: row.latitude}});
                     resolve(documents);
                 }
             })

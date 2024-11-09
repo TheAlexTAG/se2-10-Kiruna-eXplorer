@@ -44,7 +44,7 @@ class DocumentRoutes {
             body("pages").optional({nullable:true}).isString(),
             Utilities.prototype.isUrbanPlanner,
             this.errorHandler.validateRequest,
-        (req: any, res: any, next: any) => this.controller.createNode(req.body.title, req.body.icon, req.body.description, req.body.zoneID, req.body.latitude, req.body.longitude, req.body.stakeholders, req.body.scale, req.body.issuanceDate, req.body.type, req.body.language, req.body.pages)
+        (req: any, res: any, next: any) => this.controller.createNode(req.body.title, req.body.description, req.body.zoneID, req.body.latitude, req.body.longitude, req.body.stakeholders, req.body.scale, req.body.issuanceDate, req.body.type, req.body.language, req.body.pages)
         .then((lastID:number) => res.status(200).json(lastID))
         .catch((err: Error) => {
             if(err instanceof WrongGeoreferenceError) res.status(err.code).json(err.message);
