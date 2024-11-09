@@ -87,9 +87,10 @@ class ZoneDAO {
   */
   getKirunaPolygon(): Promise<string> {
     return new Promise((resolve, reject) => {
-      const sql = "SELECT coordinates FROM zone WHERE zoneName = 'Kiruna municipal area'";
+      const sql = "SELECT coordinates FROM zone WHERE zoneID = 0";
       db.get(sql, [], (err: Error, row: any) => {
         if (err) reject(err);
+        console.log(row);
         row ? resolve(row.coordinates) : resolve('')
       })
     })
@@ -97,7 +98,7 @@ class ZoneDAO {
 
   insertKirunaPolygon(): Promise<boolean> {
     return new Promise<boolean>(function (resolve, reject) {
-      const sql = "insert into zone(zoneName,coordinates) VALUES('Kiruna municipal area','POLYGON ((20.0884348 67.8795522, 20.0777938 67.8461752, 20.0959903 67.8137874, 20.1313601 67.8009557, 20.20173 67.789142, 20.2526948 67.780064, 20.3284129 67.8017275, 20.3586137 67.820848, 20.3775067 67.8372408, 20.3644607 67.8659746, 20.2542569 67.8805869, 20.2082529 67.8834303, 20.0884348 67.8795522))')";
+      const sql = "insert into zone(zoneID, coordinates) VALUES(0, 'POLYGON ((20.0884348 67.8795522, 20.0777938 67.8461752, 20.0959903 67.8137874, 20.1313601 67.8009557, 20.20173 67.789142, 20.2526948 67.780064, 20.3284129 67.8017275, 20.3586137 67.820848, 20.3775067 67.8372408, 20.3644607 67.8659746, 20.2542569 67.8805869, 20.2082529 67.8834303, 20.0884348 67.8795522))')";
       db.run(sql, [], async function (err: Error | null) {
         if (err) {
           if(err.message.includes('UNIQUE constraint failed')){
