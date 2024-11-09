@@ -47,12 +47,12 @@ class DocumentRoutes {
         (req: any, res: any, next: any) => this.controller.createNode(req.body.title, req.body.description, req.body.zoneID, req.body.latitude, req.body.longitude, req.body.stakeholders, req.body.scale, req.body.issuanceDate, req.body.type, req.body.language, req.body.pages)
         .then((lastID:number) => res.status(200).json(lastID))
         .catch((err: Error) => {
-            if(err instanceof WrongGeoreferenceError) res.status(err.code).json(err.message);
-            else if (err instanceof DocumentZoneNotFoundError) res.status(err.code).json(err.message);
-            else if (err instanceof ZoneError) res.status(err.code).json(err.message);
-            else if (err instanceof MissingKirunaZoneError) res.status(err.code).json(err.message);
-            else if (err instanceof CoordinatesOutOfBoundsError) res.status(err.code).json(err.message);
-            else res.status(500).json(err.message);
+            if(err instanceof WrongGeoreferenceError) res.status(err.code).json({error: err.message});
+            else if (err instanceof DocumentZoneNotFoundError) res.status(err.code).json({error: err.message});
+            else if (err instanceof ZoneError) res.status(err.code).json({error: err.message});
+            else if (err instanceof MissingKirunaZoneError) res.status(err.code).json({error: err.message});
+            else if (err instanceof CoordinatesOutOfBoundsError) res.status(err.code).json({error: err.message});
+            else res.status(500).json({error: err.message});
         }))
 /**
  * route for getting a document given its id
@@ -63,8 +63,8 @@ class DocumentRoutes {
         (req: any, res: any, next: any) => this.controller.getDocumentByID(req.params.id)
         .then((document: Document) => res.status(200).json(document))
         .catch((err: Error) => {
-            if(err instanceof DocumentNotFoundError) res.status(err.code).json(err.message);
-            else res.status(500).json(err.message);
+            if(err instanceof DocumentNotFoundError) res.status(err.code).json({error: err.message});
+            else res.status(500).json({error: err.message});
         }))
 /**
  * route for retrieving all the documents titles and their ids
@@ -73,28 +73,28 @@ class DocumentRoutes {
             Utilities.prototype.isUrbanPlanner,
         (req: any, res: any, next: any) => this.controller.getDocumentsTitles()
         .then((titles: {documentID: number, title: string}[]) => res.status(200).json(titles))
-        .catch((err: Error) => res.status(500).json(err.message)))
+        .catch((err: Error) => res.status(500).json({error: err.message})))
 /**
  * route for retrieving all the documents in the database
  */
         this.app.get("/api/documents/links",
         (req: any, res: any, next: any) => this.controller.getAllDocuments()
         .then((documents: {document: Document, links: number[]}[]) => res.status(200).json(documents))
-        .catch((err: Error) => res.status(500).json(err.message)))
+        .catch((err: Error) => res.status(500).json({error: err.message})))
 /**
  * route for retrieving all the documents and their coordinates
  */
         this.app.get("/api/documents/coordinates",
         (req: any, res: any, next: any) => this.controller.getAllDocumentsCoordinates()
         .then((coordinates: turf.AllGeoJSON) => res.status(200).json(coordinates))
-        .catch((err: Error) => res.status(500).json(err.message))
+        .catch((err: Error) => res.status(500).json({error: err.message}))
         )
 
         this.app.delete("/api/documents/delete/all",
             Utilities.prototype.isAdmin,
         (req: any, res: any, next: any) => this.controller.deleteAllDocuments()
         .then(() => res.status(200).json())
-        .catch((err: Error) => res.status(500).json(err.message))
+        .catch((err: Error) => res.status(500).json({error: err.message}))
         )
     }
 

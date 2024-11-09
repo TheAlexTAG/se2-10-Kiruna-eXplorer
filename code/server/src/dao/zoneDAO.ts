@@ -90,7 +90,6 @@ class ZoneDAO {
       const sql = "SELECT coordinates FROM zone WHERE zoneID = 0";
       db.get(sql, [], (err: Error, row: any) => {
         if (err) reject(err);
-        console.log(row);
         row ? resolve(row.coordinates) : resolve('')
       })
     })
