@@ -12,7 +12,7 @@ interface userProps {
 
 export default function NewDocument({ userInfo, updateTable }: userProps) {
   const [title, setTitle] = useState("");
-  const [icon, setIcon] = useState("../../../public/img/icon.webp");
+  const [icon, setIcon] = useState("");
   const [description, setDescription] = useState("");
   const [zoneID, setZoneID] = useState<number | null>(null);
   const [latitude, setLatitude] = useState<number | null>(null);
@@ -24,10 +24,21 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
   const [language, setLanguage] = useState<string | null>(null);
   const [pages, setPages] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [zones, setZones] = useState<{ id: number; name: string }[]>([]);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const [show, setShow] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
+
+  const options = [
+    { label: "Design doc.", value: "../../../public/img/design-icon.png" },
+    { label: "Informative doc.", value: "../../../public/img/informative-icon.png" },
+    { label: "Prescriptive doc.", value: "../../../public/img/prescriptive-icon.png" },
+    { label: "Technical doc.", value: "../../../public/img/technical-icon.png" },
+    { label: "Agreement", value: "../../../public/img/agreement-icon.png" },
+    { label: "Conflict", value: "../../../public/img/conflict-icon.png" },
+    { label: "Consultation", value: "../../../public/img/consultation-icon.png" },
+    { label: "Material effect", value: "../../../public/img/material-effect-icon.png" },
+  ];
 
   const [tempCoordinates, setTempCoordinates] = useState<{
     lat: number | null;
@@ -50,23 +61,9 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
     setLanguage(null);
     setPages(null);
     setErrorMessage(null);
-    setZones([]);
     setShow(false);
   };
   const handleShow = () => setShow(true);
-
-  useEffect(() => {
-    const fetchZones = async () => {
-      try {
-        const zonesData = await API.getZones();
-        setZones(zonesData);
-      } catch (error) {
-        console.error("Error fetching zones:", error);
-        setErrorMessage("Failed to load zones.");
-      }
-    };
-    fetchZones();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +112,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
       updateTable();
       handleClose();
 
-      alert(`Creation of document ${title} successful!`);
+      setSuccessMessage(`Creation of document "${title}" successful!`);
       setErrorMessage(null);
     } catch (error) {
       console.error("Error during creation of document:", error);
@@ -124,16 +121,6 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
       } else {
         setErrorMessage("An error occurred while creating the document");
       }
-    }
-  };
-
-  const handleZoneIDChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedZoneID = e.target.value ? parseInt(e.target.value) : null;
-    setZoneID(selectedZoneID);
-
-    if (selectedZoneID !== null) {
-      setLatitude(null);
-      setLongitude(null);
     }
   };
 
@@ -184,6 +171,15 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                 {errorMessage}
               </Alert>
             )}
+            {successMessage && (
+              <Alert
+                variant="success"
+                onClose={() => setSuccessMessage(null)}
+                dismissible
+              >
+                {successMessage}
+              </Alert>
+            )}
 
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formTitle">
@@ -196,16 +192,20 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                 />
               </Form.Group>
 
-              <Form.Group as={Col} controlId="formIcon">
-                <Form.Label>Icon</Form.Label>
+              <Form.Group as={Col} controlId="formStakeholders">
+                <Form.Label>Stakeholders</Form.Label>
                 <Form.Select
-                  value={icon}
-                  onChange={(e) => setIcon(e.target.value)}
+                  value={stakeholders}
+                  onChange={(e) => setStakeholders(e.target.value)}
                   required
                 >
-                  <option value="../../../public/img/icon.webp">
-                    Document Icon
-                  </option>
+                  <option value="">Select Stakeholders</option>
+                  <option value="LKAB">LKAB</option>
+                  <option value="Municipalty">Municipalty</option>
+                  <option value="Regional authority">Regional authority</option>
+                  <option value="Architecture firms">Architecture firms</option>
+                  <option value="Citizens">Citizens</option>
+                  <option value="Others">Others</option>
                 </Form.Select>
               </Form.Group>
             </Row>
@@ -222,22 +222,6 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
             </Form.Group>
 
             <Row className="mb-3">
-              <Form.Group as={Col} controlId="formZoneID">
-                <Form.Label>Zone Name</Form.Label>
-                <Form.Select
-                  value={zoneID ?? ""}
-                  onChange={handleZoneIDChange}
-                  disabled={latitude !== null || longitude !== null}
-                >
-                  <option value="">Select a Zone</option>
-                  {zones.map((zone) => (
-                    <option key={zone.id} value={zone.id}>
-                      {zone.name}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-
               <Form.Group as={Col} controlId="formLatitude">
                 <Form.Label>Latitude</Form.Label>
                 <Form.Control
@@ -271,20 +255,34 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
             </Row>
 
             <Row className="mb-3">
-              <Form.Group as={Col} controlId="formStakeholders">
-                <Form.Label>Stakeholders</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={stakeholders}
-                  onChange={(e) => setStakeholders(e.target.value)}
-                  required
-                />
-              </Form.Group>
+            <Form.Group as={Col} controlId="formIcon">
+              <Form.Label>Icon</Form.Label>
+              <Form.Select
+                value={icon}
+                onChange={(e) => {
+                  const selectedOption = options.find((opt) => opt.value === e.target.value);
+                  if (selectedOption) {
+                    setIcon(selectedOption.value);
+                    setType(selectedOption.label);
+                  }
+                }}
+                required
+              >
+                <option value="">Select Icon</option>
+                {options.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
 
               <Form.Group as={Col} controlId="formScale">
                 <Form.Label>Scale</Form.Label>
                 <Form.Control
                   type="text"
+                  className="light-placeholder"
+                  placeholder = "1:1000"
                   value={scale}
                   onChange={(e) => setScale(e.target.value)}
                   required
@@ -297,6 +295,8 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                 <Form.Label>Date of Issue</Form.Label>
                 <Form.Control
                   type="text"
+                  className="light-placeholder"
+                  placeholder="YYYY-MM-DD"
                   value={issuanceDate}
                   onChange={(e) => setIssuanceDate(e.target.value)}
                   required
@@ -305,33 +305,59 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
 
               <Form.Group as={Col} controlId="formType">
                 <Form.Label>Type</Form.Label>
-                <Form.Control
-                  type="text"
+                <Form.Select
                   value={type}
-                  onChange={(e) => setType(e.target.value)}
+                  onChange={(e) => {
+                    const selectedOption = options.find((opt) => opt.label === e.target.value);
+                    if (selectedOption) {
+                      setIcon(selectedOption.value);
+                      setType(selectedOption.label);
+                    }
+                  }}
                   required
-                />
+                >
+                  <option value="">Select Type</option>
+                  {options.map((opt) => (
+                    <option key={opt.label} value={opt.label}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </Form.Select>
               </Form.Group>
             </Row>
 
             <Row className="mb-3">
-              <Form.Group as={Col} controlId="formLanguage">
-                <Form.Label>Language</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={language ?? ""}
-                  onChange={(e) => setLanguage(e.target.value || null)}
-                />
-              </Form.Group>
+            <Form.Group as={Col} controlId="formLanguage">
+              <Form.Label>Language</Form.Label>
+              <Form.Select
+                value={language ?? ""}
+                onChange={(e) => setLanguage(e.target.value || null)}
+              >
+                <option value="">Select Language</option>
+                <option value="English">English</option>
+                <option value="Spanish">Spanish</option>
+                <option value="French">French</option>
+                <option value="German">German</option>
+                <option value="Italian">Italian</option>
+                <option value="Chinese">Chinese</option>
+                <option value="Japanese">Japanese</option>
+                <option value="Korean">Korean</option>
+                <option value="Russian">Russian</option>
+                <option value="Arabic">Arabic</option>
+                {/* Add more languages as needed */}
+              </Form.Select>
+            </Form.Group>
 
-              <Form.Group as={Col} controlId="formPages">
-                <Form.Label>Pages</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={pages ?? ""}
-                  onChange={(e) => setPages(e.target.value || null)}
-                />
-              </Form.Group>
+            <Form.Group as={Col} controlId="formPages">
+              <Form.Label>Pages</Form.Label>
+              <Form.Control
+                type="text"
+                className="light-placeholder"
+                placeholder="1-100"
+                value={pages ?? ""}
+                onChange={(e) => setPages(e.target.value || null)}
+              />
+            </Form.Group>
             </Row>
           </Form>
         </Modal.Body>
