@@ -1,3 +1,4 @@
+import { lineArc } from "@turf/turf";
 import { Document } from "../components/document";
 import db from "../db/db";
 import { DocumentNotFoundError, DocumentZoneNotFoundError } from "../errors/documentErrors";
@@ -24,7 +25,6 @@ class DocumentDAO {
  */
     createDocumentNode(title: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
         return new Promise((resolve, reject) => {
-            console.log("Creating document node")
             const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
             VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
             db.run(sql, [title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages], function(this: any, err: Error) {
@@ -240,6 +240,52 @@ class DocumentDAO {
                 else resolve();
             })
         }) 
+    }
+/**
+ * DAO for updating the zone of a document
+ * @param documentID the id of the document to modify
+ * @param zoneID the id of the new zone
+ * @param longitude random longitude of the new coordinates
+ * @param latitude random latitude of the new coordinates
+ * @returns the number of modified rows
+ * @throws generic error if the database query fails
+ */
+    setDocumentZoneID(documentID: number, zoneID: number, longitude: number, latitude: number): Promise<number> {
+        return new Promise((resolve, reject) => {
+            console.log(zoneID, longitude, latitude)
+            const sql = `UPDATE document SET zoneID = ?, longitude = ?, latitude = ? WHERE documentID = ?`
+            db.run(sql, [zoneID, longitude, latitude, documentID], function (this: any, err: Error) {
+                if(err) reject(err);
+                else resolve(this.changes);
+            })
+        })
+    }
+/**
+ * 
+ * @param documentID DAO for updating coordinates of a document
+ * @param longitude longitude of the new coordinates
+ * @param latitude latitude of the new coordinates
+ * @returns the number of modified rows
+ * @throws generic error if the database query fails
+ */
+    setDocumentLonLat(documentID: number, longitude: number, latitude: number): Promise<number> {
+        return new Promise((resolve, reject) => {
+            const sql = `UPDATE document SET zoneID = null, longitude = ?, latitude = ? WHERE documentID = ?`
+            db.run(sql, [longitude, latitude, documentID], function(this: any, err: Error) {
+                if(err) reject(err);
+                else resolve(this.changes);
+            })
+        })
+    }
+
+    getDocumentZone(documentID: number): Promise<number> {
+        return new Promise((resolve, reject) => {
+            const sql = 'SELECT zoneID FROM document WHERE documentID = ?'
+            db.get(sql, [documentID], (err: Error, row: any) => {
+                if(err) reject(err);
+                row ? resolve(row.zoneID) : resolve(-1);
+            })
+        })
     }
 }
 

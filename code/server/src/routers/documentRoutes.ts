@@ -3,7 +3,7 @@ import { DocumentController } from "../controllers/documentController";
 import { body, param } from "express-validator";
 import ErrorHandler from "../helper";
 import { Document } from "../components/document";
-import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, WrongGeoreferenceError } from "../errors/documentErrors";
+import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, WrongGeoreferenceError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
 import { MissingKirunaZoneError } from "../errors/zoneError";
 import * as turf from '@turf/turf';
 import {Utilities} from '../utilities'
@@ -48,7 +48,6 @@ class DocumentRoutes {
         .then((lastID:number) => res.status(200).json(lastID))
         .catch((err: Error) => {
             if(err instanceof WrongGeoreferenceError) res.status(err.code).json({error: err.message});
-            else if (err instanceof DocumentZoneNotFoundError) res.status(err.code).json({error: err.message});
             else if (err instanceof ZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof MissingKirunaZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof CoordinatesOutOfBoundsError) res.status(err.code).json({error: err.message});
@@ -95,6 +94,25 @@ class DocumentRoutes {
         (req: any, res: any, next: any) => this.controller.deleteAllDocuments()
         .then(() => res.status(200).json())
         .catch((err: Error) => res.status(500).json({error: err.message}))
+        )
+
+        this.app.post("/api/document/georef/update/:id",
+            param('id').isInt(),
+            body("zoneID").optional({nullable: true}).isInt(),
+            body("latitude").optional({nullable:true}).isFloat(),
+            body("longitude").optional({nullable:true}).isFloat(),
+            Utilities.prototype.isUrbanPlanner,
+            this.errorHandler.validateRequest,
+        (req: any, res: any, next: any) => this.controller.updateGeoreference(req.params.id, req.body.zoneID, req.body.longitude, req.body.latitude)
+        .then(() => res.status(200).json())
+        .catch((err: Error) => {
+            if(err instanceof WrongGeoreferenceError) res.status(err.code).json({error: err.message});
+            else if (err instanceof ZoneError) res.status(err.code).json({error: err.message});
+            else if (err instanceof MissingKirunaZoneError) res.status(err.code).json({error: err.message});
+            else if (err instanceof CoordinatesOutOfBoundsError) res.status(err.code).json({error: err.message});
+            else if (err instanceof WrongGeoreferenceUpdateError) res.status(err.code).json({error: err.message});
+            else res.status(500).json({error: err.message});
+        })
         )
     }
 
