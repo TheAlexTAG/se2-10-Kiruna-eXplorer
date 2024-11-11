@@ -83,7 +83,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
       return;
     }
 
-    if (!zoneID) {
+    if (zoneID === null) {
       if (latitude === null || longitude === null) {
         setErrorMessage(
           "Please provide valid coordinates if no zone is selected."
@@ -255,28 +255,6 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
             </Row>
 
             <Row className="mb-3">
-            <Form.Group as={Col} controlId="formIcon">
-              <Form.Label>Icon</Form.Label>
-              <Form.Select
-                value={icon}
-                onChange={(e) => {
-                  const selectedOption = options.find((opt) => opt.value === e.target.value);
-                  if (selectedOption) {
-                    setIcon(selectedOption.value);
-                    setType(selectedOption.label);
-                  }
-                }}
-                required
-              >
-                <option value="">Select Icon</option>
-                {options.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-
               <Form.Group as={Col} controlId="formScale">
                 <Form.Label>Scale</Form.Label>
                 <Form.Control
@@ -296,7 +274,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                 <Form.Control
                   type="text"
                   className="light-placeholder"
-                  placeholder="YYYY-MM-DD"
+                  placeholder="DD/MM/YYYY"
                   value={issuanceDate}
                   onChange={(e) => setIssuanceDate(e.target.value)}
                   required
@@ -359,6 +337,20 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
               />
             </Form.Group>
             </Row>
+            <Form.Group controlId="formAssignToKiruna">
+              <Form.Check 
+                type="checkbox" 
+                label="Assign document to entire Kiruna area" 
+                checked={zoneID === 0}
+                onChange={(e) => {
+                  setZoneID(e.target.checked ? 0 : null);
+                  if (e.target.checked) {
+                    setLatitude(null);
+                    setLongitude(null);
+                  }
+                }}
+              />
+            </Form.Group>
           </Form>
         </Modal.Body>
         <Modal.Footer>
