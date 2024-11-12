@@ -27,7 +27,7 @@ class DocumentDAO {
         return new Promise((resolve, reject) => {
             const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
             VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-            db.run(sql, [title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages], function(this: any, err: Error) {
+            db.run(sql, [title, description, zoneID, latitude, longitude, stakeholders.replace(/\s*,\s*/g, ',').trim(), scale, issuanceDate, type, language, pages], function(this: any, err: Error) {
                 if(err) reject(err);
                 else resolve(this.lastID);
             })
@@ -86,7 +86,7 @@ class DocumentDAO {
                         row.title,
                         row.description,
                         row.zoneID, row.latitude,
-                        row.longitude, row.stakeholders,
+                        row.longitude, row.stakeholders.replace(/\s*,\s*/g, ', ').trim(),
                         row.scale, row.issuanceDate,
                         row.type, row.language,
                         row.pages,
@@ -161,9 +161,9 @@ class DocumentDAO {
  * @returns a list of documents
  * @throws generic error if the database query fails
  */
-    getDocumentsFull(): Promise<Document[]> {
+    getDocumentsFull(filters: any): Promise<Document[]> {
         return new Promise((resolve, reject) => {
-            const sql = `WITH link_counts AS (
+            let sql = `WITH link_counts AS (
                 SELECT d.documentID,
                 COUNT(*) AS total_connections,
                 GROUP_CONCAT(
@@ -196,8 +196,38 @@ class DocumentDAO {
         LEFT JOIN link_counts lc ON d.documentID = lc.documentID
         LEFT JOIN resource r ON d.documentID = r.documentID
         LEFT JOIN attachment a ON d.documentID = a.documentID
-        GROUP BY d.documentID`
-            db.all(sql, [], (err: Error, rows: any[]) => {
+        `;
+        const conditions: string[] = [];
+        const params: any[] = [];
+        if (filters.zoneID) {
+            conditions.push("d.zoneID = ?");
+            params.push(filters.zoneID);
+        }
+        if (filters.stakeholders) {
+            conditions.push("d.stakeholders LIKE ?");
+            params.push(`%${filters.stakeholders}%`);
+        }
+        if (filters.scale) {
+            conditions.push("d.scale = ?");
+            params.push(filters.scale);
+        }
+        if (filters.issuanceDate) {
+            conditions.push("d.issuanceDate LIKE ?");
+            params.push(`${filters.issuanceDate}%`);
+        }
+        if (filters.type) {
+            conditions.push("d.type = ?");
+            params.push(filters.type);
+        }
+        if (filters.language) {
+            conditions.push("d.language = ?");
+            params.push(filters.language);
+        }
+        if (conditions.length > 0) {
+            sql += ` WHERE ${conditions.join(" AND ")}`;
+        }
+        sql += ` GROUP BY d.documentID`;
+            db.all(sql, params, (err: Error, rows: any[]) => {
                 if(err) reject(err);
                 else {
                     let documents: Document[] = [];
@@ -207,7 +237,7 @@ class DocumentDAO {
                             row.title,
                             row.description,
                             row.zoneID, row.latitude,
-                            row.longitude, row.stakeholders,
+                            row.longitude, row.stakeholders.replace(/\s*,\s*/g, ', ').trim(),
                             row.scale, row.issuanceDate,
                             row.type, row.language,
                             row.pages,
