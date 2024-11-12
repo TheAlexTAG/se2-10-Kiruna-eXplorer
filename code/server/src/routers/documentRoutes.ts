@@ -78,7 +78,7 @@ class DocumentRoutes {
  */
         this.app.get("/api/documents/links",
         (req: any, res: any, next: any) => this.controller.getAllDocuments()
-        .then((documents: {document: Document, links: number[]}[]) => res.status(200).json(documents))
+        .then((documents: Document[]) => res.status(200).json(documents))
         .catch((err: Error) => res.status(500).json({error: err.message})))
 /**
  * route for retrieving all the documents and their coordinates
