@@ -1,3 +1,4 @@
+import { lineArc } from "@turf/turf";
 import { Document } from "../components/document";
 import db from "../db/db";
 import { DocumentNotFoundError, DocumentZoneNotFoundError } from "../errors/documentErrors";
@@ -24,7 +25,6 @@ class DocumentDAO {
  */
     createDocumentNode(title: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
         return new Promise((resolve, reject) => {
-            console.log("Creating document node")
             const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
             VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
             db.run(sql, [title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages], function(this: any, err: Error) {
@@ -44,20 +44,39 @@ class DocumentDAO {
         return new Promise((resolve, reject) => {
             const sql = `WITH link_counts AS (
                 SELECT d.documentID,
-                COUNT(*) AS total_connections
+                COUNT(*) AS total_connections,
+                GROUP_CONCAT(
+                    CASE
+                        WHEN l.firstDoc = d.documentID THEN l.secondDoc
+                        ELSE l.firstDoc
+                     END
+                    ) AS linked_documents
                 FROM link l
                 JOIN document d ON l.firstDoc = d.documentID OR l.secondDoc = d.documentID
-                GROUP BY d.documentID)
-            SELECT d.documentID, d.title, d.description, d.zoneID, d.latitude, d.longitude, d.stakeholders, d.scale, d.issuanceDate, d.type, d.language, d.pages,
-            COALESCE(lc.total_connections, 0) AS connections, 
-            COALESCE(GROUP_CONCAT(DISTINCT r.link), '') AS resources,
-            COALESCE(GROUP_CONCAT(DISTINCT a.link), '') AS attachments
-            FROM document d
-            LEFT JOIN link_counts lc ON d.documentID = lc.documentID
-            LEFT JOIN resource r ON d.documentID = r.documentID
-            LEFT JOIN attachment a ON d.documentID = a.documentID
-            WHERE d.documentID = ?
-            GROUP BY d.documentID`
+                GROUP BY d.documentID
+                )
+        SELECT d.documentID, 
+            d.title,
+            d.description, 
+            d.zoneID, 
+            d.latitude, 
+            d.longitude, 
+            d.stakeholders, 
+            d.scale, 
+            d.issuanceDate, 
+            d.type, 
+            d.language, 
+            d.pages,
+        COALESCE(lc.total_connections, 0) AS connections, 
+        COALESCE(GROUP_CONCAT(DISTINCT r.link), '') AS resources,
+        COALESCE(GROUP_CONCAT(DISTINCT a.link), '') AS attachments,
+        COALESCE(lc.linked_documents, '') AS linked_document_ids
+        FROM document d
+        LEFT JOIN link_counts lc ON d.documentID = lc.documentID
+        LEFT JOIN resource r ON d.documentID = r.documentID
+        LEFT JOIN attachment a ON d.documentID = a.documentID
+        WHERE d.documentID = ?
+        GROUP BY d.documentID`
             db.get(sql, [documentID], (err: Error, row: any) => {
                 if(err) reject(err);
                 else {
@@ -73,7 +92,8 @@ class DocumentDAO {
                         row.pages,
                         row.connections,
                         row.attachments ? row.attachments.split(",").map((url: string) => url.trim()): [],
-                        row.resources ? row.resources.split(",").map((url: string) => url.trim()) : []
+                        row.resources ? row.resources.split(",").map((url: string) => url.trim()) : [],
+                        row.linked_document_ids ? row.linked_document_ids.split(",").map((id: string) => parseInt(id.trim(), 10)) : []
                     ))
                     : reject(new DocumentNotFoundError())
                 }
@@ -141,7 +161,7 @@ class DocumentDAO {
  * @returns a list of documents
  * @throws generic error if the database query fails
  */
-    getDocumentsFull(): Promise<{document: Document, links: number[]}[]> {
+    getDocumentsFull(): Promise<Document[]> {
         return new Promise((resolve, reject) => {
             const sql = `WITH link_counts AS (
                 SELECT d.documentID,
@@ -176,31 +196,26 @@ class DocumentDAO {
         LEFT JOIN link_counts lc ON d.documentID = lc.documentID
         LEFT JOIN resource r ON d.documentID = r.documentID
         LEFT JOIN attachment a ON d.documentID = a.documentID
-        GROUP BY d.documentID;`
+        GROUP BY d.documentID`
             db.all(sql, [], (err: Error, rows: any[]) => {
                 if(err) reject(err);
                 else {
-                    let documents: {document: Document, links: number[]}[] = [];
+                    let documents: Document[] = [];
                     if(rows) {
-                        documents = rows.map((row: any) => {return {
-                            document: new Document(
-                                row.documentID,
-                                row.title,
-                                row.description, row.zoneID,
-                                row.latitude,
-                                row.longitude,
-                                row.stakeholders,
-                                row.scale,
-                                row.issuanceDate,
-                                row.type,
-                                row.language,
-                                row.pages,
-                                row.connections,
-                                row.attachments ? row.attachments.split(",").map((url: string) => url.trim()): [],
-                                row.resources ? row.resources.split(",").map((url: string) => url.trim()) : []
-                                ),
-                                links: row.linked_document_ids ? row.linked_document_ids.split(",").map((id: string) => parseInt(id.trim(), 10)) : []
-                        }})
+                        documents = rows.map((row: any) => new Document(
+                            row.documentID,
+                            row.title,
+                            row.description,
+                            row.zoneID, row.latitude,
+                            row.longitude, row.stakeholders,
+                            row.scale, row.issuanceDate,
+                            row.type, row.language,
+                            row.pages,
+                            row.connections,
+                            row.attachments ? row.attachments.split(",").map((url: string) => url.trim()): [],
+                            row.resources ? row.resources.split(",").map((url: string) => url.trim()) : [],
+                            row.linked_document_ids ? row.linked_document_ids.split(",").map((id: string) => parseInt(id.trim(), 10)) : []
+                        ) )
                     }
                     resolve(documents); 
                 }
@@ -240,6 +255,52 @@ class DocumentDAO {
                 else resolve();
             })
         }) 
+    }
+/**
+ * DAO for updating the zone of a document
+ * @param documentID the id of the document to modify
+ * @param zoneID the id of the new zone
+ * @param longitude random longitude of the new coordinates
+ * @param latitude random latitude of the new coordinates
+ * @returns the number of modified rows
+ * @throws generic error if the database query fails
+ */
+    setDocumentZoneID(documentID: number, zoneID: number, longitude: number, latitude: number): Promise<number> {
+        return new Promise((resolve, reject) => {
+            console.log(zoneID, longitude, latitude)
+            const sql = `UPDATE document SET zoneID = ?, longitude = ?, latitude = ? WHERE documentID = ?`
+            db.run(sql, [zoneID, longitude, latitude, documentID], function (this: any, err: Error) {
+                if(err) reject(err);
+                else resolve(this.changes);
+            })
+        })
+    }
+/**
+ * 
+ * @param documentID DAO for updating coordinates of a document
+ * @param longitude longitude of the new coordinates
+ * @param latitude latitude of the new coordinates
+ * @returns the number of modified rows
+ * @throws generic error if the database query fails
+ */
+    setDocumentLonLat(documentID: number, longitude: number, latitude: number): Promise<number> {
+        return new Promise((resolve, reject) => {
+            const sql = `UPDATE document SET zoneID = null, longitude = ?, latitude = ? WHERE documentID = ?`
+            db.run(sql, [longitude, latitude, documentID], function(this: any, err: Error) {
+                if(err) reject(err);
+                else resolve(this.changes);
+            })
+        })
+    }
+
+    getDocumentZone(documentID: number): Promise<number> {
+        return new Promise((resolve, reject) => {
+            const sql = 'SELECT zoneID FROM document WHERE documentID = ?'
+            db.get(sql, [documentID], (err: Error, row: any) => {
+                if(err) reject(err);
+                row ? resolve(row.zoneID) : resolve(-1);
+            })
+        })
     }
 }
 

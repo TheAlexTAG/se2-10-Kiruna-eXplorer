@@ -5,6 +5,7 @@ import {
   CoordinatesOutOfBoundsError,
   InvalidDocumentZoneError,
   WrongGeoreferenceError,
+  WrongGeoreferenceUpdateError,
 } from "../errors/documentErrors";
 import * as turf from "@turf/turf";
 import { ZoneDAO } from "../dao/zoneDAO";
@@ -53,7 +54,7 @@ class DocumentController {
       else if (zoneID != null && latitude == null && longitude == null) {
         let zone = await ZoneDAO.prototype.getZone(zoneID);
         let randCoordinates: {latitude: number, longitude: number};
-        if (zoneID != 0) randCoordinates = {latitude: 67.84905775407694, longitude: 20.302734375000004} 
+        if (zoneID == 0) randCoordinates = {latitude: 67.84905775407694, longitude: 20.302734375000004} 
         else randCoordinates = await this.getRandCoordinates(zone.coordinates);
         let lastID = await this.dao.createDocumentNode(title, description, zoneID, randCoordinates.latitude, randCoordinates.longitude, stakeholders, scale, issuanceDate, type, language, pages); 
         return lastID;
@@ -95,7 +96,7 @@ class DocumentController {
    * @returns a list of documents
    * @throws generic error if the database query fails
    */
-  async getAllDocuments(): Promise<{ document: Document; links: number[] }[]> {
+  async getAllDocuments(): Promise<Document[]> {
     try {
       let documents = await this.dao.getDocumentsFull();
       return documents;
@@ -129,6 +130,40 @@ class DocumentController {
       await this.dao.deleteAllDocuments();
       return;
     } catch (err) {
+      throw err;
+    }
+  }
+  /**
+   * 
+   * @param documentID the id of the document to modify
+   * @param zoneID the id of the zone, can be null
+   * @param longitude the longitude of the point, can be null
+   * @param latitude the latitude of the point, can be null
+   */
+  async updateGeoreference(documentID: number, zoneID: number | null, longitude: number | null, latitude: number | null): Promise<void> {
+    try {
+      if(zoneID == null && latitude != null && longitude != null) {
+        const checkCoordinates = await this.checkCoordinatesValidity(longitude, latitude);
+        if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
+        else {
+          let changes = await this.dao.setDocumentLonLat(documentID, longitude, latitude);
+          if(!changes) throw new WrongGeoreferenceUpdateError();
+          else return;
+        }  
+      }
+      else if(zoneID != null && latitude == null && longitude == null) {
+        let docZone = await this.dao.getDocumentZone(documentID);
+        if(docZone === zoneID) throw new WrongGeoreferenceUpdateError();
+        let zone = await ZoneDAO.prototype.getZone(zoneID);
+        let randCoordinates: {latitude: number, longitude: number};
+        if (zoneID == 0) randCoordinates = {latitude: 67.84905775407694, longitude: 20.302734375000004}
+        else randCoordinates = await this.getRandCoordinates(zone.coordinates);
+        let changes = await this.dao.setDocumentZoneID(documentID, zoneID, randCoordinates.longitude, randCoordinates.latitude);
+        if(!changes) throw new WrongGeoreferenceUpdateError();
+        else return;
+      }
+      else throw new WrongGeoreferenceError();
+    } catch(err) {
       throw err;
     }
   }

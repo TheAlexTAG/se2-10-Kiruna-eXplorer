@@ -44,4 +44,13 @@ class CoordinatesOutOfBoundsError extends Error {
     }
 }
 
-export {DocumentNotFoundError, WrongGeoreferenceError, DocumentZoneNotFoundError, InvalidDocumentZoneError, CoordinatesOutOfBoundsError};
+class WrongGeoreferenceUpdateError extends Error {
+    code: number
+
+    constructor() {
+        super("The georeference update is not valid")
+        this.code = 400;
+    }
+}
+
+export {DocumentNotFoundError, WrongGeoreferenceError, DocumentZoneNotFoundError, InvalidDocumentZoneError, CoordinatesOutOfBoundsError, WrongGeoreferenceUpdateError};
