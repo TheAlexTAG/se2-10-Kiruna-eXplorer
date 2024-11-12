@@ -4,6 +4,7 @@ import API from "../../API/API";
 import "./NewDocument.css";
 import { CoordinatesOutOfBoundsError } from "../../../../server/src/errors/documentErrors";
 import MapComponent from "../Map/MapComponent";
+import Select, { MultiValue } from "react-select";
 
 interface userProps {
   userInfo: { username: string; role: string };
@@ -38,6 +39,20 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
     { label: "Conflict", value: "../../../public/img/conflict-icon.png" },
     { label: "Consultation", value: "../../../public/img/consultation-icon.png" },
     { label: "Material effect", value: "../../../public/img/material-effect-icon.png" },
+  ];
+
+  type OptionType = {
+    value: string;
+    label: string;
+  };
+
+  const stakeholderOptions: OptionType[] = [
+    { value: "LKAB", label: "LKAB" },
+    { value: "Municipalty", label: "Municipalty" },
+    { value: "Regional authority", label: "Regional authority" },
+    { value: "Architecture firms", label: "Architecture firms" },
+    { value: "Citizens", label: "Citizens" },
+    { value: "Others", label: "Others" }
   ];
 
   const [tempCoordinates, setTempCoordinates] = useState<{
@@ -150,6 +165,12 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
     setShowMapModal(false); // Close the modal when "OK" is clicked
   };
 
+  const handleStakeholderSelect = (selectedStakeholders: MultiValue<OptionType>) => {
+    // Convert selected options to a string of comma-separated values
+    const valuesString = [...selectedStakeholders].map(option => option.value).join(", ");
+    setStakeholders(valuesString);
+  };
+
   return (
     <div className="document-container">
       <Button variant="primary" onClick={handleShow}>
@@ -171,15 +192,6 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                 {errorMessage}
               </Alert>
             )}
-            {successMessage && (
-              <Alert
-                variant="success"
-                onClose={() => setSuccessMessage(null)}
-                dismissible
-              >
-                {successMessage}
-              </Alert>
-            )}
 
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formTitle">
@@ -193,20 +205,18 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
               </Form.Group>
 
               <Form.Group as={Col} controlId="formStakeholders">
-                <Form.Label>Stakeholders</Form.Label>
-                <Form.Select
+                  <Form.Label>Stakeholders</Form.Label>
+                <Select
+                  options={stakeholderOptions}
+                  isMulti = {true}
+                  onChange={handleStakeholderSelect}
+                  placeholder="Select Stakeholders"
+                />
+                <input
+                  type="hidden"
+                  name="stakeholders"
                   value={stakeholders}
-                  onChange={(e) => setStakeholders(e.target.value)}
-                  required
-                >
-                  <option value="">Select Stakeholders</option>
-                  <option value="LKAB">LKAB</option>
-                  <option value="Municipalty">Municipalty</option>
-                  <option value="Regional authority">Regional authority</option>
-                  <option value="Architecture firms">Architecture firms</option>
-                  <option value="Citizens">Citizens</option>
-                  <option value="Others">Others</option>
-                </Form.Select>
+                />
               </Form.Group>
             </Row>
 
