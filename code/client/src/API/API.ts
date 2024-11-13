@@ -115,8 +115,7 @@ const getDocuments = async () => {
 
 const connectDocuments = async (
   firstDoc: number,
-  secondDoc: number,
-  relationship: string
+  secondDoc: { id: number; relationship: string }[]
 ) => {
   const response = await fetch(`${SERVER_URL}/link`, {
     method: "POST",
@@ -124,7 +123,7 @@ const connectDocuments = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ firstDoc, secondDoc, relationship }),
+    body: JSON.stringify({ firstDoc, secondDoc }),
   });
 
   if (!response.ok) {

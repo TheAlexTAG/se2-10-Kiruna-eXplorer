@@ -38,23 +38,34 @@ export const DocumentList = ({ userInfo }: userProps) => {
             </tr>
           </thead>
           <tbody>
-            {documents.map((document: any, index: number) => (
-              <tr key={index}>
-                <td>{index + 1}</td>
-                <td>{document.title ? document.title : "-"}</td>
-                <td>{document.type ? document.type : "-"}</td>
-                <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
-                <td>{document.connections ? document.connections : "-"}</td>
-                <td>{document.language ? document.language : "-"}</td>
-                <td>
-                  <LinkingDocumentsModal
-                    currentDocument={document}
-                    documents={documents}
-                    updateTable={fetchDocuments}
-                  />
-                </td>
-              </tr>
-            ))}
+            {documents.map(
+              (
+                document: {
+                  title: string;
+                  type: string;
+                  issuanceDate: string;
+                  connections: string;
+                  language: string;
+                },
+                index: number
+              ) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td>{document.title ? document.title : "-"}</td>
+                  <td>{document.type ? document.type : "-"}</td>
+                  <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
+                  <td>{document.connections ? document.connections : "-"}</td>
+                  <td>{document.language ? document.language : "-"}</td>
+                  <td>
+                    <LinkingDocumentsModal
+                      currentDocument={document}
+                      documents={documents}
+                      updateTable={fetchDocuments}
+                    />
+                  </td>
+                </tr>
+              )
+            )}
           </tbody>
         </Table>
       </div>
