@@ -1,7 +1,7 @@
-import { LinkDocument, Relationship } from "../components/link_doc";
+import { LinkDocument } from "../components/link_doc";
 import db from "../db/db";
 import { DocumentNotFoundError } from "../errors/documentErrors";
-import { DocumentsError, InternalServerError, LinkError } from "../errors/link_docError";
+import { DocumentsError, InternalServerError } from "../errors/link_docError";
 
 /* Sanitize input */
 const createDOMPurify = require("dompurify");
@@ -67,17 +67,17 @@ class LinkDocumentDAO {
     );
   };
 
-  insertLink(firstDoc: number, secondDoc: number, relationship: string): Promise<LinkDocument> {
-    return new Promise<LinkDocument>(function (resolve, reject) {
-      const sql = "insert into link(firstDoc, secondDoc, relationship) VALUES(?,?,?)";
-      db.run(sql, [firstDoc, secondDoc, relationship], async function (err: Error | null) {
+  insertLink(links: LinkDocument[]): Promise<boolean> {
+    return new Promise<boolean>(function (resolve, reject) {
+      const placeholders = links.map(() => "(?,?,?)").join();
+      const sql = `insert into link(firstDoc, secondDoc, relationship) VALUES ${placeholders}`;
+      const values= links.flatMap(link=> [link.firstDoc, link.secondDoc, link.relationship]);
+
+      db.run(sql, values, async function (err: Error | null) {
         if (err) {
           return reject(new InternalServerError(err.message));
         }
-        if (this.lastID) {
-          return resolve(new LinkDocument(firstDoc, secondDoc, relationship as Relationship));
-        }
-        return reject(new LinkError());
+        return resolve(true);
       }
      );
     }
