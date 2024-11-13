@@ -1,3 +1,7 @@
 .modal-dialog {
   max-width: 1000px;
 }
+.form-control:focus {
+  border-color: #dee2e6;
+  box-shadow: none;
+}
