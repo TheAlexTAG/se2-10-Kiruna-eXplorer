@@ -1,0 +1,19 @@
+.title {
+    font-family: "Arial", sans-serif;
+    font-size: 3rem;
+    font-weight: bold;
+    text-align: center;
+    color: black;
+    text-transform: uppercase;
+  }
+  
+.form-label {
+    font-weight: bold;
+  }
+  
+.form-control {
+    border-radius: 4px;
+  }
+  
+  
+  
