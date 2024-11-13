@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Table } from "react-bootstrap";
+import { Table } from "react-bootstrap";
 import API from "../../API/API";
 import { LinkingDocumentsModal } from "./LinkingDocuments/LinkingDocumentsModal";
 import NewDocument from "../NewDocument/NewDocument";
@@ -41,25 +41,11 @@ export const DocumentList = ({ userInfo }: userProps) => {
             {documents.map((document: any, index: number) => (
               <tr key={index}>
                 <td>{index + 1}</td>
-                <td>
-                  {document.document.title ? document.document.title : "-"}
-                </td>
-                <td>{document.document.type ? document.document.type : "-"}</td>
-                <td>
-                  {document.document.issuanceDate
-                    ? document.document.issuanceDate
-                    : "-"}
-                </td>
-                <td>
-                  {document.document.connections
-                    ? document.document.connections
-                    : "-"}
-                </td>
-                <td>
-                  {document.document.language
-                    ? document.document.language
-                    : "-"}
-                </td>
+                <td>{document.title ? document.title : "-"}</td>
+                <td>{document.type ? document.type : "-"}</td>
+                <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
+                <td>{document.connections ? document.connections : "-"}</td>
+                <td>{document.language ? document.language : "-"}</td>
                 <td>
                   <LinkingDocumentsModal
                     currentDocument={document}
