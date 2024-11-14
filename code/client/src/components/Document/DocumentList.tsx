@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Table, Button } from "react-bootstrap";
 import API from "../../API/API";
 import { LinkingDocumentsModal } from "./LinkingDocuments/LinkingDocumentsModal";
-import  EditDocumentModal  from "./EditDocuments/EditDocumentsModal"; 
+import EditDocumentModal from "./EditDocuments/EditDocumentsModal";
 import NewDocument from "../NewDocument/NewDocument";
+import { FaEdit } from "react-icons/fa"; 
 
 interface userProps {
   userInfo: { username: string; role: string };
@@ -33,7 +34,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
     <div className="mx-4">
       <div className="my-4 d-flex justify-content-between align-items-center">
         <h2>Documents</h2>
-        {userInfo.role == "Urban Planner" && (
+        {userInfo.role === "Urban Planner" && (
           <NewDocument updateTable={fetchDocuments} userInfo={userInfo} />
         )}
       </div>
@@ -59,23 +60,21 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
                 <td>{document.connections ? document.connections : "-"}</td>
                 <td>{document.language ? document.language : "-"}</td>
-                <td>
+                <td className="d-flex justify-content-center">
                   {/* Link to a Document Button */}
                   <LinkingDocumentsModal
                     currentDocument={document}
                     documents={documents}
                     updateTable={fetchDocuments}
                   />
-                  
-                  
-                  {/* Edit Button */}
+
+                  {/*Edit Icon */}
                   <Button
-                    variant="success"  
-                    size="sm"
-                    className="ml-2"  
+                    variant="success"
+                    className="ml-2 d-flex align-items-center justify-content-center"
                     onClick={() => handleEditClick(document)}
                   >
-                    Edit
+                    <FaEdit color="white" />
                   </Button>
                 </td>
               </tr>
