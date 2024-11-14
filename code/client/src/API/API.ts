@@ -115,8 +115,7 @@ const getDocuments = async () => {
 
 const connectDocuments = async (
   firstDoc: number,
-  secondDoc: number,
-  relationship: string
+  secondDoc: { id: number; relationship: string }[]
 ) => {
   const response = await fetch(`${SERVER_URL}/link`, {
     method: "POST",
@@ -124,13 +123,38 @@ const connectDocuments = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ firstDoc, secondDoc, relationship }),
+    body: JSON.stringify({ firstDoc, secondDoc }),
   });
 
   if (!response.ok) {
     const errorData = await response.json();
     console.error("Error connecting documents:", errorData);
     throw new Error(errorData.error || "Failed to connect documents");
+  }
+
+  return await response.json();
+};
+
+const updateGeoreference = async (
+  documentID: number,
+  zoneID: number | null,
+  longitude: number | null,
+  latitude: number | null
+) => {
+  console.log(documentID, zoneID, longitude, latitude);
+  const response = await fetch(`${SERVER_URL}/document/georef/update/${documentID}`, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ zoneID, longitude, latitude }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error updating georeference:", errorData);
+    throw new Error(errorData.error || "Failed to update georeference");
   }
 
   return await response.json();
@@ -144,5 +168,6 @@ const API = {
   getZones,
   getDocuments,
   connectDocuments,
+  updateGeoreference
 };
 export default API;
