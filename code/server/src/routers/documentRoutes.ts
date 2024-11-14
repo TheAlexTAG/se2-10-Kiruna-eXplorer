@@ -97,7 +97,7 @@ class DocumentRoutes {
         this.app.delete("/api/documents/delete/all",
             Utilities.prototype.isAdmin,
         (req: any, res: any, next: any) => this.controller.deleteAllDocuments()
-        .then(() => res.status(200).json())
+        .then(() => res.status(200).send())
         .catch((err: Error) => res.status(500).json({error: err.message}))
         )
 
@@ -109,7 +109,7 @@ class DocumentRoutes {
             Utilities.prototype.isUrbanPlanner,
             this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => this.controller.updateGeoreference(req.params.id, req.body.zoneID, req.body.longitude, req.body.latitude)
-        .then(() => res.status(200).json())
+        .then(() => res.status(200).send())
         .catch((err: Error) => {
             if(err instanceof WrongGeoreferenceError) res.status(err.code).json({error: err.message});
             else if (err instanceof ZoneError) res.status(err.code).json({error: err.message});
