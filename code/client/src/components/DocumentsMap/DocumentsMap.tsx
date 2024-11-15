@@ -9,16 +9,12 @@ import "./DocumentsMap.css";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
 import { BsMap, BsMapFill } from "react-icons/bs";
 
-interface DocumentData {
+interface Document {
+  id: number;
   title: string;
   type: string;
   latitude: number;
   longitude: number;
-}
-
-interface Document {
-  id: number;
-  document: DocumentData;
 }
 
 const DocumentsMap: React.FC = () => {
@@ -55,10 +51,9 @@ const DocumentsMap: React.FC = () => {
   useEffect(() => {
     const fetchDocuments = async () => {
       const data = await API.getDocuments();
+      console.log("my data is: ", data);
       setDocuments(
-        data.filter(
-          (item: Document) => item.document.latitude && item.document.longitude
-        )
+        data.filter((item: Document) => item.latitude && item.longitude)
       );
     };
 
@@ -138,7 +133,7 @@ const DocumentsMap: React.FC = () => {
       });
 
       documents.forEach((item) => {
-        const { latitude, longitude, title, type } = item.document;
+        const { latitude, longitude, title, type } = item;
         if (latitude && longitude) {
           const marker = L.marker([latitude, longitude], {
             icon: customIcon,
