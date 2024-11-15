@@ -91,8 +91,10 @@ const getZones = async () => {
     console.error("Error getting zones:", errorData);
     throw new Error(errorData.message || "Failed to get zones");
   }
+  const data = await response.json();
+  console.log("my datazones api is ", data);
 
-  return await response.json();
+  return data;
 };
 
 const getDocuments = async () => {
@@ -142,14 +144,17 @@ const updateGeoreference = async (
   latitude: number | null
 ) => {
   console.log(documentID, zoneID, longitude, latitude);
-  const response = await fetch(`${SERVER_URL}/document/georef/update/${documentID}`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ zoneID, longitude, latitude }),
-  });
+  const response = await fetch(
+    `${SERVER_URL}/document/georef/update/${documentID}`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ zoneID, longitude, latitude }),
+    }
+  );
 
   if (!response.ok) {
     const errorData = await response.json();
@@ -157,12 +162,9 @@ const updateGeoreference = async (
     throw new Error(errorData.error || "Failed to update georeference");
   }
 
-  if(response.status === 200)
-  {
+  if (response.status === 200) {
     return;
-  }
-  else
-  {
+  } else {
     return await response.json();
   }
 };
@@ -175,6 +177,6 @@ const API = {
   getZones,
   getDocuments,
   connectDocuments,
-  updateGeoreference
+  updateGeoreference,
 };
 export default API;

@@ -1,84 +1,157 @@
-import React, { useEffect, useRef } from "react";
-import L from "leaflet";
+import React, { useEffect, useState } from "react";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  GeoJSON,
+  useMapEvent,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import API from "../../API/API";
 
 interface MapComponentProps {
   onLocationSelect: () => void;
   tempCoordinates: { lat: number | null; lng: number | null };
-  setTempCoordinates: (coords: { lat: number; lng: number }) => void;
+  setTempCoordinates: (coords: {
+    lat: number | null;
+    lng: number | null;
+  }) => void;
+  onZoneSelect: (zoneId: number | null) => void;
 }
+
+type ZoneProps = {
+  id: number;
+  coordinates: {
+    geometry: GeoJSON.Geometry;
+  };
+};
 
 const MapComponent: React.FC<MapComponentProps> = ({
   onLocationSelect,
   tempCoordinates,
   setTempCoordinates,
+  onZoneSelect,
 }) => {
-  const mapRef = useRef<L.Map | null>(null);
-  const markerRef = useRef<L.Marker | null>(null);
+  const [zones, setZones] = useState<ZoneProps[]>([]);
+  const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
+    null
+  );
+  const [selectionMode, setSelectionMode] = useState<"point" | "zone">("point");
 
   useEffect(() => {
-    if (!mapRef.current) {
-      mapRef.current = L.map("map").setView([67.8558, 20.2253], 13);
+    const fetchZones = async () => {
+      try {
+        const zonesData = await API.getZones();
+        setZones(zonesData as ZoneProps[]);
+      } catch (err) {
+        console.error("Error fetching zones:", err);
+      }
+    };
+    fetchZones();
+  }, []);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "&copy; OpenStreetMap contributors",
-      }).addTo(mapRef.current);
+  const PointClickHandler: React.FC = () => {
+    useMapEvent("click", (e) => {
+      if (selectionMode === "point") {
+        setTempCoordinates({ lat: e.latlng.lat, lng: e.latlng.lng });
+      }
+    });
+    return null;
+  };
 
-      const kirunaUrbanPolygonCoords: [number, number][] = [
-        [67.8795522, 20.0884348],
-        [67.8461752, 20.0777938],
-        [67.8137874, 20.0959903],
-        [67.8009557, 20.1313601],
-        [67.789142, 20.20173],
-        [67.780064, 20.2526948],
-        [67.8017275, 20.3284129],
-        [67.820848, 20.3586137],
-        [67.8372408, 20.3775067],
-        [67.8659746, 20.3644607],
-        [67.8805869, 20.2542569],
-        [67.8834303, 20.2082529],
-        [67.8795522, 20.0884348],
-      ];
-      /*const kirunaUrbanPolygonCoords: [number, number][] = [
-        [67.8223, 20.157],
-        [67.8223, 20.1701],
-        [67.8238, 20.19],
-        [67.828, 20.2235],
-        [67.8325, 20.2235],
-        [67.8372, 20.278],
-        [67.8554, 20.278],
-        [67.8516, 20.2111],
-        [67.8556, 20.2111],
-        [67.8223, 20.157],
-      ];*/
+  const getZoneStyle = (zoneId: number) => ({
+    color: highlightedZoneId === zoneId ? "blue" : "green",
+    weight: 2,
+    fillColor: highlightedZoneId === zoneId ? "blue" : "green",
+    fillOpacity: highlightedZoneId === zoneId ? 0.4 : 0.2,
+  });
 
-      // Add the polygon layer to highlight the urban area
-      const polygon = L.polygon(kirunaUrbanPolygonCoords, {
-        color: "blue",
-        weight: 2,
-        fillColor: "blue",
-        fillOpacity: 0.2, // Semi-transparent fill
-      }).addTo(mapRef.current);
-
-      // Fit the map to the polygon bounds for visibility
-      //mapRef.current.fitBounds(polygon.getBounds());
-
-      mapRef.current.on("click", (e: L.LeafletMouseEvent) => {
-        const { lat, lng } = e.latlng;
-        setTempCoordinates({ lat, lng });
-
-        if (markerRef.current) {
-          markerRef.current.setLatLng([lat, lng]);
-        } else {
-          markerRef.current = L.marker([lat, lng]).addTo(
-            mapRef.current as L.Map
-          );
-        }
-      });
+  const handleZoneClick = (zoneId: number) => {
+    if (selectionMode === "zone") {
+      setHighlightedZoneId(zoneId);
+      onZoneSelect(zoneId);
     }
-  }, [setTempCoordinates]);
+  };
 
-  return <div id="map" style={{ height: "400px", width: "100%" }}></div>;
+  const handlePointMode = () => {
+    setHighlightedZoneId(null);
+    onZoneSelect(null);
+    setSelectionMode("point");
+  };
+
+  const handleZoneMode = () => {
+    setTempCoordinates({ lat: null, lng: null });
+    setSelectionMode("zone");
+  };
+  return (
+    <div>
+      <div>
+        <button
+          onClick={handlePointMode}
+          style={{
+            margin: "10px",
+            padding: "10px",
+            cursor: "pointer",
+            backgroundColor: selectionMode === "point" ? "blue" : "gray",
+            color: "white",
+          }}
+        >
+          Select Point
+        </button>
+        <button
+          onClick={handleZoneMode}
+          style={{
+            margin: "10px",
+            padding: "10px",
+            cursor: "pointer",
+            backgroundColor: selectionMode === "zone" ? "blue" : "gray",
+            color: "white",
+          }}
+        >
+          Select zone
+        </button>
+      </div>
+
+      {/* Map Container */}
+      <MapContainer
+        center={[67.8558, 20.2253]}
+        zoom={13}
+        style={{ height: "400px", width: "100%" }}
+      >
+        {/* Base Layer */}
+        <TileLayer
+          attribution="&copy; OpenStreetMap contributors"
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+
+        <PointClickHandler />
+
+        {tempCoordinates.lat && tempCoordinates.lng && (
+          <Marker position={[tempCoordinates.lat, tempCoordinates.lng]}>
+            <Popup>You selected this point.</Popup>
+          </Marker>
+        )}
+
+        {zones.map((zone) => (
+          <GeoJSON
+            key={zone.id}
+            data={
+              {
+                type: "Feature",
+                geometry: zone.coordinates.geometry,
+                properties: {},
+              } as GeoJSON.Feature
+            }
+            style={() => getZoneStyle(zone.id)}
+            eventHandlers={{
+              click: () => handleZoneClick(zone.id),
+            }}
+          />
+        ))}
+      </MapContainer>
+    </div>
+  );
 };
 
 export default MapComponent;
