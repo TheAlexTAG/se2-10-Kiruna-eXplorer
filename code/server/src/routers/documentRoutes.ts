@@ -82,6 +82,7 @@ class DocumentRoutes {
             query("issuanceDate").optional().isString().matches(/^(?:(?:31\/(0[13578]|1[02])\/\d{4})|(?:30\/(0[1-9]|1[0-2])\/\d{4})|(?:29\/02\/(?:(?:\d{2}(?:0[48]|[2468][048]|[13579][26]))|(?:[048]00)))|(?:0[1-9]|1\d|2[0-8])\/(0[1-9]|1[0-2])\/\d{4}|(?:0[1-9]|1[0-2])\/\d{4}|\d{4})$/),
             query("type").optional().isString(),
             query("language").optional().isString(),
+            this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => this.controller.getAllDocuments(req.query)
         .then((documents: Document[]) => res.status(200).json(documents))
         .catch((err: Error) => res.status(500).json({error: err.message})))
