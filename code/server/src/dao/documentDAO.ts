@@ -2,6 +2,7 @@ import { lineArc } from "@turf/turf";
 import { Document } from "../components/document";
 import db from "../db/db";
 import { DocumentNotFoundError, DocumentZoneNotFoundError } from "../errors/documentErrors";
+import { param } from "express-validator";
 /**
  * DAO for interactions with document table
  */
@@ -297,7 +298,6 @@ class DocumentDAO {
  */
     setDocumentZoneID(documentID: number, zoneID: number, longitude: number, latitude: number): Promise<number> {
         return new Promise((resolve, reject) => {
-            console.log(zoneID, longitude, latitude)
             const sql = `UPDATE document SET zoneID = ?, longitude = ?, latitude = ? WHERE documentID = ?`
             db.run(sql, [zoneID, longitude, latitude, documentID], function (this: any, err: Error) {
                 if(err) reject(err);
@@ -332,6 +332,46 @@ class DocumentDAO {
             })
         })
     }
+
+    shuffleCoordInsert(documents: {documentID: number, coordinates: {latitude: number, longitude: number}}[]): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            db.serialize(() => {
+                db.run("BEGIN TRANSACTION", (err: Error) => {
+                    if(err) return reject(err);
+                })
+                const updatestmt = db.prepare(`
+                UPDATE document 
+                SET latitude = ?, 
+                    longitude = ? 
+                WHERE documentID = ?
+                `)
+                const updates = documents.map(doc => new Promise<void>((res, rej) => {
+                    updatestmt.run(
+                        doc.coordinates.latitude,
+                        doc.coordinates.longitude,
+                        doc.documentID,
+                        (err: Error) => {
+                            if(err) rej(err);
+                            else res();
+                        }
+                    )
+                }))
+                Promise.all(updates)
+                .then(() => updatestmt.finalize((err: Error) => {
+                    if(err) return reject(err);
+                    db.run("COMMIT", (cerr: Error) => {
+                        if(err) return reject(cerr);
+                        resolve(true);
+                    })
+                }))
+                .catch((err: Error) => db.run("ROLLBACK", (rerr: Error) => {
+                    if(rerr) return reject(rerr);
+                    return reject(err);
+                }))
+            })
+        })
+    }
+
 }
 
 

@@ -47,6 +47,7 @@ class DocumentRoutes {
         .then((lastID:number) => res.status(200).json(lastID))
         .catch((err: Error) => {
             if(err instanceof WrongGeoreferenceError) res.status(err.code).json({error: err.message});
+            else if(err instanceof InvalidDocumentZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof ZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof MissingKirunaZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof CoordinatesOutOfBoundsError) res.status(err.code).json({error: err.message});
@@ -113,10 +114,24 @@ class DocumentRoutes {
         .then(() => res.status(200).send())
         .catch((err: Error) => {
             if(err instanceof WrongGeoreferenceError) res.status(err.code).json({error: err.message});
+            else if(err instanceof InvalidDocumentZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof ZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof MissingKirunaZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof CoordinatesOutOfBoundsError) res.status(err.code).json({error: err.message});
             else if (err instanceof WrongGeoreferenceUpdateError) res.status(err.code).json({error: err.message});
+            else res.status(500).json({error: err.message});
+        })
+        )
+
+        this.app.put("/api/documents/georef/shuffle/:id",
+            param('id').isInt(),
+            Utilities.prototype.isUrbanPlanner,
+            this.errorHandler.validateRequest,
+        (req: any, res: any, next: any) => this.controller.shuffleCoordinates(parseInt(req.params.id, 10))
+        .then((success: boolean) => res.status(200).json(success))
+        .catch((err: Error) => {
+            if(err instanceof InvalidDocumentZoneError) res.status(err.code).json({error: err.message});
+            else if (err instanceof ZoneError) res.status(err.code).json({error: err.message});
             else res.status(500).json({error: err.message});
         })
         )
