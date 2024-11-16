@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import { Table, Button } from "react-bootstrap";
+import { Table, Button, Form } from "react-bootstrap";
 import API from "../../API/API";
 import { LinkingDocumentsModal } from "./LinkingDocuments/LinkingDocumentsModal";
 import EditDocumentModal from "./EditDocuments/EditDocumentsModal";
 import NewDocument from "../NewDocument/NewDocument";
-import { FaEdit } from "react-icons/fa"; 
+import { FaEdit } from "react-icons/fa";
 
 interface userProps {
   userInfo: { username: string; role: string };
@@ -12,13 +12,25 @@ interface userProps {
 
 export const DocumentList = ({ userInfo }: userProps) => {
   const [documents, setDocuments] = useState([]);
+  const [filteredDocuments, setFilteredDocuments] = useState([]);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const fetchDocuments = async () => {
     API.getDocuments().then((data) => {
       setDocuments(data);
+      setFilteredDocuments(data);
     });
+  };
+
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value.toLowerCase();
+    setSearchTerm(value);
+    const filtered = documents.filter((document: any) =>
+      document.title?.toLowerCase().includes(value)
+    );
+    setFilteredDocuments(filtered);
   };
 
   const handleEditClick = (document: any) => {
@@ -38,6 +50,17 @@ export const DocumentList = ({ userInfo }: userProps) => {
           <NewDocument updateTable={fetchDocuments} userInfo={userInfo} />
         )}
       </div>
+
+      {/* Search Bar */}
+      <Form.Group className="mb-3">
+        <Form.Control
+          type="text"
+          placeholder="Search by title..."
+          value={searchTerm}
+          onChange={handleSearch}
+        />
+      </Form.Group>
+
       <div style={{ overflow: "auto" }}>
         <Table striped bordered hover className="text-center">
           <thead>
@@ -52,7 +75,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
             </tr>
           </thead>
           <tbody>
-            {documents.map((document: any, index: number) => (
+            {filteredDocuments.map((document: any, index: number) => (
               <tr key={index}>
                 <td>{index + 1}</td>
                 <td>{document.title ? document.title : "-"}</td>
@@ -68,7 +91,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
                     updateTable={fetchDocuments}
                   />
 
-                  {/*Edit Icon */}
+                  {/* Edit Icon */}
                   <Button
                     variant="success"
                     className="ml-2 d-flex align-items-center justify-content-center"
