@@ -2,6 +2,7 @@ import { lineArc } from "@turf/turf";
 import { Document } from "../components/document";
 import db from "../db/db";
 import { DocumentNotFoundError, DocumentZoneNotFoundError } from "../errors/documentErrors";
+import { param } from "express-validator";
 /**
  * DAO for interactions with document table
  */
@@ -27,7 +28,7 @@ class DocumentDAO {
         return new Promise((resolve, reject) => {
             const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
             VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-            db.run(sql, [title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages], function(this: any, err: Error) {
+            db.run(sql, [title, description, zoneID, latitude, longitude, stakeholders.replace(/\s*,\s*/g, ',').trim(), scale, issuanceDate, type, language, pages], function(this: any, err: Error) {
                 if(err) reject(err);
                 else resolve(this.lastID);
             })
@@ -86,7 +87,7 @@ class DocumentDAO {
                         row.title,
                         row.description,
                         row.zoneID, row.latitude,
-                        row.longitude, row.stakeholders,
+                        row.longitude, row.stakeholders.replace(/\s*,\s*/g, ', ').trim(),
                         row.scale, row.issuanceDate,
                         row.type, row.language,
                         row.pages,
@@ -161,9 +162,9 @@ class DocumentDAO {
  * @returns a list of documents
  * @throws generic error if the database query fails
  */
-    getDocumentsFull(): Promise<Document[]> {
+    getDocumentsFull(filters: any): Promise<Document[]> {
         return new Promise((resolve, reject) => {
-            const sql = `WITH link_counts AS (
+            let sql = `WITH link_counts AS (
                 SELECT d.documentID,
                 COUNT(*) AS total_connections,
                 GROUP_CONCAT(
@@ -196,8 +197,38 @@ class DocumentDAO {
         LEFT JOIN link_counts lc ON d.documentID = lc.documentID
         LEFT JOIN resource r ON d.documentID = r.documentID
         LEFT JOIN attachment a ON d.documentID = a.documentID
-        GROUP BY d.documentID`
-            db.all(sql, [], (err: Error, rows: any[]) => {
+        `;
+        const conditions: string[] = [];
+        const params: any[] = [];
+        if (filters.zoneID) {
+            conditions.push("d.zoneID = ?");
+            params.push(filters.zoneID);
+        }
+        if (filters.stakeholders) {
+            conditions.push("d.stakeholders LIKE ?");
+            params.push(`%${filters.stakeholders}%`);
+        }
+        if (filters.scale) {
+            conditions.push("d.scale = ?");
+            params.push(filters.scale);
+        }
+        if (filters.issuanceDate) {
+            conditions.push("d.issuanceDate LIKE ?");
+            params.push(`${filters.issuanceDate}%`);
+        }
+        if (filters.type) {
+            conditions.push("d.type = ?");
+            params.push(filters.type);
+        }
+        if (filters.language) {
+            conditions.push("d.language = ?");
+            params.push(filters.language);
+        }
+        if (conditions.length > 0) {
+            sql += ` WHERE ${conditions.join(" AND ")}`;
+        }
+        sql += ` GROUP BY d.documentID`;
+            db.all(sql, params, (err: Error, rows: any[]) => {
                 if(err) reject(err);
                 else {
                     let documents: Document[] = [];
@@ -207,7 +238,7 @@ class DocumentDAO {
                             row.title,
                             row.description,
                             row.zoneID, row.latitude,
-                            row.longitude, row.stakeholders,
+                            row.longitude, row.stakeholders.replace(/\s*,\s*/g, ', ').trim(),
                             row.scale, row.issuanceDate,
                             row.type, row.language,
                             row.pages,
@@ -267,7 +298,6 @@ class DocumentDAO {
  */
     setDocumentZoneID(documentID: number, zoneID: number, longitude: number, latitude: number): Promise<number> {
         return new Promise((resolve, reject) => {
-            console.log(zoneID, longitude, latitude)
             const sql = `UPDATE document SET zoneID = ?, longitude = ?, latitude = ? WHERE documentID = ?`
             db.run(sql, [zoneID, longitude, latitude, documentID], function (this: any, err: Error) {
                 if(err) reject(err);
@@ -304,6 +334,46 @@ class DocumentDAO {
     }
 
 
+    shuffleCoordInsert(documents: {documentID: number, coordinates: {latitude: number, longitude: number}}[]): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            db.serialize(() => {
+                db.run("BEGIN TRANSACTION", (err: Error) => {
+                    if(err) return reject(err);
+                })
+                const updatestmt = db.prepare(`
+                UPDATE document 
+                SET latitude = ?, 
+                    longitude = ? 
+                WHERE documentID = ?
+                `)
+                const updates = documents.map(doc => new Promise<void>((res, rej) => {
+                    updatestmt.run(
+                        doc.coordinates.latitude,
+                        doc.coordinates.longitude,
+                        doc.documentID,
+                        (err: Error) => {
+                            if(err) rej(err);
+                            else res();
+                        }
+                    )
+                }))
+                Promise.all(updates)
+                .then(() => updatestmt.finalize((err: Error) => {
+                    if(err) return reject(err);
+                    db.run("COMMIT", (cerr: Error) => {
+                        if(err) return reject(cerr);
+                        resolve(true);
+                    })
+                }))
+                .catch((err: Error) => db.run("ROLLBACK", (rerr: Error) => {
+                    if(rerr) return reject(rerr);
+                    return reject(err);
+                }))
+            })
+        })
+    }
+
+
     /**
  * Creates a new resource for the specified document
  * @param documentID the id of the document to which belong the resource
@@ -322,6 +392,7 @@ class DocumentDAO {
             })
         })
     }
+
 }
 
 

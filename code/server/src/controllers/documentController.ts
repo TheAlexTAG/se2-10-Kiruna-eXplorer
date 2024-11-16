@@ -96,9 +96,9 @@ class DocumentController {
    * @returns a list of documents
    * @throws generic error if the database query fails
    */
-  async getAllDocuments(): Promise<Document[]> {
+  async getAllDocuments(filters: any): Promise<Document[]> {
     try {
-      let documents = await this.dao.getDocumentsFull();
+      let documents = await this.dao.getDocumentsFull(filters);
       return documents;
     } catch (err) {
       throw err;
@@ -140,7 +140,7 @@ class DocumentController {
    * @param longitude the longitude of the point, can be null
    * @param latitude the latitude of the point, can be null
    */
-  async updateGeoreference(documentID: number, zoneID: number | null, longitude: number | null, latitude: number | null): Promise<void> {
+  async updateGeoreference(documentID: number, zoneID: number | null, longitude: number, latitude: number): Promise<void> {
     try {
       if(zoneID == null && latitude != null && longitude != null) {
         const checkCoordinates = await this.checkCoordinatesValidity(longitude, latitude);
@@ -163,6 +163,33 @@ class DocumentController {
         else return;
       }
       else throw new WrongGeoreferenceError();
+    } catch(err) {
+      throw err;
+    }
+  }
+
+  async shuffleCoordinates(zoneID: number): Promise<boolean> {
+    try{
+      if(zoneID === 0) return false;
+      let documents = await this.dao.getDocumentsFull({zoneID: zoneID});
+      let zone = await ZoneDAO.prototype.getZone(zoneID);
+      if(documents.length === 0) return false;
+      let updatedDocs = await Promise.all(documents.map(async (doc: Document) => {
+        if(await this.checkCoordinatesInsideZone(zone.coordinates, {longitude: doc.longitude, latitude: doc.latitude})) {
+          return {
+            documentID: doc.id,
+            coordinates: {latitude: doc.latitude, longitude: doc.longitude},
+          }
+        }
+        else {
+          return {
+            documentID: doc.id,
+            coordinates: await this.getRandCoordinates(zone.coordinates)
+          }
+        }
+      }))
+      await this.dao.shuffleCoordInsert(updatedDocs);
+      return true;
     } catch(err) {
       throw err;
     }
@@ -239,6 +266,17 @@ class DocumentController {
       );
       return checkInside;
     } catch (err) {
+      throw err;
+    }
+  }
+
+  private async checkCoordinatesInsideZone(polygon: any, coordinates: {longitude: number, latitude: number}): Promise<boolean> {
+    try {
+      const point = turf.point([coordinates.longitude, coordinates.latitude]);
+      const checkInside = turf.booleanPointInPolygon(point, polygon);
+      return checkInside;
+    }catch(err) {
+      console.error(err);
       throw err;
     }
   }

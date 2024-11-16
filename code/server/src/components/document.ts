@@ -6,8 +6,8 @@ class Document {
     title: string;
     description: string;
     zoneID: number | null;
-    latitude: number | null;
-    longitude: number | null;
+    latitude: number;
+    longitude: number;
     stakeholders: string;
     scale: string;
     issuanceDate: string;
@@ -40,7 +40,7 @@ class Document {
      * @param resource list of resource URLs related to the document
      * @param links the id of the documents linked to the actual document
     */
-    constructor(id: number, title: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null,
+    constructor(id: number, title: string, description: string, zoneID: number | null, latitude: number, longitude: number,
         stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: number | null, connections: number, 
         attachment: string[] = [], resource: string[] = [], links: number[] = []) {
         this.id = id;
