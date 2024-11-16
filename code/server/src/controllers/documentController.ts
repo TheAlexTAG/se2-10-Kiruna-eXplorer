@@ -169,6 +169,24 @@ class DocumentController {
   }
 
   /**
+   * 
+   * @param documentID the id of the document to which belong the resource
+   * @param link the link of the resource
+   * @returns the id of the resource added
+   * @throws generic error if the database query fails
+   * @throws DocumentNotFoundError if the documentID is not presend into the database
+   */
+  async addResource(documentID: number, link: string): Promise<number>{
+    try {
+      const document: Document = await this.getDocumentByID(documentID);
+      const lastID: number = await this.dao.addResource(documentID, link);
+      return lastID;
+    } catch (err) {
+      throw err;
+    }
+  }
+
+  /**
    *
    * @param polygon a geojson polygon
    * @returns random coordinates in the poygon in {lat, lon} format
