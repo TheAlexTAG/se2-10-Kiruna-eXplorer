@@ -78,6 +78,13 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
     lat: latitude,
     lng: longitude,
   });
+
+  const [tempZoneId, setTempZoneId] = useState<number | null>(null);
+  const [selectionMode, setSelectionMode] = useState<"point" | "zone">("point");
+  const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
+    null
+  );
+
   const handleClose = () => {
     setTitle("");
     setIcon("");
@@ -174,11 +181,15 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
   };
 
   const handleLocationSelect = () => {
+    console.log(tempCoordinates);
     if (tempCoordinates.lat !== null && tempCoordinates.lng !== null) {
       setLatitude(tempCoordinates.lat);
       setLongitude(tempCoordinates.lng);
+      setZoneID(null);
+    } else {
+      setZoneID(tempZoneId);
     }
-    setShowMapModal(false); // Close the modal when "OK" is clicked
+    setShowMapModal(false);
   };
 
   const handleStakeholderSelect = (
@@ -191,13 +202,13 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
     setStakeholders(valuesString);
   };
   const handleZoneSelect = (zoneId: number | null) => {
-    setZoneID(zoneId);
+    setTempZoneId(zoneId);
     if (zoneId !== null) {
-      setLatitude(null);
-      setLongitude(null);
+      setTempCoordinates({ lat: null, lng: null });
     }
   };
-
+  console.log("my temp zone id is ", tempZoneId);
+  console.log("my zoneid is ", zoneID);
   return (
     <div className="document-container">
       <Button variant="primary" onClick={handleShow}>
@@ -262,6 +273,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                   step="0.0001"
                   value={latitude ?? ""}
                   onChange={handleLatitudeChange}
+                  disabled={zoneID !== null}
                 />
               </Form.Group>
 
@@ -272,6 +284,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                   step="0.0001"
                   value={longitude ?? ""}
                   onChange={handleLongitudeChange}
+                  disabled={zoneID !== null}
                 />
               </Form.Group>
               <Form.Group as={Col} controlId="formLongitude">
@@ -411,6 +424,11 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
             tempCoordinates={tempCoordinates}
             setTempCoordinates={setTempCoordinates}
             onZoneSelect={handleZoneSelect}
+            setTempZoneId={setTempZoneId}
+            selectionMode={selectionMode}
+            setSelectionMode={setSelectionMode}
+            highlightedZoneId={highlightedZoneId}
+            setHighlightedZoneId={setHighlightedZoneId}
           />
         </Modal.Body>
         <Modal.Footer>

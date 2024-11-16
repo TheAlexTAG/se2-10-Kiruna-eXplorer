@@ -18,6 +18,11 @@ interface MapComponentProps {
     lng: number | null;
   }) => void;
   onZoneSelect: (zoneId: number | null) => void;
+  setTempZoneId: (zoneId: number | null) => void;
+  selectionMode: string;
+  setSelectionMode: (selectionMode: "point" | "zone") => void;
+  highlightedZoneId: number | null;
+  setHighlightedZoneId: (zoneId: number | null) => void;
 }
 
 type ZoneProps = {
@@ -32,12 +37,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
   tempCoordinates,
   setTempCoordinates,
   onZoneSelect,
+  setTempZoneId,
+  selectionMode,
+  setSelectionMode,
+  highlightedZoneId,
+  setHighlightedZoneId,
 }) => {
   const [zones, setZones] = useState<ZoneProps[]>([]);
-  const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
-    null
-  );
-  const [selectionMode, setSelectionMode] = useState<"point" | "zone">("point");
 
   useEffect(() => {
     const fetchZones = async () => {
