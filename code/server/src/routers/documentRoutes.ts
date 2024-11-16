@@ -1,6 +1,6 @@
 import express from "express";
 import { DocumentController } from "../controllers/documentController";
-import { body, param } from "express-validator";
+import { body, param, query} from "express-validator";
 import ErrorHandler from "../helper";
 import { Document } from "../components/document";
 import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, WrongGeoreferenceError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
@@ -31,7 +31,6 @@ class DocumentRoutes {
          */
         this.app.post("/api/document", 
             body("title").isString().notEmpty(),
-            body("icon").isString().notEmpty(),
             body("description").isString().notEmpty(),
             body("zoneID").optional({nullable: true}).isInt(),
             body("latitude").optional({nullable:true}).isFloat(),
@@ -48,6 +47,7 @@ class DocumentRoutes {
         .then((lastID:number) => res.status(200).json(lastID))
         .catch((err: Error) => {
             if(err instanceof WrongGeoreferenceError) res.status(err.code).json({error: err.message});
+            else if(err instanceof InvalidDocumentZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof ZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof MissingKirunaZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof CoordinatesOutOfBoundsError) res.status(err.code).json({error: err.message});
@@ -77,7 +77,14 @@ class DocumentRoutes {
  * route for retrieving all the documents in the database
  */
         this.app.get("/api/documents/links",
-        (req: any, res: any, next: any) => this.controller.getAllDocuments()
+            query("zoneID").optional().isInt(),
+            query("stakeholders").optional().isString(),
+            query("scale").optional().isString(),
+            query("issuanceDate").optional().isString().matches(/^(?:(?:31\/(0[13578]|1[02])\/\d{4})|(?:30\/(0[1-9]|1[0-2])\/\d{4})|(?:29\/02\/(?:(?:\d{2}(?:0[48]|[2468][048]|[13579][26]))|(?:[048]00)))|(?:0[1-9]|1\d|2[0-8])\/(0[1-9]|1[0-2])\/\d{4}|(?:0[1-9]|1[0-2])\/\d{4}|\d{4})$/),
+            query("type").optional().isString(),
+            query("language").optional().isString(),
+            this.errorHandler.validateRequest,
+        (req: any, res: any, next: any) => this.controller.getAllDocuments(req.query)
         .then((documents: Document[]) => res.status(200).json(documents))
         .catch((err: Error) => res.status(500).json({error: err.message})))
 /**
@@ -92,7 +99,7 @@ class DocumentRoutes {
         this.app.delete("/api/documents/delete/all",
             Utilities.prototype.isAdmin,
         (req: any, res: any, next: any) => this.controller.deleteAllDocuments()
-        .then(() => res.status(200).json())
+        .then(() => res.status(200).send())
         .catch((err: Error) => res.status(500).json({error: err.message}))
         )
 
@@ -104,13 +111,28 @@ class DocumentRoutes {
             Utilities.prototype.isUrbanPlanner,
             this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => this.controller.updateGeoreference(req.params.id, req.body.zoneID, req.body.longitude, req.body.latitude)
-        .then(() => res.status(200).json())
+        .then(() => res.status(200).send())
         .catch((err: Error) => {
             if(err instanceof WrongGeoreferenceError) res.status(err.code).json({error: err.message});
+            else if(err instanceof InvalidDocumentZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof ZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof MissingKirunaZoneError) res.status(err.code).json({error: err.message});
             else if (err instanceof CoordinatesOutOfBoundsError) res.status(err.code).json({error: err.message});
             else if (err instanceof WrongGeoreferenceUpdateError) res.status(err.code).json({error: err.message});
+            else res.status(500).json({error: err.message});
+        })
+        )
+
+
+        this.app.put("/api/documents/georef/shuffle/:id",
+            param('id').isInt(),
+            Utilities.prototype.isUrbanPlanner,
+            this.errorHandler.validateRequest,
+        (req: any, res: any, next: any) => this.controller.shuffleCoordinates(parseInt(req.params.id, 10))
+        .then((success: boolean) => res.status(200).json(success))
+        .catch((err: Error) => {
+            if(err instanceof InvalidDocumentZoneError) res.status(err.code).json({error: err.message});
+            else if (err instanceof ZoneError) res.status(err.code).json({error: err.message});
             else res.status(500).json({error: err.message});
         })
         )
