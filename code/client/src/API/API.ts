@@ -169,6 +169,48 @@ const updateGeoreference = async (
   }
 };
 
+const filterDocuments = async (
+  stakeholders: string | null | undefined,
+  scale: string | null | undefined,
+  issuanceDate: string | null | undefined,
+  type: string | null | undefined,
+  language: string | null | undefined
+) => {
+  try {
+    // Crea un oggetto per i parametri
+    const params = new URLSearchParams();
+
+    if (stakeholders) params.append("stakeholders", stakeholders);
+    if (scale) params.append("scale", scale);
+    if (issuanceDate) params.append("issuanceDate", issuanceDate);
+    if (type) params.append("type", type);
+    if (language) params.append("language", language);
+
+    // Fai la richiesta con i parametri dinamici
+    const response = await fetch(
+      `${SERVER_URL}/documents/links?${params.toString()}`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Error filtering documents:", errorData);
+      throw new Error(errorData.error || "Failed to filter documents");
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("An error occurred while filtering documents:", error);
+    throw error;
+  }
+};
+
 const API = {
   login,
   logout,
@@ -178,5 +220,6 @@ const API = {
   getDocuments,
   connectDocuments,
   updateGeoreference,
+  filterDocuments,
 };
 export default API;
