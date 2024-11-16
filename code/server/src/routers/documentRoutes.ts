@@ -123,6 +123,7 @@ class DocumentRoutes {
         })
         )
 
+
         this.app.put("/api/documents/georef/shuffle/:id",
             param('id').isInt(),
             Utilities.prototype.isUrbanPlanner,
@@ -135,6 +136,20 @@ class DocumentRoutes {
             else res.status(500).json({error: err.message});
         })
         )
+
+/**
+ * route for inserting a resource related to the a specific document. It returns the id of the resource added.
+ */
+        this.app.post("/api/resource/:documentID", 
+            param('documentID').isInt(),
+            body("link").isString().notEmpty(),
+            Utilities.prototype.isUrbanPlanner,
+            this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => this.controller.addResource(req.params.documentID, req.body.link)
+            .then((lastID:number) => res.status(200).json(lastID))
+            .catch((err: any) =>  res.status(err.code).json({error: err.message}))
+        )
+
     }
 
 }

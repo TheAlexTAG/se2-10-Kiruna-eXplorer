@@ -52,6 +52,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
     { value: "Regional authority", label: "Regional authority" },
     { value: "Architecture firms", label: "Architecture firms" },
     { value: "Citizens", label: "Citizens" },
+    { value: "Kiruna kommun", label: "Kiruna kommun" },
     { value: "Others", label: "Others" }
   ];
 
@@ -324,6 +325,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                 <option value="">Select Language</option>
                 <option value="English">English</option>
                 <option value="Spanish">Spanish</option>
+                <option value="Swedish">Swedish</option>
                 <option value="French">French</option>
                 <option value="German">German</option>
                 <option value="Italian">Italian</option>

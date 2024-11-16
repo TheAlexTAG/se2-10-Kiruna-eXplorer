@@ -157,7 +157,14 @@ const updateGeoreference = async (
     throw new Error(errorData.error || "Failed to update georeference");
   }
 
-  return await response.json();
+  if(response.status === 200)
+  {
+    return;
+  }
+  else
+  {
+    return await response.json();
+  }
 };
 
 const API = {
