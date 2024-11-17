@@ -11,11 +11,20 @@ class ZoneError extends Error {
 }
 
 class MissingKirunaZoneError extends Error {
-    code: number
+    code: number;
 
     constructor() {
         super("Cannot find Kiruna main area")
         this.code = 404;
+    }
+}
+
+class InsertZoneError extends Error{
+    code: number;
+
+    constructor() {
+        super("Error during zone entry")
+        this.code = 400;
     }
 }
 
@@ -27,4 +36,4 @@ class DatabaseConnectionError extends Error {
         this.code = 503;
     }
 }
-export {ZoneError, MissingKirunaZoneError,DatabaseConnectionError};
+export {ZoneError, MissingKirunaZoneError,DatabaseConnectionError,InsertZoneError};

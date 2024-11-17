@@ -18,7 +18,7 @@ class DocumentsError extends Error {
 
     constructor() {
         super('Error with documents!');
-        this.code = 401;
+        this.code = 409;
     }
 }
 
