@@ -1,8 +1,8 @@
 import { Zone } from "../components/zone";
 import db from "../db/db";
 import { InternalServerError } from "../errors/link_docError";
-import { ZoneError } from "../errors/zoneError";
-import { GeoJSON } from 'geojson';
+import { ZoneError, InsertZoneError } from "../errors/zoneError";
+import { Geometry } from 'geojson';
 
 
 /* Sanitize input */
@@ -15,24 +15,17 @@ const wellknown = require('wellknown');
 
 class ZoneDAO {
 
-  static createGeoJSON(coordinates: string): GeoJSON{
-    const geo= wellknown.parse(DOMPurify.sanitize(coordinates));
+  static createZone(id: number, coordinates: string): Zone{
+    const geo= wellknown.parse(coordinates);
     if(!geo){
-      return geo; // in this case geo= null;
+      throw new ZoneError(); // in this case geo= null;
     }
     
-    const geoJson: GeoJSON= {
-      type: "Feature",
-      geometry: geo,
-      properties: {
-        name: "Custom zone"
-      }
-    };
-    return geoJson;
+    return new Zone(id, geo);
   }
 
-  getZone(id: number): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
+  getZone(id: number): Promise<Zone> {
+    return new Promise<Zone>((resolve, reject) => {
       const sql= "SELECT * FROM zone WHERE zoneID=?";
       db.get(sql, [id], (err: Error | null, row: any) => {
         if(err){
@@ -41,12 +34,12 @@ class ZoneDAO {
         if(!row){
           return reject(new ZoneError());
         }
-        const geo= ZoneDAO.createGeoJSON(row.coordinates);
-        if(!geo){
-          return reject(new ZoneError());
-        }
+        try {
+          return resolve(ZoneDAO.createZone(+DOMPurify.sanitize(row.zoneID), DOMPurify.sanitize(row.coordinates)));
 
-        return resolve(new Zone(+DOMPurify.sanitize(row.zoneID), geo));
+        } catch (error: any) {
+          return reject(error);
+        }
       }
      );
     }
@@ -57,7 +50,6 @@ class ZoneDAO {
     return new Promise<Zone[]>((resolve, reject) => {
       const sql= "SELECT * FROM zone";
       db.all(sql, [], (err: Error | null, rows: any) => {
-        const res: Zone[]= [];
         if (err) {
           return reject(new InternalServerError(err.message));
         }
@@ -65,19 +57,17 @@ class ZoneDAO {
           return reject(new ZoneError());
         }
 
-        for (let row of rows) {
-          const geo= ZoneDAO.createGeoJSON(row.coordinates);
-          if(!geo){
-            return reject(new ZoneError());
-          }
-          res.push(new Zone(+DOMPurify.sanitize(row.zoneID), geo));
+        try {
+          const zones: Zone[] = rows.map((row: any) => ZoneDAO.createZone(+DOMPurify.sanitize(row.zoneID), DOMPurify.sanitize(row.coordinates)));
+          return resolve(zones);
+        } catch (error) {
+          return reject(error);
         }
-        return resolve(res);
       }
      );
     }
    );
-  }
+  };
 
   /**
    * Retrieves the whole Kiruna area as a WKT polygon
@@ -93,7 +83,7 @@ class ZoneDAO {
         row ? resolve(row.coordinates) : resolve('')
       })
     })
-  }
+  };
 
   insertKirunaPolygon(): Promise<boolean> {
     return new Promise<boolean>(function (resolve, reject) {
@@ -106,6 +96,25 @@ class ZoneDAO {
           return reject(new InternalServerError(err.message));
         }
         return resolve(true);
+      }
+     );
+    }
+   );
+  };
+
+  insertZone(coordinates: string): Promise<number> {
+    return new Promise<number>(function (resolve, reject) {
+      const sql = "insert into zone(coordinates) VALUES(?)";
+      db.run(sql, [coordinates], function (err: Error | null) {
+        if (err) {
+          return reject(new InternalServerError(err.message));
+        }
+
+        if(this.lastID){
+          return resolve(this.lastID);
+        }
+
+        return reject(new InsertZoneError());
       }
      );
     }

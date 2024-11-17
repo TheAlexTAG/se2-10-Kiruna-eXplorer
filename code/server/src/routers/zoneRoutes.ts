@@ -3,8 +3,16 @@ import { ZoneController } from '../controllers/zoneController';
 import { Utilities } from '../utilities';
 import { Zone } from '../components/zone';
 import db from '../db/db';
+import { Geometry } from 'geojson';
 
-const {param, validationResult} = require('express-validator'); // validation middleware
+import { geometry } from "@turf/helpers";
+
+const {param, body, validationResult} = require('express-validator'); // validation middleware
+/* Sanitize input */
+const createDOMPurify = require("dompurify");
+const { JSDOM } = require("jsdom");
+const window = new JSDOM("").window;
+const DOMPurify = createDOMPurify(window);
 
 class ZoneRoutes {    
     private app: express.Application;
@@ -47,6 +55,30 @@ class ZoneRoutes {
                 return res.status(err.code).json({error: err.message});
             }
         });
+
+        // POST api/zone
+        this.app.post('/api/zone', this.utility.isUrbanPlanner, [
+            body('coordinates').isArray(),
+            body("coordinates.*").isArray({ min: 2, max: 2}),
+            body("coordinates.*.0").isFloat({ min: -180, max: 180 }), //longitudine
+            body("coordinates.*.1").isFloat({ min: -90, max: 90 }) //latitudine
+        ], async (req: any, res: any) => {
+
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(422).json({ error: "Invalid zone input" });
+            }
+
+            try {
+                const geo: Geometry= geometry("Polygon", [req.body.coordinates])
+                const zoneID: number = await this.controller.insertZone(geo);
+                return res.json(zoneID);
+
+            } catch (err: any) {
+                return res.status(err.code ? err.code : 422).json({ error: err.message });
+            }
+        });
+
     }
 
     checkKiruna(): void{
