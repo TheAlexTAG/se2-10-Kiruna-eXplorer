@@ -7,6 +7,7 @@ import {
   GeoJSON,
   FeatureGroup,
   useMapEvent,
+  Polygon,
 } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
 import "leaflet/dist/leaflet.css";
@@ -33,7 +34,8 @@ interface MapComponentProps {
 type ZoneProps = {
   id: number;
   coordinates: {
-    geometry: GeoJSON.Geometry;
+    type: "Polygon";
+    coordinates: number[][][];
   };
 };
 
@@ -57,6 +59,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const fetchZones = async () => {
       try {
         const zonesData = await API.getZones();
+        console.log("the zones are: ", zonesData);
         setZones(zonesData as ZoneProps[]);
       } catch (err) {
         console.error("Error fetching zones:", err);
@@ -109,7 +112,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const handleCreated = (e: any) => {
     const { layer } = e;
     const geoJson = layer.toGeoJSON();
-    console.log("Custom Zone GeoJSON:", geoJson);
+    console.log("Custom Zone GeoJSON:aa", geoJson.geometry.coordinates[0]);
+    setTempCustom(geoJson.geometry.coordinates[0]);
   };
 
   return (
@@ -167,6 +171,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
         <PointClickHandler />
 
+        {tempCoordinates.lat && tempCoordinates.lng && (
+          <Marker position={[tempCoordinates.lat, tempCoordinates.lng]}>
+            <Popup>You selected this point.</Popup>
+          </Marker>
+        )}
         {selectionMode === "custom" && (
           <FeatureGroup ref={featureGroupRef}>
             <EditControl
@@ -180,14 +189,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 polyline: false,
                 polygon: {
                   allowIntersection: false,
-                  showArea: true,
+                  showArea: false,
                 },
               }}
             />
           </FeatureGroup>
         )}
 
-        {zones.map((zone) => (
+        {/*zones.map((zone) => (
           <GeoJSON
             key={zone.id}
             data={
@@ -198,6 +207,19 @@ const MapComponent: React.FC<MapComponentProps> = ({
               } as GeoJSON.Feature
             }
             style={getZoneStyle(zone.id)}
+            eventHandlers={{
+              click: () => handleZoneClick(zone.id),
+            }}
+          />
+        ))*/}
+        {zones.map((zone) => (
+          <Polygon
+            key={zone.id}
+            positions={zone.coordinates.coordinates[0].map(([lng, lat]) => [
+              lat,
+              lng,
+            ])}
+            pathOptions={getZoneStyle(zone.id)}
             eventHandlers={{
               click: () => handleZoneClick(zone.id),
             }}

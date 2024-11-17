@@ -26,6 +26,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
   const [pages, setPages] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   const [show, setShow] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
@@ -123,7 +124,9 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
       );
       return;
     }
-
+    console.log("1)my zoneId is ", zoneID);
+    console.log("2)my tempCustom is ", tempCustom);
+    console.log("3)my latitude is ", latitude);
     if (zoneID === null && tempCustom === null) {
       if (latitude === null || longitude === null) {
         setErrorMessage(
@@ -132,41 +135,50 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
         return;
       }
     } else if (zoneID === null && tempCustom !== null) {
-      //waiting for an api here
-      //after this, we set new zoneId and can proceed
+      const newZone = await API.createZone(tempCustom);
+      //console.log("my new zone is ", newZone);
+      setZoneID(newZone);
     }
-
-    const documentData = {
-      title,
-      icon,
-      description,
-      zoneID,
-      latitude,
-      longitude,
-      stakeholders,
-      scale,
-      issuanceDate,
-      type,
-      language,
-      pages,
-    };
-
-    try {
-      await API.createDocumentNode(documentData);
-      updateTable();
-      handleClose();
-
-      setSuccessMessage(`Creation of document "${title}" successful!`);
-      setErrorMessage(null);
-    } catch (error) {
-      console.error("Error during creation of document:", error);
-      if (CoordinatesOutOfBoundsError) {
-        setErrorMessage("Enter the coordinates inside the zone");
-      } else {
-        setErrorMessage("An error occurred while creating the document");
-      }
-    }
+    setIsReady(true);
   };
+
+  useEffect(() => {
+    const realSubmit = async () => {
+      const documentData = {
+        title,
+        icon,
+        description,
+        zoneID,
+        latitude,
+        longitude,
+        stakeholders,
+        scale,
+        issuanceDate,
+        type,
+        language,
+        pages,
+      };
+
+      try {
+        await API.createDocumentNode(documentData);
+        updateTable();
+        handleClose();
+
+        setSuccessMessage(`Creation of document "${title}" successful!`);
+        setErrorMessage(null);
+      } catch (error) {
+        console.error("Error during creation of document:", error);
+        if (CoordinatesOutOfBoundsError) {
+          setErrorMessage("Enter the coordinates inside the zone");
+        } else {
+          setErrorMessage("An error occurred while creating the document");
+        }
+      }
+    };
+    if (isReady) {
+      realSubmit();
+    }
+  }, [isReady]);
 
   const handleLatitudeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLatitude = e.target.value ? parseFloat(e.target.value) : null;
@@ -215,6 +227,8 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
   };
   console.log("my temp zone id is ", tempZoneId);
   console.log("my zoneid is ", zoneID);
+
+  console.log("in new document we have custom zone as ", tempCustom);
   return (
     <div className="document-container">
       <Button variant="primary" onClick={handleShow}>

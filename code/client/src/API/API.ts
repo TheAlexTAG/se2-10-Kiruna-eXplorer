@@ -211,6 +211,32 @@ const filterDocuments = async (
   }
 };
 
+const createZone = async (coordinates: any) => {
+  try {
+    const response = await fetch(`${SERVER_URL}/zone`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ coordinates }),
+    });
+    if (response.ok) {
+      const zoneId = await response.json();
+      console.log("zone id is , ", zoneId);
+      return zoneId;
+    } else {
+      const errDetails = await response.json();
+      throw new Error(
+        errDetails.error ? errDetails.error : errDetails.error[0].msg
+      );
+    }
+  } catch (err) {
+    console.error("Error creating custom zone: ", err);
+    throw err;
+  }
+};
+
 const API = {
   login,
   logout,
@@ -221,5 +247,6 @@ const API = {
   connectDocuments,
   updateGeoreference,
   filterDocuments,
+  createZone,
 };
 export default API;
