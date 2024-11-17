@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   MapContainer,
   TileLayer,
   Marker,
   Popup,
   GeoJSON,
+  FeatureGroup,
   useMapEvent,
 } from "react-leaflet";
+import { EditControl } from "react-leaflet-draw";
 import "leaflet/dist/leaflet.css";
+import "leaflet-draw/dist/leaflet.draw.css";
 import API from "../../API/API";
 
 interface MapComponentProps {
@@ -20,9 +23,11 @@ interface MapComponentProps {
   onZoneSelect: (zoneId: number | null) => void;
   setTempZoneId: (zoneId: number | null) => void;
   selectionMode: string;
-  setSelectionMode: (selectionMode: "point" | "zone") => void;
+  setSelectionMode: (selectionMode: "point" | "zone" | "custom") => void;
   highlightedZoneId: number | null;
   setHighlightedZoneId: (zoneId: number | null) => void;
+  tempCustom: any;
+  setTempCustom: (tempCustom: any) => void;
 }
 
 type ZoneProps = {
@@ -42,8 +47,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
   setSelectionMode,
   highlightedZoneId,
   setHighlightedZoneId,
+  tempCustom,
+  setTempCustom,
 }) => {
   const [zones, setZones] = useState<ZoneProps[]>([]);
+  const featureGroupRef = useRef<L.FeatureGroup | null>(null);
 
   useEffect(() => {
     const fetchZones = async () => {
@@ -90,6 +98,20 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setTempCoordinates({ lat: null, lng: null });
     setSelectionMode("zone");
   };
+
+  const handleCustomDrawMode = () => {
+    setTempCoordinates({ lat: null, lng: null });
+    setHighlightedZoneId(null);
+    onZoneSelect(null);
+    setSelectionMode("custom");
+  };
+
+  const handleCreated = (e: any) => {
+    const { layer } = e;
+    const geoJson = layer.toGeoJSON();
+    console.log("Custom Zone GeoJSON:", geoJson);
+  };
+
   return (
     <div>
       <div>
@@ -115,7 +137,19 @@ const MapComponent: React.FC<MapComponentProps> = ({
             color: "white",
           }}
         >
-          Select zone
+          Select Zone
+        </button>
+        <button
+          onClick={handleCustomDrawMode}
+          style={{
+            margin: "10px",
+            padding: "10px",
+            cursor: "pointer",
+            backgroundColor: selectionMode === "custom" ? "blue" : "gray",
+            color: "white",
+          }}
+        >
+          Draw Custom Area
         </button>
       </div>
 
@@ -133,10 +167,24 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
         <PointClickHandler />
 
-        {tempCoordinates.lat && tempCoordinates.lng && (
-          <Marker position={[tempCoordinates.lat, tempCoordinates.lng]}>
-            <Popup>You selected this point.</Popup>
-          </Marker>
+        {selectionMode === "custom" && (
+          <FeatureGroup ref={featureGroupRef}>
+            <EditControl
+              position="topright"
+              onCreated={handleCreated}
+              draw={{
+                rectangle: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polyline: false,
+                polygon: {
+                  allowIntersection: false,
+                  showArea: true,
+                },
+              }}
+            />
+          </FeatureGroup>
         )}
 
         {zones.map((zone) => (
@@ -149,7 +197,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 properties: {},
               } as GeoJSON.Feature
             }
-            style={() => getZoneStyle(zone.id)}
+            style={getZoneStyle(zone.id)}
             eventHandlers={{
               click: () => handleZoneClick(zone.id),
             }}

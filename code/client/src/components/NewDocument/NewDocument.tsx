@@ -80,10 +80,13 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
   });
 
   const [tempZoneId, setTempZoneId] = useState<number | null>(null);
-  const [selectionMode, setSelectionMode] = useState<"point" | "zone">("point");
+  const [selectionMode, setSelectionMode] = useState<
+    "point" | "zone" | "custom"
+  >("point");
   const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
     null
   );
+  const [tempCustom, setTempCustom] = useState<any>(null);
 
   const handleClose = () => {
     setTitle("");
@@ -121,13 +124,16 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
       return;
     }
 
-    if (zoneID === null) {
+    if (zoneID === null && tempCustom === null) {
       if (latitude === null || longitude === null) {
         setErrorMessage(
           "Please provide valid coordinates if no zone is selected."
         );
         return;
       }
+    } else if (zoneID === null && tempCustom !== null) {
+      //waiting for an api here
+      //after this, we set new zoneId and can proceed
     }
 
     const documentData = {
@@ -429,6 +435,8 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
             setSelectionMode={setSelectionMode}
             highlightedZoneId={highlightedZoneId}
             setHighlightedZoneId={setHighlightedZoneId}
+            tempCustom={tempCustom}
+            setTempCustom={setTempCustom}
           />
         </Modal.Body>
         <Modal.Footer>
