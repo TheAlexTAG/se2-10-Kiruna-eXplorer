@@ -17,7 +17,7 @@ afterEach(() => {
 /**
  * insertZone test cases
  */
-describe("KX9 unit tests", () => {
+describe("KX9 DAO unit tests", () => {
     describe("insertZone test cases", () => {
         test("It should return the id of the last inserted zone", async() => {
             const zoneDAO = new ZoneDAO();
