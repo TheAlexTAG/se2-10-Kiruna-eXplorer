@@ -70,9 +70,42 @@ class ZoneRoutes {
             }
 
             try {
-                const geo: Geometry= geometry("Polygon", [req.body.coordinates])
+                const geo: Geometry= geometry("Polygon", [req.body.coordinates]);
                 const zoneID: number = await this.controller.insertZone(geo);
                 return res.json(zoneID);
+
+            } catch (err: any) {
+                return res.status(err.code ? err.code : 422).json({ error: err.message });
+            }
+        });
+
+        // PUT api/zone
+        this.app.put('/api/zone/:id', this.utility.isUrbanPlanner, [
+            param('id').isInt({min: 1}),
+            body("document").isBoolean({ strict: true }), // true: editing the area of one document; false: editing the entire area 
+            body('coordinates').isArray(),
+            body("coordinates.*").isArray({ min: 2, max: 2}),
+            body("coordinates.*.0").isFloat({ min: -180, max: 180 }), //longitudine
+            body("coordinates.*.1").isFloat({ min: -90, max: 90 }), //latitudine
+        ], async (req: any, res: any) => {
+
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(422).json({ error: "Invalid input" });
+            }
+
+            try {
+                const geo: Geometry= geometry("Polygon", [req.body.coordinates]);
+                const zoneID: number= +req.params.id;
+                const document: boolean= DOMPurify.sanitize(req.body.document);
+                
+                if (!document || (document && await this.controller.countDocumentsInZone(zoneID)=== 1)){
+                    const spy: boolean= await this.controller.modifyZone(zoneID,geo);
+                    return res.json(spy);             
+                }
+                
+                const newZoneID: number = await this.controller.insertZone(geo);
+                return res.json(newZoneID);
 
             } catch (err: any) {
                 return res.status(err.code ? err.code : 422).json({ error: err.message });
