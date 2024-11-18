@@ -1,8 +1,7 @@
 import { Zone } from "../components/zone";
 import db from "../db/db";
 import { InternalServerError } from "../errors/link_docError";
-import { ZoneError, InsertZoneError } from "../errors/zoneError";
-import { Geometry } from 'geojson';
+import { ZoneError, InsertZoneError, ModifyZoneError } from "../errors/zoneError";
 
 
 /* Sanitize input */
@@ -115,6 +114,42 @@ class ZoneDAO {
         }
 
         return reject(new InsertZoneError());
+      }
+     );
+    }
+   );
+  };
+
+  countDocumentsInZone(zoneID: number): Promise<number> {
+    return new Promise<number>((resolve, reject) => {
+      const sql = "SELECT count(*) as tot FROM document WHERE zoneID=?";
+      db.get(sql, [zoneID], (err: Error | null, row: any) => {
+        if (err) {
+          return reject(new InternalServerError(err.message));
+        }
+        if (row.tot === undefined) {
+          return reject(new ZoneError());
+        }
+        return resolve(+DOMPurify.sanitize(row.tot));
+      }
+     );
+    }
+   );
+  };
+
+  modifyZone(zoneID: number, coordinates: string): Promise<boolean> {
+    return new Promise<boolean>(function (resolve, reject) {
+      const sql = "update zone set coordinates=? where zoneID=?";
+      db.run(sql, [coordinates,zoneID], function (err: Error | null) {
+        if (err) {
+          return reject(new InternalServerError(err.message));
+        }
+
+        if(this.changes!== 1){
+          return reject(new ModifyZoneError());
+        }
+
+        return resolve(true);
       }
      );
     }

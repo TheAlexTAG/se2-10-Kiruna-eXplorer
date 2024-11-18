@@ -79,8 +79,8 @@ export const LinkingDocumentsModal = ({
   };
 
   return (
-    <div className="linking-documents">
-      <Button variant="primary" onClick={handleShow}>
+    <div className="linking-documents mx-2">
+      <Button variant="outline-primary" onClick={handleShow}>
         <i className="bi bi-link-45deg"></i>
       </Button>
       <Modal show={show} onHide={handleClose}>

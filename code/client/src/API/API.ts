@@ -91,8 +91,10 @@ const getZones = async () => {
     console.error("Error getting zones:", errorData);
     throw new Error(errorData.message || "Failed to get zones");
   }
+  const data = await response.json();
+  console.log("my datazones api is ", data);
 
-  return await response.json();
+  return data;
 };
 
 const getDocuments = async () => {
@@ -142,14 +144,17 @@ const updateGeoreference = async (
   latitude: number | null
 ) => {
   console.log(documentID, zoneID, longitude, latitude);
-  const response = await fetch(`${SERVER_URL}/document/georef/update/${documentID}`, {
-    method: "POST",
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ zoneID, longitude, latitude }),
-  });
+  const response = await fetch(
+    `${SERVER_URL}/document/georef/update/${documentID}`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ zoneID, longitude, latitude }),
+    }
+  );
 
   if (!response.ok) {
     const errorData = await response.json();
@@ -157,12 +162,9 @@ const updateGeoreference = async (
     throw new Error(errorData.error || "Failed to update georeference");
   }
 
-  if(response.status === 200)
-  {
+  if (response.status === 200) {
     return;
-  }
-  else
-  {
+  } else {
     return await response.json();
   }
 };
@@ -178,20 +180,23 @@ const filterDocuments = async (
     // Crea un oggetto per i parametri
     const params = new URLSearchParams();
 
-    if (stakeholders) params.append('stakeholders', stakeholders);
-    if (scale) params.append('scale', scale);
-    if (issuanceDate) params.append('issuanceDate', issuanceDate);
-    if (type) params.append('type', type);
-    if (language) params.append('language', language);
+    if (stakeholders) params.append("stakeholders", stakeholders);
+    if (scale) params.append("scale", scale);
+    if (issuanceDate) params.append("issuanceDate", issuanceDate);
+    if (type) params.append("type", type);
+    if (language) params.append("language", language);
 
     // Fai la richiesta con i parametri dinamici
-    const response = await fetch(`${SERVER_URL}/documents/links?${params.toString()}`, {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    const response = await fetch(
+      `${SERVER_URL}/documents/links?${params.toString()}`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     if (!response.ok) {
       const errorData = await response.json();
@@ -200,10 +205,35 @@ const filterDocuments = async (
     }
 
     return await response.json();
-
   } catch (error) {
     console.error("An error occurred while filtering documents:", error);
-    throw error; 
+    throw error;
+  }
+};
+
+const createZone = async (coordinates: any) => {
+  try {
+    const response = await fetch(`${SERVER_URL}/zone`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ coordinates }),
+    });
+    if (response.ok) {
+      const zoneId = await response.json();
+      console.log("zone id is , ", zoneId);
+      return zoneId;
+    } else {
+      const errDetails = await response.json();
+      throw new Error(
+        errDetails.error ? errDetails.error : errDetails.error[0].msg
+      );
+    }
+  } catch (err) {
+    console.error("Error creating custom zone: ", err);
+    throw err;
   }
 };
 
@@ -216,6 +246,7 @@ const API = {
   getDocuments,
   connectDocuments,
   updateGeoreference,
-  filterDocuments
+  filterDocuments,
+  createZone,
 };
 export default API;

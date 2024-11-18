@@ -1,4 +1,4 @@
-import { Col, Container, Dropdown, Row } from "react-bootstrap";
+import { Button, Col, Container, Dropdown, Row } from "react-bootstrap";
 
 interface LinkingDocumentDropdownProps {
   doc: any;
@@ -20,10 +20,10 @@ export const LinkingDocumentDropdown = ({
       <div>
         <Container>
           <Row>
-            <Col md={4}>
+            <Col md={6}>
               <span>{doc.title}</span>
             </Col>
-            <Col md={8}>
+            <Col md={5} className="d-flex align-items-center">
               <Dropdown>
                 <Dropdown.Toggle variant="secondary" id="dropdown-basic">
                   {doc.relationship || "Relationship"}
@@ -40,6 +40,11 @@ export const LinkingDocumentDropdown = ({
                   ))}
                 </Dropdown.Menu>
               </Dropdown>
+            </Col>
+            <Col md={1} className="d-flex align-items-center">
+              <Button variant="outline-danger">
+                <i className="bi bi-x-lg"></i>
+              </Button>
             </Col>
           </Row>
         </Container>

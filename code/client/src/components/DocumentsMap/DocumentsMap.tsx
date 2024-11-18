@@ -164,6 +164,8 @@ const DocumentsMap: React.FC = () => {
     setSelectedDocument(item);
   };
 
+  console.log("selected document is: ", selectedDocument);
+
   return (
     <>
       <div

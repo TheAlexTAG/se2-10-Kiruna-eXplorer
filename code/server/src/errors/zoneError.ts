@@ -28,6 +28,15 @@ class InsertZoneError extends Error{
     }
 }
 
+class ModifyZoneError extends Error{
+    code: number;
+
+    constructor() {
+        super("Error when editing the zone")
+        this.code = 409;
+    }
+}
+
 class DatabaseConnectionError extends Error {
     code: number
 
@@ -36,4 +45,4 @@ class DatabaseConnectionError extends Error {
         this.code = 503;
     }
 }
-export {ZoneError, MissingKirunaZoneError,DatabaseConnectionError,InsertZoneError};
+export {ZoneError, MissingKirunaZoneError,DatabaseConnectionError,InsertZoneError, ModifyZoneError};

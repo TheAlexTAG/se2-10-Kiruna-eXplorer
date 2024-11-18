@@ -26,19 +26,35 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
   const [pages, setPages] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isReady, setIsReady] = useState(false);
 
   const [show, setShow] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
 
   const options = [
     { label: "Design doc.", value: "../../../public/img/design-icon.png" },
-    { label: "Informative doc.", value: "../../../public/img/informative-icon.png" },
-    { label: "Prescriptive doc.", value: "../../../public/img/prescriptive-icon.png" },
-    { label: "Technical doc.", value: "../../../public/img/technical-icon.png" },
+    {
+      label: "Informative doc.",
+      value: "../../../public/img/informative-icon.png",
+    },
+    {
+      label: "Prescriptive doc.",
+      value: "../../../public/img/prescriptive-icon.png",
+    },
+    {
+      label: "Technical doc.",
+      value: "../../../public/img/technical-icon.png",
+    },
     { label: "Agreement", value: "../../../public/img/agreement-icon.png" },
     { label: "Conflict", value: "../../../public/img/conflict-icon.png" },
-    { label: "Consultation", value: "../../../public/img/consultation-icon.png" },
-    { label: "Material effect", value: "../../../public/img/material-effect-icon.png" },
+    {
+      label: "Consultation",
+      value: "../../../public/img/consultation-icon.png",
+    },
+    {
+      label: "Material effect",
+      value: "../../../public/img/material-effect-icon.png",
+    },
   ];
 
   type OptionType = {
@@ -53,16 +69,26 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
     { value: "Architecture firms", label: "Architecture firms" },
     { value: "Citizens", label: "Citizens" },
     { value: "Kiruna kommun", label: "Kiruna kommun" },
-    { value: "Others", label: "Others" }
+    { value: "Others", label: "Others" },
   ];
 
   const [tempCoordinates, setTempCoordinates] = useState<{
     lat: number | null;
     lng: number | null;
   }>({
-    lat: null,
-    lng: null,
+    lat: latitude,
+    lng: longitude,
   });
+
+  const [tempZoneId, setTempZoneId] = useState<number | null>(null);
+  const [selectionMode, setSelectionMode] = useState<
+    "point" | "zone" | "custom"
+  >("point");
+  const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
+    null
+  );
+  const [tempCustom, setTempCustom] = useState<any>(null);
+
   const handleClose = () => {
     setTitle("");
     setIcon("");
@@ -98,47 +124,61 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
       );
       return;
     }
-
-    if (zoneID === null) {
+    console.log("1)my zoneId is ", zoneID);
+    console.log("2)my tempCustom is ", tempCustom);
+    console.log("3)my latitude is ", latitude);
+    if (zoneID === null && tempCustom === null) {
       if (latitude === null || longitude === null) {
         setErrorMessage(
           "Please provide valid coordinates if no zone is selected."
         );
         return;
       }
+    } else if (zoneID === null && tempCustom !== null) {
+      const newZone = await API.createZone(tempCustom);
+      //console.log("my new zone is ", newZone);
+      setZoneID(newZone);
     }
-
-    const documentData = {
-      title,
-      icon,
-      description,
-      zoneID,
-      latitude,
-      longitude,
-      stakeholders,
-      scale,
-      issuanceDate,
-      type,
-      language,
-      pages,
-    };
-
-    try {
-      await API.createDocumentNode(documentData);
-      updateTable();
-      handleClose();
-
-      setSuccessMessage(`Creation of document "${title}" successful!`);
-      setErrorMessage(null);
-    } catch (error) {
-      console.error("Error during creation of document:", error);
-      if (CoordinatesOutOfBoundsError) {
-        setErrorMessage("Enter the coordinates inside the zone");
-      } else {
-        setErrorMessage("An error occurred while creating the document");
-      }
-    }
+    setIsReady(true);
   };
+
+  useEffect(() => {
+    const realSubmit = async () => {
+      const documentData = {
+        title,
+        icon,
+        description,
+        zoneID,
+        latitude,
+        longitude,
+        stakeholders,
+        scale,
+        issuanceDate,
+        type,
+        language,
+        pages,
+      };
+
+      try {
+        await API.createDocumentNode(documentData);
+        updateTable();
+        handleClose();
+
+        setSuccessMessage(`Creation of document "${title}" successful!`);
+        setErrorMessage(null);
+      } catch (error) {
+        console.error("Error during creation of document:", error);
+        if (CoordinatesOutOfBoundsError) {
+          setErrorMessage("Enter the coordinates inside the zone");
+        } else {
+          setErrorMessage("An error occurred while creating the document");
+        }
+      }
+    };
+    if (isReady) {
+      realSubmit();
+    }
+  }, [isReady]);
 
   const handleLatitudeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLatitude = e.target.value ? parseFloat(e.target.value) : null;
@@ -159,19 +199,36 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
   };
 
   const handleLocationSelect = () => {
+    console.log(tempCoordinates);
     if (tempCoordinates.lat !== null && tempCoordinates.lng !== null) {
       setLatitude(tempCoordinates.lat);
       setLongitude(tempCoordinates.lng);
+      setZoneID(null);
+    } else {
+      setZoneID(tempZoneId);
     }
-    setShowMapModal(false); // Close the modal when "OK" is clicked
+    setShowMapModal(false);
   };
 
-  const handleStakeholderSelect = (selectedStakeholders: MultiValue<OptionType>) => {
+  const handleStakeholderSelect = (
+    selectedStakeholders: MultiValue<OptionType>
+  ) => {
     // Convert selected options to a string of comma-separated values
-    const valuesString = [...selectedStakeholders].map(option => option.value).join(", ");
+    const valuesString = [...selectedStakeholders]
+      .map((option) => option.value)
+      .join(", ");
     setStakeholders(valuesString);
   };
+  const handleZoneSelect = (zoneId: number | null) => {
+    setTempZoneId(zoneId);
+    if (zoneId !== null) {
+      setTempCoordinates({ lat: null, lng: null });
+    }
+  };
+  console.log("my temp zone id is ", tempZoneId);
+  console.log("my zoneid is ", zoneID);
 
+  console.log("in new document we have custom zone as ", tempCustom);
   return (
     <div className="document-container">
       <Button variant="primary" onClick={handleShow}>
@@ -206,18 +263,14 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
               </Form.Group>
 
               <Form.Group as={Col} controlId="formStakeholders">
-                  <Form.Label>Stakeholders</Form.Label>
+                <Form.Label>Stakeholders</Form.Label>
                 <Select
                   options={stakeholderOptions}
-                  isMulti = {true}
+                  isMulti={true}
                   onChange={handleStakeholderSelect}
                   placeholder="Select Stakeholders"
                 />
-                <input
-                  type="hidden"
-                  name="stakeholders"
-                  value={stakeholders}
-                />
+                <input type="hidden" name="stakeholders" value={stakeholders} />
               </Form.Group>
             </Row>
 
@@ -258,7 +311,6 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                 <Button
                   variant="secondary"
                   onClick={() => setShowMapModal(true)}
-                  disabled={zoneID !== null}
                 >
                   Choose Location on Map
                 </Button>
@@ -271,7 +323,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                 <Form.Control
                   type="text"
                   className="light-placeholder"
-                  placeholder = "1:1000"
+                  placeholder="1:1000"
                   value={scale}
                   onChange={(e) => setScale(e.target.value)}
                   required
@@ -297,7 +349,9 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                 <Form.Select
                   value={type}
                   onChange={(e) => {
-                    const selectedOption = options.find((opt) => opt.label === e.target.value);
+                    const selectedOption = options.find(
+                      (opt) => opt.label === e.target.value
+                    );
                     if (selectedOption) {
                       setIcon(selectedOption.value);
                       setType(selectedOption.label);
@@ -316,43 +370,43 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
             </Row>
 
             <Row className="mb-3">
-            <Form.Group as={Col} controlId="formLanguage">
-              <Form.Label>Language</Form.Label>
-              <Form.Select
-                value={language ?? ""}
-                onChange={(e) => setLanguage(e.target.value || null)}
-              >
-                <option value="">Select Language</option>
-                <option value="English">English</option>
-                <option value="Spanish">Spanish</option>
-                <option value="Swedish">Swedish</option>
-                <option value="French">French</option>
-                <option value="German">German</option>
-                <option value="Italian">Italian</option>
-                <option value="Chinese">Chinese</option>
-                <option value="Japanese">Japanese</option>
-                <option value="Korean">Korean</option>
-                <option value="Russian">Russian</option>
-                <option value="Arabic">Arabic</option>
-                {/* Add more languages as needed */}
-              </Form.Select>
-            </Form.Group>
+              <Form.Group as={Col} controlId="formLanguage">
+                <Form.Label>Language</Form.Label>
+                <Form.Select
+                  value={language ?? ""}
+                  onChange={(e) => setLanguage(e.target.value || null)}
+                >
+                  <option value="">Select Language</option>
+                  <option value="English">English</option>
+                  <option value="Spanish">Spanish</option>
+                  <option value="Swedish">Swedish</option>
+                  <option value="French">French</option>
+                  <option value="German">German</option>
+                  <option value="Italian">Italian</option>
+                  <option value="Chinese">Chinese</option>
+                  <option value="Japanese">Japanese</option>
+                  <option value="Korean">Korean</option>
+                  <option value="Russian">Russian</option>
+                  <option value="Arabic">Arabic</option>
+                  {/* Add more languages as needed */}
+                </Form.Select>
+              </Form.Group>
 
-            <Form.Group as={Col} controlId="formPages">
-              <Form.Label>Pages</Form.Label>
-              <Form.Control
-                type="text"
-                className="light-placeholder"
-                placeholder="1-100"
-                value={pages ?? ""}
-                onChange={(e) => setPages(e.target.value || null)}
-              />
-            </Form.Group>
+              <Form.Group as={Col} controlId="formPages">
+                <Form.Label>Pages</Form.Label>
+                <Form.Control
+                  type="text"
+                  className="light-placeholder"
+                  placeholder="1-100"
+                  value={pages ?? ""}
+                  onChange={(e) => setPages(e.target.value || null)}
+                />
+              </Form.Group>
             </Row>
             <Form.Group controlId="formAssignToKiruna">
-              <Form.Check 
-                type="checkbox" 
-                label="Assign document to entire Kiruna area" 
+              <Form.Check
+                type="checkbox"
+                label="Assign document to entire Kiruna area"
                 checked={zoneID === 0}
                 onChange={(e) => {
                   setZoneID(e.target.checked ? 0 : null);
@@ -389,6 +443,14 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
             onLocationSelect={handleLocationSelect}
             tempCoordinates={tempCoordinates}
             setTempCoordinates={setTempCoordinates}
+            onZoneSelect={handleZoneSelect}
+            setTempZoneId={setTempZoneId}
+            selectionMode={selectionMode}
+            setSelectionMode={setSelectionMode}
+            highlightedZoneId={highlightedZoneId}
+            setHighlightedZoneId={setHighlightedZoneId}
+            tempCustom={tempCustom}
+            setTempCustom={setTempCustom}
           />
         </Modal.Body>
         <Modal.Footer>

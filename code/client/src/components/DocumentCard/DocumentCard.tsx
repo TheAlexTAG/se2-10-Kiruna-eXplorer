@@ -33,33 +33,29 @@ export const DocumentCard = ({ cardInfo }: DocumentCardProps) => {
               <i className="bi bi-building" style={{ fontSize: "60px" }}></i>
             </Col>
             <Col md={5} style={{ borderLeft: "1px solid gray" }}>
-              <div>Title: {cardInfo.document.title} </div>
-              <div>Stakeholders: {cardInfo.document.stakeholders}</div>
-              <div>Scale: {cardInfo.document.scale}</div>
-              <div>Issuance date: {cardInfo.document.issuanceDate}</div>
-              <div>Type: {cardInfo.document.type}</div>
-              <div>Connections: {cardInfo.document.connections}</div>
-              <div>Language: {cardInfo.document.language}</div>
-              <div>Pages: {cardInfo.document.pages}</div>
-              {cardInfo.document.zoneID ? (
+              <div>Title: {cardInfo.title} </div>
+              <div>Stakeholders: {cardInfo.stakeholders}</div>
+              <div>Scale: {cardInfo.scale}</div>
+              <div>Issuance date: {cardInfo.issuanceDate}</div>
+              <div>Type: {cardInfo.type}</div>
+              <div>Connections: {cardInfo.connections}</div>
+              <div>Language: {cardInfo.language}</div>
+              <div>Pages: {cardInfo.pages}</div>
+              {cardInfo.zoneID ? (
                 <div>
                   Zone:{" "}
-                  {
-                    zones.find(
-                      (zone: any) => zone.id === cardInfo.document.zoneID
-                    )?.name
-                  }
+                  {zones.find((zone: any) => zone.id === cardInfo.zoneID)?.name}
                 </div>
               ) : (
                 <div>
-                  <div>Latitude: {cardInfo.document.latitude}</div>
-                  <div>Longitude: {cardInfo.document.longitude} </div>
+                  <div>Latitude: {cardInfo.latitude}</div>
+                  <div>Longitude: {cardInfo.longitude} </div>
                 </div>
               )}
             </Col>
             <Col md={5} style={{ borderLeft: "1px solid gray" }}>
               Description:
-              <div>{cardInfo.document.description}</div>
+              <div>{cardInfo.description}</div>
             </Col>
           </Row>
         </Container>
