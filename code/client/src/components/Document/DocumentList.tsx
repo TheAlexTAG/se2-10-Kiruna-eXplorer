@@ -55,16 +55,13 @@ export const DocumentList = ({ userInfo }: userProps) => {
 
   const applyFilters = async () => {
     try {
-      const filteredData = documents.filter((document: any) => {
-        return (
-          (filters.stakeholders ? document.stakeholders?.toLowerCase().includes(filters.stakeholders.toLowerCase()) : true) &&
-          (filters.scale ? document.scale?.toLowerCase().includes(filters.scale.toLowerCase()) : true) &&
-          (filters.issuanceDate ? document.issuanceDate?.includes(filters.issuanceDate) : true) &&
-          (filters.type ? document.type?.toLowerCase().includes(filters.type.toLowerCase()) : true) &&
-          (filters.language ? document.language?.toLowerCase().includes(filters.language.toLowerCase()) : true)
-        );
-      });
-
+      const filteredData = await API.filterDocuments(
+        filters.stakeholders || undefined,
+        filters.scale || undefined,
+        filters.issuanceDate || undefined,
+        filters.type || undefined,
+        filters.language || undefined
+      );
       setFilteredDocuments(filteredData);
     } catch (error) {
       console.error("Error applying filters:", error);
