@@ -4,8 +4,6 @@ import API from "../../API/API";
 import { LinkingDocumentsModal } from "./LinkingDocuments/LinkingDocumentsModal";
 import EditDocumentModal from "./EditDocuments/EditDocumentsModal";
 import NewDocument from "../NewDocument/NewDocument";
-import { FaEdit } from "react-icons/fa";
-
 interface userProps {
   userInfo: { username: string; role: string };
 }
@@ -36,20 +34,20 @@ export const DocumentList = ({ userInfo }: userProps) => {
   ];
 
   const typeOptions: string[] = [
-  "Design doc.",
-  "Informative doc.",
-  "Prescriptive doc.",
-  "Technical doc.",
-  "Agreement",
-  "Conflict",
-  "Consultation",
-  "Material effect",
-];
-  
+    "Design doc.",
+    "Informative doc.",
+    "Prescriptive doc.",
+    "Technical doc.",
+    "Agreement",
+    "Conflict",
+    "Consultation",
+    "Material effect",
+  ];
+
   const fetchDocuments = async () => {
     API.getDocuments().then((data) => {
       setDocuments(data);
-      setFilteredDocuments(data);  
+      setFilteredDocuments(data);
     });
   };
 
@@ -86,7 +84,9 @@ export const DocumentList = ({ userInfo }: userProps) => {
     fetchDocuments();
   }, []);
 
-  const handleFilterChange = (event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+  const handleFilterChange = (
+    event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
+  ) => {
     const { name, value } = event.target;
     setFilters((prevFilters) => ({
       ...prevFilters,
@@ -102,7 +102,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
       type: "",
       language: "",
     });
-    setFilteredDocuments(documents); 
+    setFilteredDocuments(documents);
   };
 
   // Function for show/hide filters form
@@ -131,8 +131,8 @@ export const DocumentList = ({ userInfo }: userProps) => {
       </Form.Group>
 
       {/* Button to toggle filter visibility */}
-      <Button 
-        variant={filterVisible ? "danger" : "primary"} 
+      <Button
+        variant={filterVisible ? "danger" : "primary"}
         onClick={toggleFilterVisibility}
         className="mb-3"
       >
@@ -149,14 +149,16 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 <Form.Select
                   name="stakeholders"
                   value={filters.stakeholders}
-                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) => handleFilterChange(event)}
+                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                    handleFilterChange(event)
+                  }
                 >
                   <option value="">Select Stakeholder</option>
                   {stakeholderOptions.map((stakeholder) => (
                     <option key={stakeholder} value={stakeholder}>
                       {stakeholder}
                     </option>
-                  ))}  
+                  ))}
                 </Form.Select>
               </Form.Group>
               <Form.Group as={Col} controlId="filterScale">
@@ -165,7 +167,9 @@ export const DocumentList = ({ userInfo }: userProps) => {
                   type="text"
                   name="scale"
                   value={filters.scale}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleFilterChange(event)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    handleFilterChange(event)
+                  }
                 />
               </Form.Group>
             </Row>
@@ -177,7 +181,9 @@ export const DocumentList = ({ userInfo }: userProps) => {
                   placeholder="DD/MM/YYYY"
                   name="issuanceDate"
                   value={filters.issuanceDate}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleFilterChange(event)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                    handleFilterChange(event)
+                  }
                 />
               </Form.Group>
               <Form.Group as={Col} controlId="filterType">
@@ -185,7 +191,9 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 <Form.Select
                   name="type"
                   value={filters.type}
-                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) => handleFilterChange(event)}
+                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                    handleFilterChange(event)
+                  }
                 >
                   <option value="">Select Type</option>
                   {typeOptions.map((type) => (
@@ -201,7 +209,9 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 <Form.Select
                   name="language"
                   value={filters.language}
-                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) => handleFilterChange(event)}
+                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                    handleFilterChange(event)
+                  }
                 >
                   <option value="">Select Language</option>
                   <option value="English">English</option>
@@ -222,10 +232,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
               <Button variant="primary" onClick={applyFilters}>
                 Apply Filters
               </Button>
-              <Button
-                variant="secondary"
-                onClick={handleResetFilters}  
-              >
+              <Button variant="secondary" onClick={handleResetFilters}>
                 Reset Filters
               </Button>
             </div>
@@ -261,20 +268,17 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 <td>{document.connections ? document.connections : "-"}</td>
                 <td>{document.language ? document.language : "-"}</td>
                 <td className="d-flex justify-content-center">
-                  {/* Link to a Document Button */}
                   <LinkingDocumentsModal
                     currentDocument={document}
                     documents={documents}
                     updateTable={fetchDocuments}
                   />
-
-                  {/* Edit Icon */}
                   <Button
-                    variant="success"
+                    variant="outline-success"
                     className="ml-2 d-flex align-items-center justify-content-center"
                     onClick={() => handleEditClick(document)}
                   >
-                    <FaEdit color="white" />
+                    <i className="bi bi-pencil-square"></i>
                   </Button>
                 </td>
               </tr>
