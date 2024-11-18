@@ -5,7 +5,7 @@ import { LinkingDocumentsModal } from "./LinkingDocuments/LinkingDocumentsModal"
 import EditDocumentModal from "./EditDocuments/EditDocumentsModal";
 import NewDocument from "../NewDocument/NewDocument";
 interface userProps {
-  userInfo: { username: string; role: string };
+  userInfo: { username: string; role: string } | null;
 }
 
 export const DocumentList = ({ userInfo }: userProps) => {
@@ -115,7 +115,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
       {/* Header */}
       <div className="my-4 d-flex justify-content-between align-items-center">
         <h2>Documents</h2>
-        {userInfo.role === "Urban Planner" && (
+        {userInfo?.role === "Urban Planner" && (
           <NewDocument updateTable={fetchDocuments} userInfo={userInfo} />
         )}
       </div>
@@ -253,7 +253,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
               <th>Issue Date</th>
               <th>Connections</th>
               <th>Language</th>
-              <th>Actions</th>
+              {userInfo?.role === "Urban Planner" && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -267,20 +267,22 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
                 <td>{document.connections ? document.connections : "-"}</td>
                 <td>{document.language ? document.language : "-"}</td>
-                <td className="d-flex justify-content-center">
-                  <LinkingDocumentsModal
-                    currentDocument={document}
-                    documents={documents}
-                    updateTable={fetchDocuments}
-                  />
-                  <Button
-                    variant="outline-success"
-                    className="ml-2 d-flex align-items-center justify-content-center"
-                    onClick={() => handleEditClick(document)}
-                  >
-                    <i className="bi bi-pencil-square"></i>
-                  </Button>
-                </td>
+                {userInfo?.role === "Urban Planner" && (
+                  <td className="d-flex justify-content-center">
+                    <LinkingDocumentsModal
+                      currentDocument={document}
+                      documents={documents}
+                      updateTable={fetchDocuments}
+                    />
+                    <Button
+                      variant="outline-success"
+                      className="ml-2 d-flex align-items-center justify-content-center"
+                      onClick={() => handleEditClick(document)}
+                    >
+                      <i className="bi bi-pencil-square"></i>
+                    </Button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

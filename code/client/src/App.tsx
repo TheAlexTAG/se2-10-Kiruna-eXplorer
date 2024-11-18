@@ -4,7 +4,6 @@ import { Login } from "./components/Login/Login";
 import { TopBar } from "./components/TopBar/TopBar";
 import { useAuth } from "./contexts/GlobalStateProvider";
 import GeoreferenceDocument from "./components/DocumentsMap/DocumentsMap";
-import { Alert } from "react-bootstrap"; // Importa l'Alert di react-bootstrap
 import { DocumentList } from "./components/Document/DocumentList";
 import { Home } from "./components/Home/Home";
 
@@ -20,20 +19,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/map" element={<GeoreferenceDocument />} />
 
-        <Route
-          path="/document"
-          element={
-            user?.role === "Urban Planner" || user?.role === "Admin" ? (
-              <DocumentList userInfo={user} />
-            ) : (
-              <div className="center-alert">
-                <Alert variant="danger">
-                  Access denied. Only the urban planner can access this page
-                </Alert>
-              </div>
-            )
-          }
-        />
+        <Route path="/document" element={<DocumentList userInfo={user} />} />
       </Routes>
     </>
   );
