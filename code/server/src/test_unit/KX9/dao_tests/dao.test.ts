@@ -14,10 +14,11 @@ afterEach(() => {
     jest.resetAllMocks();
     jest.restoreAllMocks();
 })
-/**
- * insertZone test cases
- */
+
 describe("KX9 DAO unit tests", () => {
+    /**
+     * insertZone test cases
+     */
     describe("insertZone test cases", () => {
         test("It should return the id of the last inserted zone", async() => {
             const zoneDAO = new ZoneDAO();
@@ -55,9 +56,9 @@ describe("KX9 DAO unit tests", () => {
               expect(mockDBRun).toHaveBeenCalledTimes(1);
         })
     })
-/**
- * countDocumentsInZone test cases
- */
+    /**
+     * countDocumentsInZone test cases
+     */
     describe("countDocumentsInZone test cases", () => {
         test("It should return the number of documents in zone", async() => {
             const zoneDAO = new ZoneDAO();
