@@ -64,6 +64,23 @@ class ZoneController{
 
         return await this.dao.insertZone(wellknown.stringify(coordinates));
     }
+
+    /**
+     * Returns the total number of documents linked to a zone
+     * @param zoneID 
+     * @returns 
+    */
+    async countDocumentsInZone(zoneID: number): Promise<number> {
+        return await this.dao.countDocumentsInZone(zoneID);
+    }
+
+    async modifyZone(zoneID: number, coordinates: Geometry): Promise<boolean>{
+        if(!await this.verifyContainedInKiruna(coordinates)){
+            throw new WrongGeoreferenceError();
+        }
+        
+        return await this.dao.modifyZone(zoneID, wellknown.stringify(coordinates));
+    }
 }
 
 export {ZoneController};
