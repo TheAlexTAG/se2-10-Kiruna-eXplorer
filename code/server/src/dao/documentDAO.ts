@@ -214,7 +214,7 @@ class DocumentDAO {
         }
         if (filters.issuanceDate) {
             conditions.push("d.issuanceDate LIKE ?");
-            params.push(`${filters.issuanceDate}%`);
+            params.push(`%${filters.issuanceDate}%`);
         }
         if (filters.type) {
             conditions.push("d.type = ?");
