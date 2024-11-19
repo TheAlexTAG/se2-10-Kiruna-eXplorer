@@ -80,5 +80,5 @@ class Kiruna{
     }
 }
 
-export default ErrorHandler;
+export {ErrorHandler};
 export {Kiruna};

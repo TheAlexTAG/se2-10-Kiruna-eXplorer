@@ -1,7 +1,7 @@
 import express from "express";
 import { DocumentController } from "../controllers/documentController";
 import { body, param, query} from "express-validator";
-import ErrorHandler from "../helper";
+import { ErrorHandler } from "../helper";
 import { Document } from "../components/document";
 import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, InvalidResourceError, WrongGeoreferenceError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
 import { MissingKirunaZoneError } from "../errors/zoneError";
