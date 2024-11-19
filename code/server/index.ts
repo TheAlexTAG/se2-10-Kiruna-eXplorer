@@ -4,8 +4,8 @@ import {UserController} from "./src/controllers/userController";
 import {UserRoutes} from "./src/routers/userRoutes";
 import {LinkDocumentRoutes} from "./src/routers/link_docRoutes";
 import {ZoneRoutes} from "./src/routers/zoneRoutes";
-import { ZoneController } from "./src/controllers/zoneController";
 import db from "./src/db/db";
+import { Kiruna } from "./src/helper";
 
 
 const morgan = require("morgan"); // logging middleware
@@ -88,7 +88,8 @@ new DocumentRoutes(app);
 new UserRoutes(app, passport, isLoggedIn);
 new LinkDocumentRoutes(app);
 new ZoneRoutes(app);
-ZoneController.prototype.checkKiruna().catch((err: any)=>{
+const kiruna= new Kiruna();
+kiruna.checkKiruna().catch((err: any)=>{
   console.error(`Error code:${err.code}\nMessage:${err.message}`);
   db.close();
 });;
