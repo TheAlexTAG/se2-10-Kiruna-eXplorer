@@ -79,10 +79,11 @@ export const LinkingDocumentsModal = ({
   };
 
   return (
-    <div className="linking-documents mx-2">
-      <Button variant="outline-primary" onClick={handleShow}>
-        <i className="bi bi-link-45deg"></i>
-      </Button>
+    <div className="linking-documents">
+      <div onClick={handleShow} className=" p-2">
+        <i className="bi bi-link-45deg" style={{ fontSize: "20px" }}></i> Link
+        to Documents
+      </div>
       <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
           <Modal.Title className="d-flex">

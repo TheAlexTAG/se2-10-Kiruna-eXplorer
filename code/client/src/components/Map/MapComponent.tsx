@@ -4,15 +4,18 @@ import {
   TileLayer,
   Marker,
   Popup,
-  GeoJSON,
+  Polygon,
   FeatureGroup,
   useMapEvent,
-  Polygon,
 } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
 import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
+import * as turf from "@turf/turf";
+import booleanWithin from "@turf/boolean-within";
+import { Feature, Polygon as GeoJSONPolygon } from "geojson"; // Import from GeoJSON spec
 import API from "../../API/API";
+import { Alert } from "react-bootstrap";
 
 interface MapComponentProps {
   onLocationSelect: () => void;
@@ -35,7 +38,7 @@ type ZoneProps = {
   id: number;
   coordinates: {
     type: "Polygon";
-    coordinates: number[][][];
+    coordinates: number[][][]; // Array of polygons, each with an array of [lng, lat]
   };
 };
 
@@ -54,13 +57,24 @@ const MapComponent: React.FC<MapComponentProps> = ({
 }) => {
   const [zones, setZones] = useState<ZoneProps[]>([]);
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
+  const [polygonExists, setPolygonExists] = useState(false);
+  const [kirunaBoundary, setKirunaBoundary] =
+    useState<Feature<GeoJSONPolygon> | null>(null);
+  const [editControlKey, setEditControlKey] = useState(0);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchZones = async () => {
       try {
         const zonesData = await API.getZones();
-        console.log("the zones are: ", zonesData);
         setZones(zonesData as ZoneProps[]);
+        const kirunaZone = zonesData.find((zone: ZoneProps) => zone.id === 0);
+        if (kirunaZone) {
+          const boundary: Feature<GeoJSONPolygon> = turf.polygon(
+            kirunaZone.coordinates.coordinates
+          );
+          setKirunaBoundary(boundary);
+        }
       } catch (err) {
         console.error("Error fetching zones:", err);
       }
@@ -68,13 +82,59 @@ const MapComponent: React.FC<MapComponentProps> = ({
     fetchZones();
   }, []);
 
-  const PointClickHandler: React.FC = () => {
-    useMapEvent("click", (e) => {
-      if (selectionMode === "point") {
-        setTempCoordinates({ lat: e.latlng.lat, lng: e.latlng.lng });
+  const clearCustomPolygon = () => {
+    if (featureGroupRef.current) {
+      featureGroupRef.current.clearLayers();
+      setTempCustom(null);
+      setPolygonExists(false);
+      setEditControlKey((prev) => prev + 1);
+    }
+  };
+
+  const handleCreated = (e: any) => {
+    const { layer } = e;
+    const geoJson = layer.toGeoJSON();
+    const drawnPolygon: Feature<GeoJSONPolygon> = turf.polygon(
+      geoJson.geometry.coordinates
+    );
+
+    if (kirunaBoundary && booleanWithin(drawnPolygon, kirunaBoundary)) {
+      console.log("Polygon is valid and within Kiruna!");
+      setErrorMessage(null);
+      setTempCustom(geoJson.geometry.coordinates[0]);
+      setPolygonExists(true);
+    } else {
+      console.error("Polygon is outside the Kiruna boundary!");
+      setErrorMessage("Polygon is outside the Kiruna boundary!");
+      if (featureGroupRef.current) {
+        featureGroupRef.current.removeLayer(layer); // Remove invalid polygon
       }
-    });
-    return null;
+    }
+  };
+
+  const handleDeleted = () => {
+    clearCustomPolygon();
+  };
+
+  const handlePointMode = () => {
+    clearCustomPolygon();
+    setHighlightedZoneId(null);
+    onZoneSelect(null);
+    setSelectionMode("point");
+  };
+
+  const handleZoneMode = () => {
+    clearCustomPolygon();
+    setTempCoordinates({ lat: null, lng: null });
+    setSelectionMode("zone");
+  };
+
+  const handleCustomDrawMode = () => {
+    clearCustomPolygon();
+    setTempCoordinates({ lat: null, lng: null });
+    setHighlightedZoneId(null);
+    onZoneSelect(null);
+    setSelectionMode("custom");
   };
 
   const getZoneStyle = (zoneId: number) => ({
@@ -91,29 +151,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
   };
 
-  const handlePointMode = () => {
-    setHighlightedZoneId(null);
-    onZoneSelect(null);
-    setSelectionMode("point");
-  };
-
-  const handleZoneMode = () => {
-    setTempCoordinates({ lat: null, lng: null });
-    setSelectionMode("zone");
-  };
-
-  const handleCustomDrawMode = () => {
-    setTempCoordinates({ lat: null, lng: null });
-    setHighlightedZoneId(null);
-    onZoneSelect(null);
-    setSelectionMode("custom");
-  };
-
-  const handleCreated = (e: any) => {
-    const { layer } = e;
-    const geoJson = layer.toGeoJSON();
-    console.log("Custom Zone GeoJSON:aa", geoJson.geometry.coordinates[0]);
-    setTempCustom(geoJson.geometry.coordinates[0]);
+  const PointClickHandler: React.FC = () => {
+    useMapEvent("click", (e) => {
+      if (selectionMode === "point") {
+        setTempCoordinates({ lat: e.latlng.lat, lng: e.latlng.lng });
+      }
+    });
+    return null;
   };
 
   return (
@@ -152,18 +196,25 @@ const MapComponent: React.FC<MapComponentProps> = ({
             backgroundColor: selectionMode === "custom" ? "blue" : "gray",
             color: "white",
           }}
+          disabled={polygonExists}
         >
           Draw Custom Area
         </button>
       </div>
-
-      {/* Map Container */}
+      {errorMessage && (
+        <Alert
+          variant="danger"
+          onClose={() => setErrorMessage(null)}
+          dismissible
+        >
+          {errorMessage}
+        </Alert>
+      )}
       <MapContainer
         center={[67.8558, 20.2253]}
         zoom={13}
         style={{ height: "400px", width: "100%" }}
       >
-        {/* Base Layer */}
         <TileLayer
           attribution="&copy; OpenStreetMap contributors"
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -176,42 +227,32 @@ const MapComponent: React.FC<MapComponentProps> = ({
             <Popup>You selected this point.</Popup>
           </Marker>
         )}
+
         {selectionMode === "custom" && (
           <FeatureGroup ref={featureGroupRef}>
             <EditControl
+              key={editControlKey} //apparently I need this to force re rendering after delete
               position="topright"
               onCreated={handleCreated}
+              onDeleted={handleDeleted}
               draw={{
                 rectangle: false,
                 circle: false,
                 circlemarker: false,
                 marker: false,
                 polyline: false,
-                polygon: {
-                  allowIntersection: false,
-                  showArea: false,
-                },
+                polygon: polygonExists
+                  ? false
+                  : {
+                      allowIntersection: false,
+                      showArea: false,
+                    },
               }}
+              edit={{ remove: true }} //sometimes also removing this works (better not to take chances though)
             />
           </FeatureGroup>
         )}
 
-        {/*zones.map((zone) => (
-          <GeoJSON
-            key={zone.id}
-            data={
-              {
-                type: "Feature",
-                geometry: zone.coordinates.geometry,
-                properties: {},
-              } as GeoJSON.Feature
-            }
-            style={getZoneStyle(zone.id)}
-            eventHandlers={{
-              click: () => handleZoneClick(zone.id),
-            }}
-          />
-        ))*/}
         {zones.map((zone) => (
           <Polygon
             key={zone.id}

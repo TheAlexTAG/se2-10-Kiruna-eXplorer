@@ -1,7 +1,7 @@
 import { LinkDocument } from "../components/link_doc";
 import db from "../db/db";
 import { DocumentNotFoundError } from "../errors/documentErrors";
-import { DocumentsError, InternalServerError } from "../errors/link_docError";
+import { InternalServerError } from "../errors/link_docError";
 
 /* Sanitize input */
 const createDOMPurify = require("dompurify");
@@ -35,7 +35,7 @@ class LinkDocumentDAO {
         if (err) {
           return reject(new InternalServerError(err.message));
         }
-        if (row.tot === undefined) {
+        if (!row.tot) {
           return reject(new DocumentNotFoundError());
         }
         return resolve(+DOMPurify.sanitize(row.tot));
@@ -54,9 +54,6 @@ class LinkDocumentDAO {
         }
         const spy: number = +DOMPurify.sanitize(row.tot);
 
-        if (spy === undefined) {
-          return reject(new DocumentsError());
-        }
         if (spy < 2) {
           return resolve(false);
         }

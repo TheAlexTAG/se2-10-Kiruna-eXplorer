@@ -237,6 +237,27 @@ const createZone = async (coordinates: any) => {
   }
 };
 
+const addOriginalResource = async (documentID: number, file: any) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const response = await fetch(`${SERVER_URL}/resource/${documentID}`, {
+      method: "POST",
+      credentials: "include",
+      body: formData,
+    });
+    if (!response.ok) {
+      throw new Error("File upload failed");
+    }
+
+    const data = await response.json();
+    console.log("File uploaded successfully:", data);
+  } catch (error) {
+    console.error("An error occurred while adding original resource:", error);
+    throw error;
+  }
+};
+
 const API = {
   login,
   logout,
@@ -248,5 +269,6 @@ const API = {
   updateGeoreference,
   filterDocuments,
   createZone,
+  addOriginalResource,
 };
 export default API;

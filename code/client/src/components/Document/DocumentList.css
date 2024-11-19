@@ -1,0 +1,6 @@
+.document-list .dropdown-toggle::after {
+  display: none;
+}
+.document-list .dropdown-toggle.show {
+  border: none;
+}

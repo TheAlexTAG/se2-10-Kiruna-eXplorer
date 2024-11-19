@@ -1,9 +1,9 @@
-import { DocumentController } from "../../../controllers/documentController";
-import { DocumentDAO } from "../../../dao/documentDAO";
-import { Document } from '../../../components/document';
+import { DocumentController } from "../../../../controllers/documentController";
+import { DocumentDAO } from "../../../../dao/documentDAO";
+import { Document } from '../../../../components/document';
 
 
-jest.mock("../../../dao/documentDAO");
+jest.mock("../../../../dao/documentDAO");
 
 
 describe("DocumentController", () => {

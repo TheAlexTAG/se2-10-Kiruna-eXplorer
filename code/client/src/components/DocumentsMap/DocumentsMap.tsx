@@ -40,8 +40,8 @@ const DocumentsMap: React.FC = () => {
   };
 
   const bounds = L.latLngBounds([
-    [67.8, 20.1],
-    [67.9, 20.4],
+    [67.77, 20.1],
+    [67.93, 20.4],
   ]);
 
   const defaultTileLayer = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -66,7 +66,7 @@ const DocumentsMap: React.FC = () => {
         minZoom: 12,
         maxZoom: 18,
         zoomControl: true,
-      }).setView([67.85, 20.2253], 12);
+      }).setView([67.84, 20.2253], 12);
 
       tileLayerRef.current = L.tileLayer(defaultTileLayer, {
         attribution: "&copy; OpenStreetMap contributors",
