@@ -1,5 +1,8 @@
-const { validationResult } = require("express-validator")
 import express from "express"
+import { ZoneDAO } from "./dao/zoneDAO";
+import { DatabaseConnectionError } from "./errors/zoneError";
+
+const { validationResult } = require("express-validator");
 
 /**
  * The ErrorHandler class is used to handle errors in the application.
@@ -40,4 +43,42 @@ class ErrorHandler {
     }
 }
 
-export default ErrorHandler
+class Kiruna{
+    private dao: ZoneDAO;
+
+    constructor(){
+        this.dao= new ZoneDAO();
+    }
+
+    private static delay(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Function to insert a record with retry
+    private async insertWithRetry(maxRetries: number,delayMs: number): Promise<void> {
+        let attempts: number= 0;
+        while (attempts < maxRetries) {
+            try {
+                await this.dao.insertKirunaPolygon();
+                return;
+            } catch (err: any) {
+                attempts++;
+
+                if (attempts >= maxRetries) {
+                    throw new DatabaseConnectionError(err.message);
+                }
+                await Kiruna.delay(delayMs);
+            }
+        }
+    }
+
+    async checkKiruna(): Promise<void>{
+        if(await this.dao.getKirunaPolygon()){
+            return;
+        }
+        await this.insertWithRetry(5,1000);
+    }
+}
+
+export default ErrorHandler;
+export {Kiruna};
