@@ -63,7 +63,6 @@ class ZoneRoutes {
             body("coordinates.*.0").isFloat({ min: -180, max: 180 }), //longitudine
             body("coordinates.*.1").isFloat({ min: -90, max: 90 }) //latitudine
         ], async (req: any, res: any) => {
-
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
                 return res.status(422).json({ error: "Invalid zone input" });
@@ -112,14 +111,6 @@ class ZoneRoutes {
             }
         });
 
-    }
-
-    checkKiruna(): void{
-        this.controller.checkKiruna()
-        .catch((err: any)=>{
-            console.error(`Error code:${err.code}\nMessage:${err.message}`);
-            db.close();
-        });
     }
 
 }

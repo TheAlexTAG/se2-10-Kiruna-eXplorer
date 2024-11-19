@@ -5,6 +5,7 @@ import {UserController} from "./src/controllers/userController";
 import {UserRoutes} from "./src/routers/userRoutes";
 import {LinkDocumentRoutes} from "./src/routers/link_docRoutes";
 import {ZoneRoutes} from "./src/routers/zoneRoutes";
+import { ZoneController } from "./src/controllers/zoneController";
 
 
 const morgan = require("morgan"); // logging middleware
@@ -77,7 +78,7 @@ new DocumentRoutes(app);
 new UserRoutes(app, passport, isLoggedIn);
 new LinkDocumentRoutes(app);
 const zone= new ZoneRoutes(app);
-zone.checkKiruna();
+ZoneController.prototype.checkKiruna();
 
 /*** Other express-related instructions ***/
 // activate the server

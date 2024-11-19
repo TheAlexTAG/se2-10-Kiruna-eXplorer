@@ -10,6 +10,7 @@ import { WrongGeoreferenceError } from "../../../errors/documentErrors";
 const wellknown = require("wellknown");
 
 jest.mock("../../../dao/zoneDAO");
+jest.mock("../../utilities")
 
 afterEach(() => {
     jest.resetAllMocks();
