@@ -127,7 +127,7 @@ class ZoneDAO {
         if (err) {
           return reject(new InternalServerError(err.message));
         }
-        if (row.tot === undefined) {
+        if (!row.tot) {
           return reject(new ZoneError());
         }
         return resolve(+DOMPurify.sanitize(row.tot));
