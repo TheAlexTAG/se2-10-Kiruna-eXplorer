@@ -1,16 +1,15 @@
 import { describe, test, expect, beforeAll, afterAll, jest, afterEach } from "@jest/globals"
-import { ZoneDAO } from "../../../dao/zoneDAO"
-import { ZoneController } from "../../../controllers/zoneController"
+import { ZoneDAO } from "../../../../dao/zoneDAO"
+import { ZoneController } from "../../../../controllers/zoneController"
 import * as booleanContainsModule from "@turf/boolean-contains";
-import { InternalServerError } from "../../../errors/link_docError";
-import { InsertZoneError, ModifyZoneError, ZoneError } from "../../../errors/zoneError";
+import { InternalServerError } from "../../../../errors/link_docError";
+import { InsertZoneError, ModifyZoneError, ZoneError } from "../../../../errors/zoneError";
 import { rejects } from "assert";
-import { WrongGeoreferenceError } from "../../../errors/documentErrors";
+import { WrongGeoreferenceError } from "../../../../errors/documentErrors";
 
 const wellknown = require("wellknown");
 
-jest.mock("../../../dao/zoneDAO");
-jest.mock("../../utilities")
+jest.mock("../../../../dao/zoneDAO");
 
 afterEach(() => {
     jest.resetAllMocks();

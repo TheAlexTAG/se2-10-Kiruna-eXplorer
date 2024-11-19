@@ -1,14 +1,14 @@
-import { Zone } from "../../../components/zone";
-import db from "../../../db/db";
+import { Zone } from "../../../../components/zone";
+import db from "../../../../db/db";
 import { Database } from "sqlite3";
 import * as turf from "@turf/turf"
 import { Geometry } from 'geojson';
 import { describe, test, expect, beforeAll, afterAll, jest, afterEach } from "@jest/globals"
-import { ZoneDAO } from "../../../dao/zoneDAO";
-import { InternalServerError } from "../../../errors/link_docError";
-import { InsertZoneError, ModifyZoneError, ZoneError } from "../../../errors/zoneError";
+import { ZoneDAO } from "../../../../dao/zoneDAO";
+import { InternalServerError } from "../../../../errors/link_docError";
+import { InsertZoneError, ModifyZoneError, ZoneError } from "../../../../errors/zoneError";
 
-jest.mock("../../../db/db");
+jest.mock("../../../../db/db");
 
 afterEach(() => {
     jest.resetAllMocks();

@@ -1,17 +1,17 @@
 import { describe, test, expect, beforeAll, afterAll, jest, afterEach } from "@jest/globals"
-import { ZoneRoutes } from "../../../routers/zoneRoutes"
-import { ZoneController } from "../../../controllers/zoneController"
+import { ZoneRoutes } from "../../../../routers/zoneRoutes"
+import { ZoneController } from "../../../../controllers/zoneController"
 import * as geometryModule from "@turf/helpers";
-import { app, server} from "../../../../index";
+import { app, server} from "../../../../../index";
 import { Geometry, Polygon } from "geojson";
 import { validationResult } from "express-validator";
 import request from 'supertest'
-import { Utilities } from "../../../utilities";
+import { Utilities } from "../../../../utilities";
 
 const wellknown = require("wellknown")
 
-jest.mock("../../../controllers/zoneController");
-jest.mock("../../../utilities");
+jest.mock("../../../../controllers/zoneController");
+jest.mock("../../../../utilities");
 
 afterEach(async() => {
     jest.resetAllMocks();
