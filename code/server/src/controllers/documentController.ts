@@ -16,9 +16,11 @@ const wellknown = require("wellknown");
 const multer = require('multer');
 const path = require('path');
 
+const resourceDir = path.join(__dirname, 'resources');
+
 const storage = multer.diskStorage({
   destination: (req: any, file: any, cb: any) => {
-    cb(null, 'resources/');
+    cb(null, resourceDir);
   },
   filename: (req: any, file: any, cb: any) => {
     cb(null, path.extname(file.originalname));

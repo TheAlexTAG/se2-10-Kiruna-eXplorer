@@ -3,7 +3,7 @@ import { DocumentController } from "../controllers/documentController";
 import { body, param, query} from "express-validator";
 import ErrorHandler from "../helper";
 import { Document } from "../components/document";
-import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, WrongGeoreferenceError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
+import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, InvalidResourceError, WrongGeoreferenceError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
 import { MissingKirunaZoneError } from "../errors/zoneError";
 import * as turf from '@turf/turf';
 import {Utilities} from '../utilities'
@@ -146,8 +146,11 @@ class DocumentRoutes {
             this.errorHandler.validateRequest,
             (req: any, res: any, next: any) => this.controller.addResource(req, res)
             .then((result: boolean) => res.status(200).json('All files have been added succesfully'))
-            .catch( //aggiungere tutti tipi
-                (err: any) =>  res.status(500).json({error: err.message}))
+            .catch((err: Error) => {
+                if(err instanceof InvalidResourceError) res.status(err.code).json({error: err.message});
+                else if (err instanceof DocumentNotFoundError) res.status(err.code).json({error: err.message});
+                else res.status(500).json({error: err.message})
+            })
         )
 
     }

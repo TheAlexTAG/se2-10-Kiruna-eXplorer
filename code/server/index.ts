@@ -11,6 +11,8 @@ const morgan = require("morgan"); // logging middleware
 const cors = require("cors");
 
 const path = require('path');
+const fs = require('fs');
+const resourceDir = path.join(__dirname, 'resources');
 
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
@@ -29,6 +31,9 @@ app.use(morgan("dev"));
 app.use(express.json()); // To automatically decode incoming json
 
 app.use('/resources', express.static(path.join(__dirname, 'resources')));
+if (!fs.existsSync(resourceDir)) {
+  fs.mkdirSync(resourceDir);
+}
 
 
 /*** Passport ***/
