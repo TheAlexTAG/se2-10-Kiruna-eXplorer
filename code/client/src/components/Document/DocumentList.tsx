@@ -1,9 +1,21 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Form, Row, Col, Collapse } from "react-bootstrap";
+import {
+  Table,
+  Button,
+  Form,
+  Row,
+  Col,
+  Collapse,
+  Dropdown,
+  DropdownButton,
+} from "react-bootstrap";
 import API from "../../API/API";
 import { LinkingDocumentsModal } from "./LinkingDocuments/LinkingDocumentsModal";
 import EditDocumentModal from "./EditDocuments/EditDocumentsModal";
 import NewDocument from "../NewDocument/NewDocument";
+import { OriginalResourcesModal } from "./OriginalResources/OriginalResourcesModal";
+import "./DocumentList.css";
+
 interface userProps {
   userInfo: { username: string; role: string } | null;
 }
@@ -111,7 +123,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
   };
 
   return (
-    <div className="mx-4">
+    <div className="mx-4 document-list">
       {/* Header */}
       <div className="my-4 d-flex justify-content-between align-items-center">
         <h2>Documents</h2>
@@ -240,8 +252,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
         </div>
       </Collapse>
 
-      {/* Documents Table */}
-      <div style={{ overflow: "auto" }}>
+      <div>
         <Table striped bordered hover className="text-center">
           <thead>
             <tr>
@@ -269,18 +280,32 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 <td>{document.language ? document.language : "-"}</td>
                 {userInfo?.role === "Urban Planner" && (
                   <td className="d-flex justify-content-center">
-                    <LinkingDocumentsModal
-                      currentDocument={document}
-                      documents={documents}
-                      updateTable={fetchDocuments}
-                    />
-                    <Button
-                      variant="outline-success"
-                      className="ml-2 d-flex align-items-center justify-content-center"
-                      onClick={() => handleEditClick(document)}
+                    <DropdownButton
+                      variant="link-black"
+                      title={<i className="bi bi-three-dots-vertical"></i>}
                     >
-                      <i className="bi bi-pencil-square"></i>
-                    </Button>
+                      <Dropdown.Item>
+                        <LinkingDocumentsModal
+                          currentDocument={document}
+                          documents={documents}
+                          updateTable={fetchDocuments}
+                        />
+                      </Dropdown.Item>
+                      <Dropdown.Divider />
+                      <Dropdown.Item>
+                        <div
+                          className="p-2"
+                          onClick={() => handleEditClick(document)}
+                          style={{ color: "green" }}
+                        >
+                          <i className="bi bi-pencil-square"></i> Edit Document
+                        </div>
+                      </Dropdown.Item>
+                      <Dropdown.Divider />
+                      <Dropdown.Item>
+                        <OriginalResourcesModal currentDocument={document} />
+                      </Dropdown.Item>
+                    </DropdownButton>
                   </td>
                 )}
               </tr>

@@ -1,0 +1,10 @@
+.original-resources .upload-button {
+  padding: 20px;
+  border: 1px dashed #2d6efd;
+  border-radius: 12px;
+  color: #2d6efd;
+  cursor: pointer;
+}
+input:not([type="file"]) {
+  display: none; /* Example: exclude file inputs */
+}
