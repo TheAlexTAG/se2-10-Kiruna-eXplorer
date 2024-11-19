@@ -7,7 +7,8 @@ import "leaflet.markercluster";
 import API from "../../API/API";
 import "./DocumentsMap.css";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
-import { BsMap, BsMapFill } from "react-icons/bs";
+import { BsEye, BsEyeSlash, BsMap, BsMapFill } from "react-icons/bs";
+import { FeatureCollection, Geometry } from "geojson";
 
 interface Document {
   id: number;
@@ -17,12 +18,21 @@ interface Document {
   longitude: number;
 }
 
+interface Zone {
+  id: number;
+  coordinates: GeoJSON.Geometry;
+}
+
 const DocumentsMap: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [kirunaBoundary, setKirunaBoundary] = useState<L.GeoJSON | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
     null
   );
   const [isSatelliteView, setIsSatelliteView] = useState(false);
+  const [showZones, setShowZones] = useState(false);
+
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -51,13 +61,32 @@ const DocumentsMap: React.FC = () => {
   useEffect(() => {
     const fetchDocuments = async () => {
       const data = await API.getDocuments();
-      console.log("my data is: ", data);
       setDocuments(
         data.filter((item: Document) => item.latitude && item.longitude)
       );
     };
 
+    const fetchZones = async () => {
+      const data = await API.getZones();
+      setZones(data);
+
+      // Extract Kiruna boundary for visualization
+      const kirunaZone = data.find((zone: Zone) => zone.id === 0);
+      if (kirunaZone && mapRef.current) {
+        const boundary = L.geoJSON(kirunaZone.coordinates, {
+          style: {
+            color: "green",
+            weight: 2,
+            dashArray: "5,10",
+            fillOpacity: 0,
+          },
+        }).addTo(mapRef.current);
+        setKirunaBoundary(boundary);
+      }
+    };
+
     fetchDocuments();
+    fetchZones();
 
     if (mapRef.current === null) {
       mapRef.current = L.map("documents-map", {
@@ -94,8 +123,44 @@ const DocumentsMap: React.FC = () => {
     }
   }, [isSatelliteView]);
 
+  useEffect(() => {
+    if (mapRef.current && showZones) {
+      const featureCollection: FeatureCollection<Geometry> = {
+        type: "FeatureCollection",
+        features: zones
+          .filter((zone) => zone.id !== 0) // Exclude Kiruna boundary
+          .map((zone) => ({
+            type: "Feature",
+            geometry: zone.coordinates,
+            properties: {}, // You can add properties if needed
+          })),
+      };
+      const zoneLayer = L.geoJSON(featureCollection, {
+        style: {
+          color: "blue",
+          weight: 2,
+          fillOpacity: 0.2,
+        },
+      });
+
+      mapRef.current.addLayer(zoneLayer);
+
+      return () => {
+        mapRef.current?.removeLayer(zoneLayer);
+      };
+    }
+  }, [showZones, zones]);
+
   const toggleSatelliteView = () => {
     setIsSatelliteView((prev) => !prev);
+  };
+
+  const toggleZonesView = () => {
+    setShowZones((prev) => !prev);
+  };
+
+  const handleMoreClick = (item: Document) => {
+    setSelectedDocument(item);
   };
 
   useEffect(() => {
@@ -160,12 +225,6 @@ const DocumentsMap: React.FC = () => {
     }
   }, [documents]);
 
-  const handleMoreClick = (item: Document) => {
-    setSelectedDocument(item);
-  };
-
-  console.log("selected document is: ", selectedDocument);
-
   return (
     <>
       <div
@@ -186,7 +245,7 @@ const DocumentsMap: React.FC = () => {
         style={{
           position: "absolute",
           bottom: "20px",
-          right: "10px",
+          left: "10px",
           zIndex: 1000,
         }}
       >
@@ -195,6 +254,21 @@ const DocumentsMap: React.FC = () => {
           {isSatelliteView
             ? "Switch to Default View"
             : "Switch to Satellite View"}
+        </span>
+      </div>
+      <div
+        onClick={toggleZonesView}
+        className="map-toggle-btn"
+        style={{
+          position: "absolute",
+          bottom: "20px",
+          left: "60px",
+          zIndex: 1000,
+        }}
+      >
+        {showZones ? <BsEye size={20} /> : <BsEyeSlash size={20} />}
+        <span className="tooltip">
+          {showZones ? "Hide Zones" : "Show Zones"}
         </span>
       </div>
     </>
