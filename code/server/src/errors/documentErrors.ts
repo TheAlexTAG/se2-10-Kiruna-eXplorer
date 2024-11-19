@@ -53,4 +53,14 @@ class WrongGeoreferenceUpdateError extends Error {
     }
 }
 
-export {DocumentNotFoundError, WrongGeoreferenceError, DocumentZoneNotFoundError, InvalidDocumentZoneError, CoordinatesOutOfBoundsError, WrongGeoreferenceUpdateError};
+class InvalidResourceError extends Error {
+    code: number
+
+    constructor() {
+        super("Missing files or there is at least a file with an invalid name")
+        this.code = 400;
+    }
+}
+
+
+export {DocumentNotFoundError, WrongGeoreferenceError, DocumentZoneNotFoundError, InvalidDocumentZoneError, CoordinatesOutOfBoundsError, WrongGeoreferenceUpdateError, InvalidResourceError};

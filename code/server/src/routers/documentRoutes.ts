@@ -142,12 +142,12 @@ class DocumentRoutes {
  */
         this.app.post("/api/resource/:documentID", 
             param('documentID').isInt(),
-            body("link").isString().notEmpty(),
             Utilities.prototype.isUrbanPlanner,
             this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.addResource(req.params.documentID, req.body.link)
-            .then((lastID:number) => res.status(200).json(lastID))
-            .catch((err: any) =>  res.status(err.code).json({error: err.message}))
+            (req: any, res: any, next: any) => this.controller.addResource(req, res)
+            .then((result: boolean) => res.status(200).json('All files have been added succesfully'))
+            .catch( //aggiungere tutti tipi
+                (err: any) =>  res.status(500).json({error: err.message}))
         )
 
     }

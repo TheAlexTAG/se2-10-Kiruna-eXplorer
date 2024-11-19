@@ -10,6 +10,8 @@ import {ZoneRoutes} from "./src/routers/zoneRoutes";
 const morgan = require("morgan"); // logging middleware
 const cors = require("cors");
 
+const path = require('path');
+
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 
@@ -25,6 +27,9 @@ app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 // set-up the middlewares
 app.use(morgan("dev"));
 app.use(express.json()); // To automatically decode incoming json
+
+app.use('/resources', express.static(path.join(__dirname, 'resources')));
+
 
 /*** Passport ***/
 const controller = new UserController();
