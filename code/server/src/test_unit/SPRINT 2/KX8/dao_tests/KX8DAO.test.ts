@@ -1,8 +1,8 @@
-import { DocumentDAO } from '../../../dao/documentDAO';
-import db from '../../../db/db';
-import { Document } from '../../../components/document';
+import { DocumentDAO } from '../../../../dao/documentDAO';
+import db from '../../../../db/db';
+import { Document } from '../../../../components/document';
 
-jest.mock('../../../db/db');
+jest.mock('../../../../db/db');
 
 describe('DocumentDAO', () => {
   let dao: DocumentDAO;
