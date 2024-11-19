@@ -124,9 +124,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
       );
       return;
     }
-    console.log("1)my zoneId is ", zoneID);
-    console.log("2)my tempCustom is ", tempCustom);
-    console.log("3)my latitude is ", latitude);
+    console.log("hrllo");
     if (zoneID === null && tempCustom === null) {
       if (latitude === null || longitude === null) {
         setErrorMessage(
@@ -136,7 +134,6 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
       }
     } else if (zoneID === null && tempCustom !== null) {
       const newZone = await API.createZone(tempCustom);
-      //console.log("my new zone is ", newZone);
       setZoneID(newZone);
     }
     setIsReady(true);
@@ -144,6 +141,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
 
   useEffect(() => {
     const realSubmit = async () => {
+      setIsReady(false);
       const documentData = {
         title,
         icon,
@@ -199,21 +197,17 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
   };
 
   const handleLocationSelect = () => {
-    console.log(tempCoordinates);
-    if (tempCoordinates.lat !== null && tempCoordinates.lng !== null) {
-      setLatitude(tempCoordinates.lat);
-      setLongitude(tempCoordinates.lng);
-      setZoneID(null);
-    } else {
-      setZoneID(tempZoneId);
-    }
+    setLatitude(tempCoordinates.lat);
+    setLongitude(tempCoordinates.lng);
+
+    setZoneID(tempZoneId);
+
     setShowMapModal(false);
   };
 
   const handleStakeholderSelect = (
     selectedStakeholders: MultiValue<OptionType>
   ) => {
-    // Convert selected options to a string of comma-separated values
     const valuesString = [...selectedStakeholders]
       .map((option) => option.value)
       .join(", ");
@@ -225,10 +219,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
       setTempCoordinates({ lat: null, lng: null });
     }
   };
-  console.log("my temp zone id is ", tempZoneId);
-  console.log("my zoneid is ", zoneID);
 
-  console.log("in new document we have custom zone as ", tempCustom);
   return (
     <div className="document-container">
       <Button variant="primary" onClick={handleShow}>
@@ -388,7 +379,6 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
                   <option value="Korean">Korean</option>
                   <option value="Russian">Russian</option>
                   <option value="Arabic">Arabic</option>
-                  {/* Add more languages as needed */}
                 </Form.Select>
               </Form.Group>
 
@@ -428,7 +418,7 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
           </Button>
         </Modal.Footer>
       </Modal>
-      {/* Map Modal */}
+
       <Modal
         show={showMapModal}
         onHide={() => setShowMapModal(false)}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
 import MapComponent from "../../Map/MapComponent";
 import Select from "react-select";
@@ -23,7 +23,15 @@ export default function EditDocumentModal({
   const [zoneID, setZoneID] = useState<number | null>(document.zoneID);
   const [showMapModal, setShowMapModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  
+  const [tempZoneId, setTempZoneId] = useState<number | null>(null);
+  const [selectionMode, setSelectionMode] = useState<
+    "point" | "zone" | "custom"
+  >("point");
+  const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
+    null
+  );
+  const [tempCustom, setTempCustom] = useState<any>(null);
+
   const [tempCoordinates, setTempCoordinates] = useState<{
     lat: number | null;
     lng: number | null;
@@ -31,6 +39,7 @@ export default function EditDocumentModal({
     lat: null,
     lng: null,
   });
+  const [isReady, setIsReady] = useState(false);
 
   const stakeholderOptions = [
     { value: "LKAB", label: "LKAB" },
@@ -42,10 +51,11 @@ export default function EditDocumentModal({
   ];
 
   const handleLocationSelect = () => {
-    if (tempCoordinates.lat !== null && tempCoordinates.lng !== null) {
-      setLatitude(tempCoordinates.lat);
-      setLongitude(tempCoordinates.lng);
-    }
+    setLatitude(tempCoordinates.lat);
+    setLongitude(tempCoordinates.lng);
+
+    setZoneID(tempZoneId);
+
     setShowMapModal(false);
   };
 
@@ -64,20 +74,48 @@ export default function EditDocumentModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (latitude === null && longitude === null && zoneID === null) {
+    if (
+      latitude === null &&
+      longitude === null &&
+      zoneID === null &&
+      tempCustom === null
+    ) {
       setErrorMessage("Please provide valid coordinates or select a zone.");
       return;
     }
 
-    console.log(document.id, zoneID, longitude, latitude);
+    if (tempCustom) {
+      const newZone = await API.createZone(tempCustom);
+      setZoneID(newZone);
+    }
+    setIsReady(true);
 
-    try {
+    console.log(document.id, zoneID, longitude, latitude);
+  };
+
+  useEffect(() => {
+    const realSubmit = async () => {
+      setIsReady(false);
+      try {
         await API.updateGeoreference(document.id, zoneID, longitude, latitude);
         updateTable();
         onHide();
       } catch (error: any) {
-        setErrorMessage(error.message || "An error occurred while updating the document.");
+        setErrorMessage(
+          error.message || "An error occurred while updating the document."
+        );
       }
+    };
+    if (isReady) {
+      realSubmit();
+    }
+  }, [isReady]);
+
+  const handleZoneSelect = (zoneId: number | null) => {
+    setTempZoneId(zoneId);
+    if (zoneId !== null) {
+      setTempCoordinates({ lat: null, lng: null });
+    }
   };
 
   return (
@@ -117,7 +155,12 @@ export default function EditDocumentModal({
 
           <Form.Group className="mb-3" controlId="formDescription">
             <Form.Label>Description</Form.Label>
-            <Form.Control as="textarea" rows={3} value={document.description} disabled />
+            <Form.Control
+              as="textarea"
+              rows={3}
+              value={document.description}
+              disabled
+            />
           </Form.Group>
 
           <Row className="mb-3">
@@ -142,13 +185,13 @@ export default function EditDocumentModal({
                 disabled={zoneID !== null}
               />
             </Form.Group>
-            <Form.Group as={Col} controlId="formMapButton" className="d-flex align-items-end">
-              <Button
-                variant="secondary"
-                onClick={() => setShowMapModal(true)}
-                disabled={zoneID !== null}
-              >
-                Choose Location on Map 
+            <Form.Group
+              as={Col}
+              controlId="formMapButton"
+              className="d-flex align-items-end"
+            >
+              <Button variant="secondary" onClick={() => setShowMapModal(true)}>
+                Choose Location on Map
               </Button>
             </Form.Group>
           </Row>
@@ -161,7 +204,11 @@ export default function EditDocumentModal({
 
             <Form.Group as={Col} controlId="formIssuanceDate">
               <Form.Label>Date of Issue</Form.Label>
-              <Form.Control type="text" value={document.issuanceDate} disabled />
+              <Form.Control
+                type="text"
+                value={document.issuanceDate}
+                disabled
+              />
             </Form.Group>
 
             <Form.Group as={Col} controlId="formType">
@@ -172,13 +219,17 @@ export default function EditDocumentModal({
 
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formLanguage">
-                <Form.Label>Language</Form.Label>
-                <Form.Control type="text" value={document.language || ""} disabled />
+              <Form.Label>Language</Form.Label>
+              <Form.Control
+                type="text"
+                value={document.language || ""}
+                disabled
+              />
             </Form.Group>
 
             <Form.Group as={Col} controlId="formPages">
-                <Form.Label>Pages</Form.Label>
-                <Form.Control type="text" value={document.pages || ""} disabled />
+              <Form.Label>Pages</Form.Label>
+              <Form.Control type="text" value={document.pages || ""} disabled />
             </Form.Group>
           </Row>
 
@@ -223,6 +274,14 @@ export default function EditDocumentModal({
             onLocationSelect={handleLocationSelect}
             tempCoordinates={tempCoordinates}
             setTempCoordinates={setTempCoordinates}
+            onZoneSelect={handleZoneSelect}
+            setTempZoneId={setTempZoneId}
+            selectionMode={selectionMode}
+            setSelectionMode={setSelectionMode}
+            highlightedZoneId={highlightedZoneId}
+            setHighlightedZoneId={setHighlightedZoneId}
+            tempCustom={tempCustom}
+            setTempCustom={setTempCustom}
           />
         </Modal.Body>
         <Modal.Footer>
