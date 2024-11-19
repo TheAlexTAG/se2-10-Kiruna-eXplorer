@@ -5,6 +5,3 @@
   color: #2d6efd;
   cursor: pointer;
 }
-input:not([type="file"]) {
-  display: none; /* Example: exclude file inputs */
-}

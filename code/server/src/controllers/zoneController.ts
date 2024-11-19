@@ -3,7 +3,7 @@ import { ZoneDAO } from "../dao/zoneDAO";
 import { Geometry } from 'geojson';
 import { DatabaseConnectionError } from "../errors/zoneError";
 import { WrongGeoreferenceError } from "../errors/documentErrors";
-import db from "../db/db";
+
 import { booleanContains } from "@turf/boolean-contains";
 const wellknown= require('wellknown');
 
@@ -45,16 +45,10 @@ class ZoneController{
     }
 
     async checkKiruna(): Promise<void>{
-        try{
-            if(await this.dao.getKirunaPolygon()){
-                return;
-            }
-            await this.insertWithRetry(5,1000);
-        }catch(err) {
-            const error = err as { code?: number; message?: string };
-            console.error(`Error code:${(error).code}\nMessage:${error.message}`);
-            db.close();
+        if(await this.dao.getKirunaPolygon()){
+            return;
         }
+        await this.insertWithRetry(5,1000);
     }
 
     // Function to verify if a zone is completely contained by Kiruna

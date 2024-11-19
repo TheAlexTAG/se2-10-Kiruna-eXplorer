@@ -1,7 +1,7 @@
 import { LinkDocument } from "../components/link_doc";
 import db from "../db/db";
 import { DocumentNotFoundError } from "../errors/documentErrors";
-import { InternalServerError } from "../errors/link_docError";
+import { InternalServerError, LinkError } from "../errors/link_docError";
 
 /* Sanitize input */
 const createDOMPurify = require("dompurify");
@@ -36,7 +36,7 @@ class LinkDocumentDAO {
           return reject(new InternalServerError(err.message));
         }
         if (!row.tot) {
-          return reject(new DocumentNotFoundError());
+          return reject(new LinkError());
         }
         return resolve(+DOMPurify.sanitize(row.tot));
       }

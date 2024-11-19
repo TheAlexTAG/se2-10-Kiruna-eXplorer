@@ -1,6 +1,6 @@
 import express from 'express';
 import { Utilities } from '../utilities';
-import { LinkDocumentController } from '../controllers/link_daoController';
+import { LinkDocumentController } from '../controllers/link_docController';
 
 const {body, validationResult} = require('express-validator'); // validation middleware
 /* Sanitize input */
@@ -37,7 +37,7 @@ class LinkDocumentRoutes {
                 }
 
                 try {
-                    const result: boolean= await this.controller.creatLink(+DOMPurify.sanitize(req.body.firstDoc), req.body.secondDoc);
+                    const result: boolean= await this.controller.createLink(+DOMPurify.sanitize(req.body.firstDoc), req.body.secondDoc);
                     res.status(200).json(result);
                 } catch (err: any) {
                     return res.status(err.code).json({error: err.message});
