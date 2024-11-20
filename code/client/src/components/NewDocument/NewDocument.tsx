@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
 import API from "../../API/API";
 import "./NewDocument.css";
-import { CoordinatesOutOfBoundsError } from "../../../../server/src/errors/documentErrors";
 import MapComponent from "../Map/MapComponent";
 import Select, { MultiValue } from "react-select";
 import { Feature, Polygon as GeoJSONPolygon } from "geojson";
+import { CoordinatesOutOfBoundsError } from "../../errors/general";
 
 interface userProps {
   userInfo: { username: string; role: string };
