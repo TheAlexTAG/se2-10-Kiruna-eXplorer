@@ -41,6 +41,20 @@ class DocumentRoutes {
         this.errorHandler = new ErrorHandler();
         this.initRoutes();
     }
+
+    documentExist = (req: any, res: any, next: any) => {
+        const documentID: number = Number(req.params.documentID);
+        this.controller.getDocumentByID(documentID)
+        .then(()=> {return next();})
+        .catch((err) => {
+            if (err instanceof DocumentNotFoundError) {
+                res.status(err.code).json({error: err.message});
+            } else {
+                res.status(500).json({error: err.message});
+            }
+        })
+    }
+
 /**
  * function for initializing all the routes
  */
@@ -162,7 +176,8 @@ class DocumentRoutes {
 
         this.app.post("/api/resource/:documentID", 
             param('documentID').isInt(),
-            Utilities.prototype.isUrbanPlanner,
+            //Utilities.prototype.isUrbanPlanner,
+            this.documentExist,
             this.errorHandler.validateRequest,
             upload.array('files', 10),
             async (req: any, res: any) => {
