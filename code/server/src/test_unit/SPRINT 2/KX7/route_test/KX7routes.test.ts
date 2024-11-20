@@ -22,7 +22,7 @@ describe("POST /api/resource/:documentID", () => {
     const documentID = 31;
     const mockDocument = { id: documentID, resource: [] };
     
-    (DocumentController.prototype.getDocumentByID as jest.Mock).mockResolvedValueOnce(mockDocument);
+    (DocumentController.prototype.getDocumentByID as jest.Mock).mockResolvedValue(mockDocument);
     (DocumentController.prototype.addResource as jest.Mock).mockResolvedValueOnce(undefined);
 
     const response = await request(app)
@@ -61,7 +61,7 @@ describe("POST /api/resource/:documentID", () => {
   test("should return 400 when file name is invalid", async () => {
     const documentID = 31;
 
-    (DocumentController.prototype.getDocumentByID as jest.Mock).mockResolvedValueOnce({
+    (DocumentController.prototype.getDocumentByID as jest.Mock).mockResolvedValue({
       id: documentID,
       resource: [`resources/${documentID}-test.txt`]
     });
