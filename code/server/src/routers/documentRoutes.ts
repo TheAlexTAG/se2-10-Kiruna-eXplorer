@@ -43,8 +43,7 @@ class DocumentRoutes {
     }
 
     documentExist = (req: any, res: any, next: any) => {
-        const documentID: number = Number(req.params.documentID);
-        this.controller.getDocumentByID(documentID)
+        this.controller.getDocumentByID(+req.params.documentID)
         .then(()=> {return next();})
         .catch((err) => {
             if (err instanceof DocumentNotFoundError) {
@@ -177,12 +176,12 @@ class DocumentRoutes {
         this.app.post("/api/resource/:documentID", 
             param('documentID').isInt(),
             Utilities.prototype.isUrbanPlanner,
-            this.documentExist,
             this.errorHandler.validateRequest,
+            this.documentExist,
             upload.array('files', 10),
             async (req: any, res: any) => {
                 try{
-                    const document: Document = await this.controller.getDocumentByID(req.params.documentID);
+                    const document: Document = await this.controller.getDocumentByID(+req.params.documentID);
                     let files: Array<any> = req.files;
                     if (files.length===0)
                         res.status(422).json({error: 'Missing files'});
