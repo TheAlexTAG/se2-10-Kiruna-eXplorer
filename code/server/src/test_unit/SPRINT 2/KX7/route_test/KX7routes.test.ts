@@ -1,7 +1,8 @@
 import request from "supertest";
-import { app } from "../../../../../index";
+import { app } from "../../../../../index"; 
 import { DocumentController } from "../../../../controllers/documentController";
 import { Utilities } from "../../../../utilities";
+import { DocumentNotFoundError } from "../../../../errors/documentErrors";
 
 jest.mock("../../../../controllers/documentController");
 jest.mock("../../../../utilities");
@@ -9,84 +10,105 @@ jest.mock("../../../../utilities");
 describe("POST /api/resource/:documentID", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock isUrbanPlanner
     (Utilities.prototype.isUrbanPlanner as jest.Mock).mockImplementation(
       (req: any, res: any, next: any) => next()
     );
+
   });
 
-  test("should return 200 and the lastID when input is valid", async () => {
-    const lastID = 2;
+  test("should return 200 and confirm files are saved successfully when input is valid", async () => {
+    const documentID = 31;
+    const mockDocument = { id: documentID, resource: [] };
     
-    (DocumentController.prototype.addResource as jest.Mock)
-      .mockResolvedValueOnce(lastID);
+    (DocumentController.prototype.getDocumentByID as jest.Mock).mockResolvedValueOnce(mockDocument);
+    (DocumentController.prototype.addResource as jest.Mock).mockResolvedValueOnce(undefined);
 
     const response = await request(app)
-      .post("/api/resource/31") 
-      .send({ link: "https://www.example.com" })
-      .set("Content-Type", "application/json");
+      .post(`/api/resource/${documentID}`)
+      .attach("files", Buffer.from("file content"), { filename: "test.txt" })
+      .attach("files", Buffer.from("file content 2"), { filename: "test2.txt" });
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual(lastID);
-    expect(DocumentController.prototype.addResource)
-      .toHaveBeenCalledWith("31", "https://www.example.com");
+    expect(response.text).toBe("Files saved successfully");
+    expect(DocumentController.prototype.getDocumentByID).toHaveBeenCalledWith(documentID.toString());
+    expect(DocumentController.prototype.addResource).toHaveBeenCalledWith(
+      documentID,
+      expect.arrayContaining([
+        `resources/${documentID}-test.txt`,
+        `resources/${documentID}-test2.txt`
+      ])
+    );
   });
 
-  test("should return 422 when link is missing", async () => {
+  test("should return 422 when no files are uploaded", async () => {
+    const documentID = 31;
+
+    (DocumentController.prototype.getDocumentByID as jest.Mock).mockResolvedValueOnce({
+      id: documentID,
+      resource: []
+    });
+
     const response = await request(app)
-      .post("/api/resource/31")
-      .send({}) 
-      .set("Content-Type", "application/json");
+      .post(`/api/resource/${documentID}`)
+      .send();
 
     expect(response.status).toBe(422);
+    expect(response.body).toEqual({ error: "Missing files" });
   });
 
-  test("should return 422 when documentID is not a number", async () => {
-    const response = await request(app)
-      .post("/api/resource/abc") 
-      .send({ link: "https://www.example.com" })
-      .set("Content-Type", "application/json");
+  test("should return 400 when file name is invalid", async () => {
+    const documentID = 31;
 
-    expect(response.status).toBe(422);
-  });
-
-  test("should return error status code and message when addResource fails", async () => {
-    const mockError = {
-      code: 500,
-      message: "Database error"
-    };
-    
-    (DocumentController.prototype.addResource as jest.Mock)
-      .mockRejectedValueOnce(mockError);
+    (DocumentController.prototype.getDocumentByID as jest.Mock).mockResolvedValueOnce({
+      id: documentID,
+      resource: [`resources/${documentID}-test.txt`]
+    });
 
     const response = await request(app)
-      .post("/api/resource/31")
-      .send({ link: "https://www.example.com" })
-      .set("Content-Type", "application/json");
+      .post(`/api/resource/${documentID}`)
+      .attach("files", Buffer.from("file content"), { filename: "test.txt" });
 
-    expect(response.status).toBe(mockError.code);
-    expect(response.body).toEqual({ error: mockError.message });
-    expect(DocumentController.prototype.addResource)
-      .toHaveBeenCalledWith("31", "https://www.example.com");
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: "Invalid file name" });
   });
 
   test("should return 404 when document is not found", async () => {
-    const mockError = {
-      code: 404,
-      message: "Document not found"
-    };
-    
-    (DocumentController.prototype.addResource as jest.Mock)
-      .mockRejectedValueOnce(mockError);
+    const documentID = 999;
+
+    (DocumentController.prototype.getDocumentByID as jest.Mock).mockRejectedValueOnce(
+      new DocumentNotFoundError()
+    );
 
     const response = await request(app)
-      .post("/api/resource/31")
-      .send({ link: "https://www.example.com" })
-      .set("Content-Type", "application/json");
+      .post(`/api/resource/${documentID}`)
+      .attach("files", Buffer.from("file content"), { filename: "test.txt" });
 
     expect(response.status).toBe(404);
     expect(response.body).toEqual({ error: "Document not found" });
   });
-  
+
+  test("should return 500 on server error", async () => {
+    const documentID = 31;
+
+    (DocumentController.prototype.getDocumentByID as jest.Mock).mockRejectedValueOnce(
+      new Error("Internal server error")
+    );
+
+    const response = await request(app)
+      .post(`/api/resource/${documentID}`)
+      .attach("files", Buffer.from("file content"), { filename: "test.txt" });
+
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({ error: "Internal server error" });
+  });
+
+  test("should return 422 when documentID is not a number", async () => {
+    const response = await request(app)
+      .post("/api/resource/abc")
+      .attach("files", Buffer.from("file content"), { filename: "test.txt" });
+
+    expect(response.status).toBe(422);
+  });
 });
