@@ -5,3 +5,47 @@
   color: #2d6efd;
   cursor: pointer;
 }
+.original-resources {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50%;
+  background-color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  border-radius: 8px;
+  z-index: 1050;
+}
+
+.original-resources.show {
+  display: block;
+}
+
+.original-resources-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.original-resources-body {
+  margin-bottom: 1rem;
+}
+
+.original-resources-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.myBackground {
+  height: 100vh;
+  width: 100vw;
+  background: #8080809c;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}

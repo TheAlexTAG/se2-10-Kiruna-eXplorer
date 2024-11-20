@@ -159,21 +159,30 @@ export const LinkingDocumentsModal = ({
                                 item.id !== currentDocument.id &&
                                 !currentDocument.links.includes(item.id)
                             )
-                            .map((option: any, index: string) => (
-                              <Accordion.Item eventKey={index} key={index}>
+                            .map((option: any) => (
+                              <Accordion.Item
+                                eventKey={option.id}
+                                key={option.id}
+                              >
                                 <Accordion.Header>
-                                  <Form.Check
-                                    inline
-                                    label={<div>{option.title}</div>}
-                                    name="group1"
-                                    type="checkbox"
-                                    id={`inline-checkbox-${option}`}
-                                    key={index}
-                                    checked={selectedItems.some(
-                                      (item: any) => item.id === option.id
-                                    )}
-                                    onChange={() => handleSelect(option)}
-                                  />
+                                  <i
+                                    className={
+                                      selectedItems.some(
+                                        (item: any) => item.id === option.id
+                                      )
+                                        ? "bi bi-check2-square mx-2"
+                                        : "bi bi-square mx-2"
+                                    }
+                                    style={
+                                      selectedItems.some(
+                                        (item: any) => item.id === option.id
+                                      )
+                                        ? { color: "#085fb2" }
+                                        : { color: "#000" }
+                                    }
+                                    onClick={() => handleSelect(option)}
+                                  ></i>{" "}
+                                  {option.title}
                                 </Accordion.Header>
                                 <Accordion.Body>
                                   {option.description}

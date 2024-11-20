@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Table,
   Button,
@@ -8,20 +8,21 @@ import {
   Collapse,
   Dropdown,
   DropdownButton,
+  Alert,
 } from "react-bootstrap";
 import API from "../../API/API";
 import { LinkingDocumentsModal } from "./LinkingDocuments/LinkingDocumentsModal";
 import EditDocumentModal from "./EditDocuments/EditDocumentsModal";
 import NewDocument from "../NewDocument/NewDocument";
-import { OriginalResourcesModal } from "./OriginalResources/OriginalResourcesModal";
 import "./DocumentList.css";
-
+import "./OriginalResources/OriginalResourcesModal.css";
 interface userProps {
   userInfo: { username: string; role: string } | null;
 }
 
 export const DocumentList = ({ userInfo }: userProps) => {
   const [documents, setDocuments] = useState([]);
+  const [document, setDocument] = useState<any | null>(null);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -120,6 +121,69 @@ export const DocumentList = ({ userInfo }: userProps) => {
   // Function for show/hide filters form
   const toggleFilterVisibility = () => {
     setFilterVisible(!filterVisible);
+  };
+
+  /////////////
+  const handleSelectDiv = (document: any) => {
+    setDocument(document);
+    setShow(true);
+  };
+  const fileInputRef = useRef<any>(null);
+  const [show, setShow] = useState(false);
+  const [files, setFiles] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFileChange = (event: any) => {
+    const selectedFiles = Array.from(event.target.files);
+    const duplicateFiles = selectedFiles.filter((newFile: any) =>
+      files.some((existingFile) => existingFile.name === newFile.name)
+    );
+    const duplicateFilesFromDoc = document?.resource.filter((resource: any) =>
+      selectedFiles.some(
+        (newFile: any) =>
+          "resources/" + document.id + "-" + newFile.name === resource
+      )
+    );
+    if (duplicateFiles.length > 0) {
+      setError(
+        `The following file(s) already exist: ${duplicateFiles
+          .map((file: any) => file.name)
+          .join(", ")}`
+      );
+    } else if (duplicateFilesFromDoc.length > 0) {
+      setError(
+        `The following file(s) already exist: ${duplicateFilesFromDoc
+          .map((file: any) => file.name)
+          .join(", ")}`
+      );
+    } else if (files.length > 4 || event.target.files.length > 5) {
+      setError("You can only upload a maximum of 5 files at a time.");
+    } else {
+      setError(null);
+      setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
+    }
+  };
+
+  const handleRemoveFile = (index: number) => {
+    setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+  };
+
+  const submitFiles = () => {
+    API.addOriginalResource(document.id, files)
+      .then(() => {
+        fetchDocuments();
+        closeUploadingFile();
+      })
+      .catch((err) => {
+        setError(err.message);
+      });
+  };
+
+  const closeUploadingFile = () => {
+    setFiles([]);
+    setError(null);
+    setDocument(null);
+    setShow(false);
   };
 
   return (
@@ -303,7 +367,14 @@ export const DocumentList = ({ userInfo }: userProps) => {
                       </Dropdown.Item>
                       <Dropdown.Divider />
                       <Dropdown.Item>
-                        <OriginalResourcesModal currentDocument={document} />
+                        <div
+                          style={{ color: "#2d6efd" }}
+                          onClick={() => handleSelectDiv(document)}
+                          className="p-2"
+                        >
+                          <i className="bi bi-file-earmark-arrow-up-fill"></i>{" "}
+                          Upload Files
+                        </div>
                       </Dropdown.Item>
                     </DropdownButton>
                   </td>
@@ -322,6 +393,91 @@ export const DocumentList = ({ userInfo }: userProps) => {
           onHide={() => setShowEditModal(false)}
         />
       )}
+
+      <div className={`original-resources ${show ? "show" : "hide"}`}>
+        <div className="original-resources-header">
+          <h4>Upload Original Resources {show ? "show" : "hide"}</h4>
+          <Button variant="close" onClick={() => closeUploadingFile()}></Button>
+        </div>
+        <div className="original-resources-body">
+          {error && (
+            <Alert variant="danger" onClose={() => setError(null)} dismissible>
+              {error}
+            </Alert>
+          )}
+          <div>
+            {document && document.resource && document.resource.length > 0 && (
+              <>
+                <div>
+                  <strong>Existing resources:</strong>
+                </div>
+
+                {document.resource.map((resource: any, index: number) => {
+                  const cleanedResource = resource.replace("resources/", "");
+                  return (
+                    <div key={index}>
+                      <Button
+                        variant="link"
+                        onClick={() =>
+                          API.handleDownloadResource(cleanedResource)
+                        }
+                      >
+                        {cleanedResource}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {files.length > 0 ? (
+              <>
+                <p>List of the added files:</p>
+                <ul>
+                  {files.map((file, index) => (
+                    <li key={index}>
+                      {file.name}{" "}
+                      <Button
+                        variant="link"
+                        onClick={() => handleRemoveFile(index)}
+                      >
+                        Remove
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p>No files selected.</p>
+            )}
+          </div>
+          <div
+            className="upload-button mt-2"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <i className="bi bi-plus-lg"></i> Upload new files
+          </div>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            style={{ display: "none" }}
+            multiple
+          />
+        </div>
+        <div className="original-resources-footer">
+          <Button variant="secondary" onClick={closeUploadingFile}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={submitFiles}>
+            Save Changes
+          </Button>
+        </div>
+      </div>
+      <div
+        className={show ? "myBackground" : ""}
+        onClick={closeUploadingFile}
+      ></div>
     </div>
   );
 };

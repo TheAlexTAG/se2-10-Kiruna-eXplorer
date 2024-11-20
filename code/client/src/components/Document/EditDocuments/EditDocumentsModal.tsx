@@ -4,6 +4,7 @@ import MapComponent from "../../Map/MapComponent";
 import Select from "react-select";
 import API from "../../../API/API";
 import "./EditDocumentsModal.css";
+import { Feature, Polygon as GeoJSONPolygon } from "geojson";
 
 interface EditDocumentProps {
   document: any;
@@ -40,6 +41,8 @@ export default function EditDocumentModal({
     lng: null,
   });
   const [isReady, setIsReady] = useState(false);
+  const [kirunaBoundary, setKirunaBoundary] =
+    useState<Feature<GeoJSONPolygon> | null>(null);
 
   const stakeholderOptions = [
     { value: "LKAB", label: "LKAB" },
@@ -282,6 +285,8 @@ export default function EditDocumentModal({
             setHighlightedZoneId={setHighlightedZoneId}
             tempCustom={tempCustom}
             setTempCustom={setTempCustom}
+            kirunaBoundary={kirunaBoundary}
+            setKirunaBoundary={setKirunaBoundary}
           />
         </Modal.Body>
         <Modal.Footer>

@@ -378,17 +378,20 @@ class DocumentDAO {
  * Creates a new resource for the specified document
  * @param documentID the id of the document to which belong the resource
  * @param link the link of the resource
- * @returns the id of the resource added
+ * @returns true if the link has been added
  * @throws generic error if the database query fails
  */
-    addResource(documentID: number, link: string): Promise<number> {
-        return new Promise((resolve, reject) => {
-            const sql = 'INSERT INTO resource (documentID, link) VALUES(?, ?)';
-            db.run(sql, [documentID, link], function(this: any, err: Error) {
+    addResource(documentID: number, links: string[]): Promise<boolean> {
+        return new Promise<boolean>(function (resolve, reject) {
+            const placeholders = links.map(() => "(?,?)").join();
+            const sql = `INSERT INTO resource (documentID, link) VALUES ${placeholders}`;
+            const values= links.flatMap(link=> [documentID, link]);
+
+            db.run(sql, values, function(err: Error | null) {
                 if(err) 
                     reject(err);
                 else 
-                    resolve(this.lastID);
+                    resolve(true);
             })
         })
     }
