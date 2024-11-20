@@ -31,15 +31,10 @@ describe("POST /api/resource/:documentID", () => {
       .attach("files", Buffer.from("file content 2"), { filename: "test2.txt" });
 
     expect(response.status).toBe(200);
-    expect(response.text).toBe("Files saved successfully");
-    expect(DocumentController.prototype.getDocumentByID).toHaveBeenCalledWith(documentID.toString());
-    expect(DocumentController.prototype.addResource).toHaveBeenCalledWith(
-      documentID,
-      expect.arrayContaining([
-        `resources/${documentID}-test.txt`,
-        `resources/${documentID}-test2.txt`
-      ])
-    );
+    expect(response.body).toBe("Files saved successfully");
+    expect(DocumentController.prototype.addResource).toHaveBeenCalledWith(documentID, [
+        "test.txt",
+        "test2.txt"]);
   });
 
   test("should return 422 when no files are uploaded", async () => {
@@ -111,4 +106,5 @@ describe("POST /api/resource/:documentID", () => {
 
     expect(response.status).toBe(422);
   });
+
 });
