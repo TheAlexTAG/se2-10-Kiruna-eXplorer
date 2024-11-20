@@ -138,13 +138,26 @@ export const DocumentList = ({ userInfo }: userProps) => {
     const duplicateFiles = selectedFiles.filter((newFile: any) =>
       files.some((existingFile) => existingFile.name === newFile.name)
     );
-
+    const duplicateFilesFromDoc = document?.resource.filter((resource: any) =>
+      selectedFiles.some(
+        (newFile: any) =>
+          "resources/" + document.id + "-" + newFile.name === resource
+      )
+    );
     if (duplicateFiles.length > 0) {
       setError(
         `The following file(s) already exist: ${duplicateFiles
           .map((file: any) => file.name)
           .join(", ")}`
       );
+    } else if (duplicateFilesFromDoc.length > 0) {
+      setError(
+        `The following file(s) already exist: ${duplicateFilesFromDoc
+          .map((file: any) => file.name)
+          .join(", ")}`
+      );
+    } else if (files.length > 4 || event.target.files.length > 5) {
+      setError("You can only upload a maximum of 5 files at a time.");
     } else {
       setError(null);
       setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
@@ -156,9 +169,21 @@ export const DocumentList = ({ userInfo }: userProps) => {
   };
 
   const submitFiles = () => {
-    console.log(document.id, files);
+    API.addOriginalResource(document.id, files)
+      .then(() => {
+        fetchDocuments();
+        closeUploadingFile();
+      })
+      .catch((err) => {
+        setError(err.message);
+      });
+  };
 
-    API.addOriginalResource(document.id, files);
+  const closeUploadingFile = () => {
+    setFiles([]);
+    setError(null);
+    setDocument(null);
+    setShow(false);
   };
 
   return (
@@ -372,9 +397,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
       <div className={`original-resources ${show ? "show" : "hide"}`}>
         <div className="original-resources-header">
           <h4>Upload Original Resources {show ? "show" : "hide"}</h4>
-          <Button variant="close" onClick={() => setShow(false)}>
-            &times;
-          </Button>
+          <Button variant="close" onClick={() => closeUploadingFile()}></Button>
         </div>
         <div className="original-resources-body">
           {error && (
@@ -383,6 +406,30 @@ export const DocumentList = ({ userInfo }: userProps) => {
             </Alert>
           )}
           <div>
+            {document && document.resource && document.resource.length > 0 && (
+              <>
+                <div>
+                  <strong>Existing resources:</strong>
+                </div>
+
+                {document.resource.map((resource: any, index: number) => {
+                  const cleanedResource = resource.replace("resources/", "");
+                  return (
+                    <div key={index}>
+                      <Button
+                        variant="link"
+                        onClick={() =>
+                          API.handleDownloadResource(cleanedResource)
+                        }
+                      >
+                        {cleanedResource}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
             {files.length > 0 ? (
               <>
                 <p>List of the added files:</p>
@@ -419,7 +466,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
           />
         </div>
         <div className="original-resources-footer">
-          <Button variant="secondary" onClick={() => setShow(false)}>
+          <Button variant="secondary" onClick={closeUploadingFile}>
             Close
           </Button>
           <Button variant="primary" onClick={submitFiles}>
@@ -427,6 +474,10 @@ export const DocumentList = ({ userInfo }: userProps) => {
           </Button>
         </div>
       </div>
+      <div
+        className={show ? "myBackground" : ""}
+        onClick={closeUploadingFile}
+      ></div>
     </div>
   );
 };
