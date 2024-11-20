@@ -204,15 +204,7 @@ class DocumentController {
    * @throws generic error if the database query fails
    */
   async addResource(documentID: number, filesname: string[]): Promise<boolean>{
-    try {
-      let result: boolean = true;
-      filesname.forEach(async (f: string)=> {
-        result = await this.dao.addResource(documentID, f);
-      })
-      return result;
-    } catch (err) {
-      throw err;
-    }
+    return await this.dao.addResource(documentID, filesname);
   }
 
   /**
