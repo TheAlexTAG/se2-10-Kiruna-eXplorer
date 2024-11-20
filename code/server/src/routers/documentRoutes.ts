@@ -43,8 +43,7 @@ class DocumentRoutes {
     }
 
     documentExist = (req: any, res: any, next: any) => {
-        const documentID: number = Number(req.params.documentID);
-        this.controller.getDocumentByID(documentID)
+        this.controller.getDocumentByID(+req.params.documentID)
         .then(()=> {return next();})
         .catch((err) => {
             if (err instanceof DocumentNotFoundError) {
@@ -177,30 +176,26 @@ class DocumentRoutes {
         this.app.post("/api/resource/:documentID", 
             param('documentID').isInt(),
             Utilities.prototype.isUrbanPlanner,
-            this.documentExist,
             this.errorHandler.validateRequest,
+            this.documentExist,
             upload.array('files', 10),
             async (req: any, res: any) => {
                 try{
-                    const document: Document = await this.controller.getDocumentByID(req.params.documentID);
-                    let files: Array<any> = req.files;
-                    if (files.length===0)
-                        res.status(422).json({error: 'Missing files'});
+                    if (!req.files || req.files.length===0)
+                        return res.status(422).json({error: 'Missing files'});
+                    let files: any[] = req.files;
+                    const document: Document = await this.controller.getDocumentByID(+req.params.documentID);
                     let validName: boolean = true;
                     files.forEach((f: any) => {
                         const name: string = 'resources/'+document.id+'-'+f.originalname;
                         if (f.originalname.length===0 || document.resource.includes(name))
-                        validName = false;
+                           validName = false;
                     });
                     if (!validName)
-                        res.status(400).json({error: 'Invalid file name'});
-                    req.files = files.map((f: any) => {
-                        f.originalname = 'resources/'+document.id+'-'+f.originalname;
-                        return f;
-                    }); 
+                        return res.status(400).json({error: 'Invalid file name'});
                     const filesName = files.map((f: any) => f.originalname);
                     await this.controller.addResource(document.id, filesName);
-                    res.status(200).json('Files saved successfully')
+                    return res.status(200).json('Files saved successfully')
                 }
                 catch (err: any) {
                     if (err instanceof DocumentNotFoundError) {
