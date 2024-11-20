@@ -195,7 +195,7 @@ class DocumentRoutes {
                         return res.status(400).json({error: 'Invalid file name'});
                     const filesName = files.map((f: any) => f.originalname);
                     await this.controller.addResource(document.id, filesName);
-                    res.status(200).json('Files saved successfully')
+                    return res.status(200).json('Files saved successfully')
                 }
                 catch (err: any) {
                     if (err instanceof DocumentNotFoundError) {
