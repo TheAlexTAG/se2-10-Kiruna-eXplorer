@@ -237,24 +237,37 @@ const createZone = async (coordinates: any) => {
   }
 };
 
-const addOriginalResource = async (documentID: number, file: any) => {
+const addOriginalResource = async (documentID: number, files: File[]) => {
   try {
+    if (!files || files.length === 0) {
+      throw new Error("No files provided for upload");
+    }
+
     const formData = new FormData();
-    formData.append("file", file);
+    files.forEach((file, index) => {
+      formData.append(`files[${index}]`, file); // Use a key to group files
+    });
+
+    console.log("Form data is ", formData);
+
     const response = await fetch(`${SERVER_URL}/resource/${documentID}`, {
       method: "POST",
-      credentials: "include",
+      credentials: "include", // Ensures cookies are included if needed
       body: formData,
     });
+
     if (!response.ok) {
-      throw new Error("File upload failed");
+      const errorText = await response.text(); // Retrieve error message from server
+      throw new Error(`File upload failed: ${errorText}`);
     }
 
     const data = await response.json();
-    console.log("File uploaded successfully:", data);
+    console.log("Files uploaded successfully:", data);
+
+    return data; // Return the response data for further use
   } catch (error) {
     console.error("An error occurred while adding original resource:", error);
-    throw error;
+    throw error; // Re-throw to handle errors upstream
   }
 };
 

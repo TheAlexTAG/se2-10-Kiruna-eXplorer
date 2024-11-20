@@ -7,6 +7,7 @@ import {
   Polygon,
   FeatureGroup,
   useMapEvent,
+  GeoJSON,
 } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
 import "leaflet/dist/leaflet.css";
@@ -32,6 +33,8 @@ interface MapComponentProps {
   setHighlightedZoneId: (zoneId: number | null) => void;
   tempCustom: any;
   setTempCustom: (tempCustom: any) => void;
+  kirunaBoundary: Feature<GeoJSONPolygon> | null;
+  setKirunaBoundary: (kirunaBoundary: Feature<GeoJSONPolygon> | null) => void;
 }
 
 type ZoneProps = {
@@ -54,12 +57,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
   setHighlightedZoneId,
   tempCustom,
   setTempCustom,
+  kirunaBoundary,
+  setKirunaBoundary,
 }) => {
   const [zones, setZones] = useState<ZoneProps[]>([]);
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
   const [polygonExists, setPolygonExists] = useState(false);
-  const [kirunaBoundary, setKirunaBoundary] =
-    useState<Feature<GeoJSONPolygon> | null>(null);
   const [editControlKey, setEditControlKey] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -97,6 +100,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const drawnPolygon: Feature<GeoJSONPolygon> = turf.polygon(
       geoJson.geometry.coordinates
     );
+    console.log("drawn polygon is ", drawnPolygon);
+    console.log("drawn kirunaBoundary is ", kirunaBoundary);
 
     if (kirunaBoundary && booleanWithin(drawnPolygon, kirunaBoundary)) {
       console.log("Polygon is valid and within Kiruna!");
@@ -111,6 +116,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       }
     }
   };
+  console.log("drawn kiruna outside", kirunaBoundary);
 
   const handleDeleted = () => {
     clearCustomPolygon();
@@ -144,7 +150,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     fillOpacity: highlightedZoneId === zoneId ? 0.4 : 0.2,
   });
 
-  const handleZoneClick = (zoneId: number) => {
+  const handleZoneClick = (zoneId: number | null) => {
     if (selectionMode === "zone") {
       setHighlightedZoneId(zoneId);
       onZoneSelect(zoneId);
@@ -159,6 +165,32 @@ const MapComponent: React.FC<MapComponentProps> = ({
     });
     return null;
   };
+
+  const renderKirunaBoundary = () => {
+    if (kirunaBoundary) {
+      return (
+        <GeoJSON
+          key={kirunaBoundary.id}
+          data={
+            {
+              type: "Feature",
+              geometry: kirunaBoundary.geometry,
+              properties: {},
+            } as GeoJSON.Feature
+          }
+          style={{
+            color: "green",
+            weight: 2,
+            dashArray: "5,10",
+            fillOpacity: 0.05,
+          }}
+        />
+      );
+    }
+    return null;
+  };
+  console.log("zones are ", zones);
+  console.log("kiruna boundary is ", kirunaBoundary);
 
   return (
     <div>
@@ -210,6 +242,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
           {errorMessage}
         </Alert>
       )}
+
       <MapContainer
         center={[67.8558, 20.2253]}
         zoom={13}
@@ -221,7 +254,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         />
 
         <PointClickHandler />
-
+        {renderKirunaBoundary()}
         {tempCoordinates.lat && tempCoordinates.lng && (
           <Marker position={[tempCoordinates.lat, tempCoordinates.lng]}>
             <Popup>You selected this point.</Popup>
@@ -253,19 +286,36 @@ const MapComponent: React.FC<MapComponentProps> = ({
           </FeatureGroup>
         )}
 
-        {zones.map((zone) => (
-          <Polygon
-            key={zone.id}
-            positions={zone.coordinates.coordinates[0].map(([lng, lat]) => [
-              lat,
-              lng,
-            ])}
-            pathOptions={getZoneStyle(zone.id)}
-            eventHandlers={{
-              click: () => handleZoneClick(zone.id),
-            }}
-          />
-        ))}
+        {zones.map((zone) => {
+          if (zone.id === 0) {
+            return (
+              <Polygon
+                key={0}
+                positions={zone.coordinates.coordinates[0].map(([lng, lat]) => [
+                  lat,
+                  lng,
+                ])}
+                pathOptions={{ opacity: 0, fillOpacity: 0 }}
+                eventHandlers={{
+                  click: () => handleZoneClick(null),
+                }}
+              />
+            );
+          }
+          return (
+            <Polygon
+              key={zone.id}
+              positions={zone.coordinates.coordinates[0].map(([lng, lat]) => [
+                lat,
+                lng,
+              ])}
+              pathOptions={getZoneStyle(zone.id)}
+              eventHandlers={{
+                click: () => handleZoneClick(zone.id),
+              }}
+            />
+          );
+        })}
       </MapContainer>
     </div>
   );

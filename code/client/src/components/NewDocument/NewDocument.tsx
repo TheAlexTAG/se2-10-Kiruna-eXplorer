@@ -5,6 +5,7 @@ import "./NewDocument.css";
 import { CoordinatesOutOfBoundsError } from "../../../../server/src/errors/documentErrors";
 import MapComponent from "../Map/MapComponent";
 import Select, { MultiValue } from "react-select";
+import { Feature, Polygon as GeoJSONPolygon } from "geojson";
 
 interface userProps {
   userInfo: { username: string; role: string };
@@ -88,6 +89,8 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
     null
   );
   const [tempCustom, setTempCustom] = useState<any>(null);
+  const [kirunaBoundary, setKirunaBoundary] =
+    useState<Feature<GeoJSONPolygon> | null>(null);
 
   const handleClose = () => {
     setTitle("");
@@ -441,6 +444,8 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
             setHighlightedZoneId={setHighlightedZoneId}
             tempCustom={tempCustom}
             setTempCustom={setTempCustom}
+            kirunaBoundary={kirunaBoundary}
+            setKirunaBoundary={setKirunaBoundary}
           />
         </Modal.Body>
         <Modal.Footer>
