@@ -184,19 +184,15 @@ class DocumentRoutes {
                     const document: Document = await this.controller.getDocumentByID(+req.params.documentID);
                     let files: Array<any> = req.files;
                     if (files.length===0)
-                        res.status(422).json({error: 'Missing files'});
+                        return res.status(422).json({error: 'Missing files'});
                     let validName: boolean = true;
                     files.forEach((f: any) => {
                         const name: string = 'resources/'+document.id+'-'+f.originalname;
                         if (f.originalname.length===0 || document.resource.includes(name))
-                        validName = false;
+                           validName = false;
                     });
                     if (!validName)
-                        res.status(400).json({error: 'Invalid file name'});
-                    req.files = files.map((f: any) => {
-                        f.originalname = 'resources/'+document.id+'-'+f.originalname;
-                        return f;
-                    }); 
+                        return res.status(400).json({error: 'Invalid file name'});
                     const filesName = files.map((f: any) => f.originalname);
                     await this.controller.addResource(document.id, filesName);
                     res.status(200).json('Files saved successfully')
