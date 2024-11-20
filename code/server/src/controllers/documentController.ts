@@ -5,29 +5,13 @@ import {
   CoordinatesOutOfBoundsError,
   InvalidDocumentZoneError,
   WrongGeoreferenceError,
-  WrongGeoreferenceUpdateError,
-  InvalidResourceError
+  WrongGeoreferenceUpdateError
 } from "../errors/documentErrors";
 import * as turf from "@turf/turf";
 import { ZoneDAO } from "../dao/zoneDAO";
 import { MissingKirunaZoneError } from "../errors/zoneError";
 
 const wellknown = require("wellknown");
-const multer = require('multer');
-const path = require('path');
-
-const resourceDir = path.join(__dirname, 'resources');
-
-const storage = multer.diskStorage({
-  destination: (req: any, file: any, cb: any) => {
-    cb(null, resourceDir);
-  },
-  filename: (req: any, file: any, cb: any) => {
-    cb(null, path.extname(file.originalname));
-  }
-});
-
-const upload = multer({storage: storage}).array('files', 10);
 
 /**
  * Controller for handling document operations
@@ -215,36 +199,17 @@ class DocumentController {
   /**
    * 
    * @param documentID the id of the document to which belong the resource
-   * @returns the id of the resource added
+   * @param filesname the list of all the links to add
+   * @returns true if link resources have been added
    * @throws generic error if the database query fails
-   * @throws DocumentNotFoundError if the documentID is not presend into the database
    */
-  async addResource(req: any, res: any): Promise<boolean>{
+  async addResource(documentID: number, filesname: string[]): Promise<boolean>{
     try {
-      console.log('controller');
-      const document: Document = await this.getDocumentByID(req.params.documentID);
-      console.log(req.files);
-      let validName: boolean = true;
-      req.files.forEach((f: any) => {
-        const name: string = 'resources/'+document.id+'/'+f.originalname;
-        if (f.originalname.length===0 || document.resource.includes(name))
-          validName = false;
-      });
-      if (req.files.length===0 || !validName)
-        throw InvalidResourceError;
-      req.files.map((f: any) => {
-        f.originalname = document.id+"/"+f.originalname;
-        return f;
-      });
-      upload(req, res, (err: any) => {
-        if (err)
-          throw new Error('Errore nel caricamento dei file');
-        const filenames = req.files.map((file: any) => file.filename);
-        filenames.forEach(async (f: any) => {
-          const lastID: number = await this.dao.addResource(document.id, f);
-        });
-      });
-      return true;
+      let result: boolean = true;
+      filesname.forEach(async (f: string)=> {
+        result = await this.dao.addResource(documentID, f);
+      })
+      return result;
     } catch (err) {
       throw err;
     }
