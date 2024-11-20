@@ -181,10 +181,10 @@ class DocumentRoutes {
             upload.array('files', 10),
             async (req: any, res: any) => {
                 try{
-                    const document: Document = await this.controller.getDocumentByID(+req.params.documentID);
-                    let files: Array<any> = req.files;
-                    if (files.length===0)
+                    if (!req.files || req.files.length===0)
                         return res.status(422).json({error: 'Missing files'});
+                    let files: any[] = req.files;
+                    const document: Document = await this.controller.getDocumentByID(+req.params.documentID);
                     let validName: boolean = true;
                     files.forEach((f: any) => {
                         const name: string = 'resources/'+document.id+'-'+f.originalname;
