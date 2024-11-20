@@ -237,16 +237,19 @@ const createZone = async (coordinates: any) => {
   }
 };
 
-const addOriginalResource = async (documentID: number, files: File[]) => {
+const addOriginalResource = async (documentID: number, myFiles: File[]) => {
   try {
-    if (!files || files.length === 0) {
+    if (!myFiles || myFiles.length === 0) {
       throw new Error("No files provided for upload");
     }
 
     const formData = new FormData();
-    files.forEach((file, index) => {
-      formData.append(`files[${index}]`, file); // Use a key to group files
-    });
+    for (let i = 0; i < myFiles.length; i++) {
+      formData.append("files", myFiles[i]);
+    }
+    // myFiles.forEach((file,) => {
+    //   files.append(`files`, file); // Use a key to group files
+    // });
 
     console.log("Form data is ", formData);
 
@@ -271,6 +274,41 @@ const addOriginalResource = async (documentID: number, files: File[]) => {
   }
 };
 
+const handleDownloadResource = async (fileName: string) => {
+  const fileUrl = `http://localhost:3001/resources/${fileName}`;
+
+  try {
+    const response = await fetch(fileUrl, {
+      method: "GET",
+      credentials: "include", // Include cookies if necessary
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch the file");
+    }
+
+    // Convert the response to a Blob
+    const blob = await response.blob();
+
+    // Create a temporary URL for the Blob
+    const url = window.URL.createObjectURL(blob);
+
+    // Create a temporary <a> tag to trigger the download
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName; // Specify the file name for download
+    document.body.appendChild(a);
+    a.click();
+
+    // Clean up and revoke the object URL
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error downloading the file:", error);
+    alert("Failed to download the file");
+  }
+};
+
 const API = {
   login,
   logout,
@@ -283,5 +321,6 @@ const API = {
   filterDocuments,
   createZone,
   addOriginalResource,
+  handleDownloadResource,
 };
 export default API;

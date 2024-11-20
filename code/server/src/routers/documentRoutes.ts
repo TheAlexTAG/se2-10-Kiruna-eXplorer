@@ -3,11 +3,30 @@ import { DocumentController } from "../controllers/documentController";
 import { body, param, query} from "express-validator";
 import { ErrorHandler } from "../helper";
 import { Document } from "../components/document";
-import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, InvalidResourceError, WrongGeoreferenceError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
+import { CoordinatesOutOfBoundsError, DocumentNotFoundError, DocumentZoneNotFoundError, InvalidDocumentZoneError, WrongGeoreferenceError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
 import { MissingKirunaZoneError } from "../errors/zoneError";
 import * as turf from '@turf/turf';
 import {Utilities} from '../utilities'
 import { ZoneError } from "../errors/zoneError";
+
+const path = require('path');
+const multer = require('multer');
+
+const resourceDir = path.join(__dirname,'..','resources');
+
+const storage = multer.diskStorage({
+  destination: (req: any, file: any, cb: any) => {
+    cb(null, resourceDir);
+  },
+  filename: (req: any, file: any, cb: any) => {
+    const doc: number = req.params.documentID;
+    const fullname: string = doc+'-'+file.originalname;
+    cb(null, fullname);
+  }
+});
+
+const upload = multer({storage: storage});
+
 /**
  * Router for handling all the http requests for the documents
  */
@@ -22,6 +41,19 @@ class DocumentRoutes {
         this.errorHandler = new ErrorHandler();
         this.initRoutes();
     }
+
+    documentExist = (req: any, res: any, next: any) => {
+        this.controller.getDocumentByID(+req.params.documentID)
+        .then(()=> {return next();})
+        .catch((err) => {
+            if (err instanceof DocumentNotFoundError) {
+                res.status(err.code).json({error: err.message});
+            } else {
+                res.status(500).json({error: err.message});
+            }
+        })
+    }
+
 /**
  * function for initializing all the routes
  */
@@ -137,20 +169,46 @@ class DocumentRoutes {
         })
         )
 
-/**
- * route for inserting a resource related to the a specific document. It returns the id of the resource added.
+ /**
+ * route for inserting a resource related to the a specific document
  */
+
         this.app.post("/api/resource/:documentID", 
             param('documentID').isInt(),
             Utilities.prototype.isUrbanPlanner,
             this.errorHandler.validateRequest,
-            (req: any, res: any, next: any) => this.controller.addResource(req, res)
-            .then((result: boolean) => res.status(200).json('All files have been added succesfully'))
-            .catch((err: Error) => {
-                if(err instanceof InvalidResourceError) res.status(err.code).json({error: err.message});
-                else if (err instanceof DocumentNotFoundError) res.status(err.code).json({error: err.message});
-                else res.status(500).json({error: err.message})
-            })
+            this.documentExist,
+            upload.array('files', 10),
+            async (req: any, res: any) => {
+                try{
+                    const document: Document = await this.controller.getDocumentByID(+req.params.documentID);
+                    let files: Array<any> = req.files;
+                    if (files.length===0)
+                        res.status(422).json({error: 'Missing files'});
+                    let validName: boolean = true;
+                    files.forEach((f: any) => {
+                        const name: string = 'resources/'+document.id+'-'+f.originalname;
+                        if (f.originalname.length===0 || document.resource.includes(name))
+                        validName = false;
+                    });
+                    if (!validName)
+                        res.status(400).json({error: 'Invalid file name'});
+                    req.files = files.map((f: any) => {
+                        f.originalname = 'resources/'+document.id+'-'+f.originalname;
+                        return f;
+                    }); 
+                    const filesName = files.map((f: any) => f.originalname);
+                    await this.controller.addResource(document.id, filesName);
+                    res.status(200).json('Files saved successfully')
+                }
+                catch (err: any) {
+                    if (err instanceof DocumentNotFoundError) {
+                        res.status(err.code).json({error: err.message});
+                    } else {
+                        res.status(500).json({error: err.message});
+                    }
+                }
+            }
         )
 
     }

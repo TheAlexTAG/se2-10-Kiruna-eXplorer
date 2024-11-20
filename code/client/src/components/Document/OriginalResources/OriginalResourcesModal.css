@@ -39,3 +39,13 @@
   justify-content: flex-end;
   gap: 0.5rem;
 }
+
+.myBackground {
+  height: 100vh;
+  width: 100vw;
+  background: #8080809c;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
