@@ -176,7 +176,7 @@ class DocumentRoutes {
 
         this.app.post("/api/resource/:documentID", 
             param('documentID').isInt(),
-            //Utilities.prototype.isUrbanPlanner,
+            Utilities.prototype.isUrbanPlanner,
             this.documentExist,
             this.errorHandler.validateRequest,
             upload.array('files', 10),
