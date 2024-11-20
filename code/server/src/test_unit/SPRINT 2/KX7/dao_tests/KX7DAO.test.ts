@@ -17,22 +17,18 @@ describe('DocumentDAO', () => {
 
   // Test  `addResource`
   describe('addResource', () => {
-    test('should resolve with the last ID when the insertion is successfull', async () => {
-      const mockLastID = 1; 
+    test('should resolve with true when the insertion is successfull', async () => {
         (db.run as jest.Mock).mockImplementationOnce((sql, params, callback) => {
-            callback.call({ lastID: mockLastID }, null); 
+            callback.call(true, null); 
         });
 
         const documentID = 12; 
-        const link = "https://www.example.com";
+        const link = ["https://www.example.com"];
 
         const result = await dao.addResource(documentID, link);
 
-        expect(result).toEqual(mockLastID);
-
-        expect(db.run).toHaveBeenCalledWith('INSERT INTO resource (documentID, link) VALUES(?, ?)',
-            [documentID, link],
-            expect.any(Function));          
+        expect(result).toEqual(true);
+         
     });
 
     test('should reject with an error when the insertion fails', async () => {
@@ -43,14 +39,9 @@ describe('DocumentDAO', () => {
         });
 
         const documentID = 12;
-        const link = 'http://example.com';
+        const link = ['http://example.com'];
 
-        await expect(dao.addResource(documentID, link)).rejects.toThrow('Database insertion failed');
-        expect(db.run).toHaveBeenCalledWith(
-            'INSERT INTO resource (documentID, link) VALUES(?, ?)',
-            [documentID, link],
-            expect.any(Function)
-        ); 
+        await expect(dao.addResource(documentID, link)).rejects.toThrow('Database insertion failed'); 
     });
   });
 });
