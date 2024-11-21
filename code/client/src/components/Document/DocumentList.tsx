@@ -421,7 +421,9 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 </div>
 
                 {document.resource.map((resource: any, index: number) => {
-                  const cleanedResource = resource.replace("resources/", "");
+                  const cleanedResource =
+                    document.id + "-" + resource.replace("resources/", "");
+
                   return (
                     <div key={index}>
                       <Button
