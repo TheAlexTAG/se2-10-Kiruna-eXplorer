@@ -274,7 +274,6 @@ export default function EditDocumentModal({
         </Modal.Header>
         <Modal.Body>
           <MapComponent
-            onLocationSelect={handleLocationSelect}
             tempCoordinates={tempCoordinates}
             setTempCoordinates={setTempCoordinates}
             onZoneSelect={handleZoneSelect}
@@ -283,7 +282,6 @@ export default function EditDocumentModal({
             setSelectionMode={setSelectionMode}
             highlightedZoneId={highlightedZoneId}
             setHighlightedZoneId={setHighlightedZoneId}
-            tempCustom={tempCustom}
             setTempCustom={setTempCustom}
             kirunaBoundary={kirunaBoundary}
             setKirunaBoundary={setKirunaBoundary}

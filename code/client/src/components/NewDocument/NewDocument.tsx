@@ -7,12 +7,17 @@ import Select, { MultiValue } from "react-select";
 import { Feature, Polygon as GeoJSONPolygon } from "geojson";
 import { CoordinatesOutOfBoundsError } from "../../errors/general";
 
-interface userProps {
+interface NewDocumentProps {
   userInfo: { username: string; role: string };
   updateTable: any;
+  setSuccessMessage: (successMessage: string | null) => void;
 }
 
-export default function NewDocument({ userInfo, updateTable }: userProps) {
+const NewDocument: React.FC<NewDocumentProps> = ({
+  /*userInfo,*/
+  updateTable,
+  setSuccessMessage,
+}) => {
   const [title, setTitle] = useState("");
   const [icon, setIcon] = useState("");
   const [description, setDescription] = useState("");
@@ -26,7 +31,6 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
   const [language, setLanguage] = useState<string | null>(null);
   const [pages, setPages] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
 
   const [show, setShow] = useState(false);
@@ -433,7 +437,6 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
         </Modal.Header>
         <Modal.Body>
           <MapComponent
-            onLocationSelect={handleLocationSelect}
             tempCoordinates={tempCoordinates}
             setTempCoordinates={setTempCoordinates}
             onZoneSelect={handleZoneSelect}
@@ -442,7 +445,6 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
             setSelectionMode={setSelectionMode}
             highlightedZoneId={highlightedZoneId}
             setHighlightedZoneId={setHighlightedZoneId}
-            tempCustom={tempCustom}
             setTempCustom={setTempCustom}
             kirunaBoundary={kirunaBoundary}
             setKirunaBoundary={setKirunaBoundary}
@@ -459,4 +461,6 @@ export default function NewDocument({ userInfo, updateTable }: userProps) {
       </Modal>
     </div>
   );
-}
+};
+
+export default NewDocument;
