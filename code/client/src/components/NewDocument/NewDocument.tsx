@@ -6,6 +6,9 @@ import MapComponent from "../Map/MapComponent";
 import Select, { MultiValue } from "react-select";
 import { Feature, Polygon as GeoJSONPolygon } from "geojson";
 import { CoordinatesOutOfBoundsError } from "../../errors/general";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { format, parse } from "date-fns";
 
 interface NewDocumentProps {
   userInfo: { username: string; role: string };
@@ -14,7 +17,6 @@ interface NewDocumentProps {
 }
 
 const NewDocument: React.FC<NewDocumentProps> = ({
-  /*userInfo,*/
   updateTable,
   setSuccessMessage,
 }) => {
@@ -26,7 +28,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   const [longitude, setLongitude] = useState<number | null>(null);
   const [stakeholders, setStakeholders] = useState("");
   const [scale, setScale] = useState("");
-  const [issuanceDate, setIssuanceDate] = useState("");
+  const [issuanceDate, setIssuanceDate] = useState<string>("");
   const [type, setType] = useState("");
   const [language, setLanguage] = useState<string | null>(null);
   const [pages, setPages] = useState<string | null>(null);
@@ -131,7 +133,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       );
       return;
     }
-    console.log("hrllo");
+
     if (zoneID === null && tempCustom === null) {
       if (latitude === null || longitude === null) {
         setErrorMessage(
@@ -227,6 +229,50 @@ const NewDocument: React.FC<NewDocumentProps> = ({
     }
   };
 
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      const formattedDate = format(date, "dd/MM/yyyy");
+      setIssuanceDate(formattedDate);
+    } else {
+      setIssuanceDate("");
+    }
+  };
+
+  const handleManualDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value.trim();
+    setIssuanceDate(input);
+
+    const fullDateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+    const monthYearRegex = /^\d{2}\/\d{4}$/;
+    const yearRegex = /^\d{4}$/;
+
+    if (
+      !fullDateRegex.test(input) &&
+      !monthYearRegex.test(input) &&
+      !yearRegex.test(input)
+    ) {
+      console.warn(
+        "Invalid date format. Supported formats: dd/mm/yyyy, mm/yyyy, yyyy."
+      );
+    }
+  };
+
+  const parsedDate = () => {
+    try {
+      if (/^\d{4}$/.test(issuanceDate)) {
+        return parse(`01/01/${issuanceDate}`, "dd/MM/yyyy", new Date());
+      } else if (/^\d{2}\/\d{4}$/.test(issuanceDate)) {
+        return parse(`01/${issuanceDate}`, "dd/MM/yyyy", new Date());
+      } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(issuanceDate)) {
+        return parse(issuanceDate, "dd/MM/yyyy", new Date());
+      } else {
+        return null;
+      }
+    } catch {
+      return null;
+    }
+  };
+
   return (
     <div className="document-container">
       <Button variant="primary" onClick={handleShow}>
@@ -291,7 +337,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   step="0.0001"
                   value={latitude ?? ""}
                   onChange={handleLatitudeChange}
-                  disabled={zoneID !== null}
+                  disabled={zoneID !== null || tempCustom !== null}
                 />
               </Form.Group>
 
@@ -302,13 +348,14 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   step="0.0001"
                   value={longitude ?? ""}
                   onChange={handleLongitudeChange}
-                  disabled={zoneID !== null}
+                  disabled={zoneID !== null || tempCustom !== null}
                 />
               </Form.Group>
               <Form.Group as={Col} controlId="formLongitude">
                 <Button
                   variant="secondary"
                   onClick={() => setShowMapModal(true)}
+                  size="lg"
                 >
                   Choose Location on Map
                 </Button>
@@ -331,14 +378,23 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formIssuanceDate">
-                <Form.Label>Date of Issue</Form.Label>
+                <Form.Label style={{ display: "block" }}>
+                  Date of Issue
+                </Form.Label>
+                <DatePicker
+                  selected={parsedDate()}
+                  onChange={handleDateChange}
+                  dateFormat="dd/MM/yyyy"
+                  placeholderText="DD/MM/YYYY"
+                  className="form-control"
+                  required
+                />
                 <Form.Control
                   type="text"
-                  className="light-placeholder"
-                  placeholder="DD/MM/YYYY"
+                  className="mt-2"
+                  placeholder="Optional manual input (dd/mm/yyyy, mm/yyyy, yyyy)"
                   value={issuanceDate}
-                  onChange={(e) => setIssuanceDate(e.target.value)}
-                  required
+                  onChange={handleManualDateChange}
                 />
               </Form.Group>
 

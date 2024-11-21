@@ -174,7 +174,7 @@ export default function EditDocumentModal({
                 step="0.0001"
                 value={latitude ?? ""}
                 onChange={handleLatitudeChange}
-                disabled={zoneID !== null}
+                disabled={zoneID !== null || tempCustom !== null}
               />
             </Form.Group>
 
@@ -185,7 +185,7 @@ export default function EditDocumentModal({
                 step="0.0001"
                 value={longitude ?? ""}
                 onChange={handleLongitudeChange}
-                disabled={zoneID !== null}
+                disabled={zoneID !== null || tempCustom !== null}
               />
             </Form.Group>
             <Form.Group

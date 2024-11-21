@@ -187,7 +187,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
   };
 
   return (
-    <div className="mx-4 document-list">
+    <div className="mx-4 document-list" style={{ paddingBottom: "20px" }}>
       {/* Header */}
       <div className="my-4 d-flex justify-content-between align-items-center">
         <h2>Documents</h2>

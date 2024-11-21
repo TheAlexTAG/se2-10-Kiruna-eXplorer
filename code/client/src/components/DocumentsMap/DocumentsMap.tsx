@@ -7,8 +7,15 @@ import "leaflet.markercluster";
 import API from "../../API/API";
 import "./DocumentsMap.css";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
-import { BsEye, BsEyeSlash, BsMap, BsMapFill } from "react-icons/bs";
+import {
+  BsEye,
+  BsEyeSlash,
+  BsGeoAltFill,
+  BsMap,
+  BsMapFill,
+} from "react-icons/bs";
 import { FeatureCollection, Geometry } from "geojson";
+import ReactDOMServer from "react-dom/server";
 
 interface Document {
   id: number;
@@ -37,12 +44,85 @@ const DocumentsMap: React.FC = () => {
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const customIcon = L.icon({
-    iconUrl: "/img/doc.png",
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
-    popupAnchor: [0, -15],
-  });
+  /*const reactIconHTML = ReactDOMServer.renderToString(
+    <div /*className="custom-icon"*/ /*>
+      <BsEye size={20} style={{ color: "green" }} />
+    </div>
+  );*/
+  //to take into consideration for the future
+  /* const workerIconHTML = ReactDOMServer.renderToString(
+    <div className="custom-icon">
+      <img src="/img/worker.png" style={{ width: "30px" }} />
+    </div>
+  );*/
+
+  const iconsByType: { [key: string]: L.Icon | L.DivIcon } = {
+    /*Conflict: L.divIcon({
+      html: reactIconHTML,
+      className: "custom-icon-border",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    }),*/
+    Consultation: L.icon({
+      iconUrl: "/img/consultation-icon.png",
+      className: "custom-icon-border",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    }),
+    Agreement: L.icon({
+      iconUrl: "/img/agreement-icon.png",
+      className: "custom-icon-border",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    }),
+    Conflict: L.icon({
+      iconUrl: "/img/conflict-icon.png",
+      className: "custom-icon-border",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    }),
+    "Material effect": L.icon({
+      iconUrl: "/img/worker.png",
+      className: "custom-icon-border",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    }),
+    "Design doc.": L.icon({
+      iconUrl: "/img/design-icon.png",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    }),
+    "Informative doc.": L.icon({
+      iconUrl: "/img/informative-icon.png",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    }),
+    "Prescriptive doc.": L.icon({
+      iconUrl: "/img/prescriptive-icon.png",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    }),
+    "Technical doc.": L.icon({
+      iconUrl: "/img/technical-icon.png",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    }),
+    default: L.icon({
+      iconUrl: "/img/doc.png",
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    }),
+  };
 
   const hotSpotCoordinates = {
     latitude: 67.84905775407694,
@@ -50,8 +130,8 @@ const DocumentsMap: React.FC = () => {
   };
 
   const bounds = L.latLngBounds([
-    [67.77, 20.1],
-    [67.93, 20.4],
+    [67.77, 20],
+    [67.93, 20.5],
   ]);
 
   const defaultTileLayer = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
@@ -81,7 +161,7 @@ const DocumentsMap: React.FC = () => {
             fillOpacity: 0,
           },
         }).addTo(mapRef.current);
-        setKirunaBoundary(boundary);
+        setKirunaBoundary(boundary); //don't really need to set it since kiruna boundary is not gonna be used at all at this point
       }
     };
 
@@ -196,12 +276,13 @@ const DocumentsMap: React.FC = () => {
           }
         },
       });
-
+      console.log("documents are", documents);
       documents.forEach((item) => {
         const { latitude, longitude, title, type } = item;
         if (latitude && longitude) {
+          const icon = iconsByType[type] || iconsByType.default;
           const marker = L.marker([latitude, longitude], {
-            icon: customIcon,
+            icon,
           }).bindPopup(
             `<b>${title}</b><br/>Type: ${type}<br/>
              <div class="moreBtn" data-id="${item.id}">more</div>`
@@ -238,7 +319,12 @@ const DocumentsMap: React.FC = () => {
           zIndex: 0,
         }}
       ></div>
-      {selectedDocument && <DocumentCard cardInfo={selectedDocument} />}
+      {selectedDocument && (
+        <DocumentCard
+          cardInfo={selectedDocument}
+          iconToShow={iconsByType[selectedDocument.type].options.iconUrl}
+        />
+      )}
       <div
         onClick={toggleSatelliteView}
         className="map-toggle-btn"
