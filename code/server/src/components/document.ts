@@ -4,11 +4,10 @@
 class Document {
     id: number;
     title: string;
-    icon: string;
     description: string;
     zoneID: number | null;
-    latitude: number | null;
-    longitude: number | null;
+    latitude: number;
+    longitude: number;
     stakeholders: string;
     scale: string;
     issuanceDate: string;
@@ -18,6 +17,7 @@ class Document {
     connections: number;
     attachment: string[];
     resource: string[];
+    links: number[];
 
   
     /**
@@ -38,13 +38,13 @@ class Document {
      * @param connections number of connections the document has
      * @param attachment list of attachment URLs related to the document
      * @param resource list of resource URLs related to the document
+     * @param links the id of the documents linked to the actual document
     */
-    constructor(id: number, title: string,icon: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null,
+    constructor(id: number, title: string, description: string, zoneID: number | null, latitude: number, longitude: number,
         stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: number | null, connections: number, 
-        attachment: string[] = [], resource: string[] = []) {
+        attachment: string[] = [], resource: string[] = [], links: number[] = []) {
         this.id = id;
         this.title = title;
-        this.icon = icon;
         this.description = description;
         this.zoneID = zoneID;
         this.latitude = latitude;
@@ -58,6 +58,7 @@ class Document {
         this.connections= connections;
         this.attachment= attachment;
         this.resource= resource;
+        this.links = links;
     }
 }
     

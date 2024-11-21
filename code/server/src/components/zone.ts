@@ -1,22 +1,19 @@
-import { GeoJSON } from 'geojson';
+import { Geometry } from 'geojson';
 
 /**
  * Represents a zone in the database
 */
 class Zone {
     id: number; 
-    name: string | null;
-    coordinates: GeoJSON | null; // well known text
+    coordinates: Geometry;
 
     /**
      * Creates a new instance of the Zone class.
      * @param id ID of the zone 
-     * @param name name of the zone 
-     * @param coordinates coordinates of the zone expressed in well known text
+     * @param coordinates coordinates of the zone expressed in GeoJSON
     */ 
-    constructor(id: number, name: string | null, coordinates: GeoJSON | null=null) {
+    constructor(id: number, coordinates: Geometry) {
         this.id = id;
-        this.name = name;
         this.coordinates= coordinates;
     }
 }

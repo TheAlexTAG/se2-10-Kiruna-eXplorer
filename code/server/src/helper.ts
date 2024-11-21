@@ -1,5 +1,8 @@
-const { validationResult } = require("express-validator")
 import express from "express"
+import { ZoneDAO } from "./dao/zoneDAO";
+import { DatabaseConnectionError } from "./errors/zoneError";
+
+const { validationResult } = require("express-validator");
 
 /**
  * The ErrorHandler class is used to handle errors in the application.
@@ -16,9 +19,10 @@ class ErrorHandler {
     validateRequest(req: any, res: any, next: any) {
         const errors = validationResult(req)
         if (!errors.isEmpty()) {
+            console.log(errors);
             let error = "The parameters are not formatted properly\n\n"
             errors.array().forEach((e: any) => {
-                error += "- Parameter: **" + e.param + "** - Reason: *" + e.msg + "* - Location: *" + e.location + "*\n\n"
+                error += "- Parameter: **" + e.path + "** - Reason: *" + e.msg + "* - Location: *" + e.location + "*\n\n"
             })
             return res.status(422).json({ error: error })
         }
@@ -39,4 +43,41 @@ class ErrorHandler {
     }
 }
 
-export default ErrorHandler
+class Kiruna{
+    private dao: ZoneDAO;
+
+    constructor(){
+        this.dao= new ZoneDAO();
+    }
+
+    private static delay(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Function to insert a record with retry
+    private async insertWithRetry(maxRetries: number,delayMs: number): Promise<void> {
+        let attempts: number= 0;
+        while (attempts < maxRetries) {
+            try {
+                await this.dao.insertKirunaPolygon();
+                return;
+            } catch (err: any) {
+                attempts++;
+
+                if (attempts >= maxRetries) {
+                    throw new DatabaseConnectionError(err.message);
+                }
+                await Kiruna.delay(delayMs);
+            }
+        }
+    }
+
+    async checkKiruna(): Promise<void>{
+        if(await this.dao.getKirunaPolygon()){
+            return;
+        }
+        await this.insertWithRetry(5,1000);
+    }
+}
+
+export {ErrorHandler, Kiruna};

@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 
 interface DocumentCardProps {
   cardInfo: any;
+  iconToShow: string | undefined;
 }
 
-export const DocumentCard = ({ cardInfo }: DocumentCardProps) => {
+export const DocumentCard = ({ cardInfo, iconToShow }: DocumentCardProps) => {
   const [zones, setZones] = useState<any>([]);
   const fetchZones = () => {
     API.getZones().then((res) => {
@@ -17,6 +18,8 @@ export const DocumentCard = ({ cardInfo }: DocumentCardProps) => {
   useEffect(() => {
     fetchZones();
   }, []);
+
+  console.log(cardInfo);
 
   return (
     <>
@@ -30,36 +33,33 @@ export const DocumentCard = ({ cardInfo }: DocumentCardProps) => {
         >
           <Row>
             <Col md={2} className="d-flex justify-content-center">
-              <i className="bi bi-building" style={{ fontSize: "60px" }}></i>
+              <img
+                src={iconToShow ? iconToShow : "/img/doc.png"}
+                style={{ width: "60px", height: "60px" }}
+              ></img>
             </Col>
             <Col md={5} style={{ borderLeft: "1px solid gray" }}>
-              <div>Title: {cardInfo.document.title} </div>
-              <div>Stakeholders: {cardInfo.document.stakeholders}</div>
-              <div>Scale: {cardInfo.document.scale}</div>
-              <div>Issuance date: {cardInfo.document.issuanceDate}</div>
-              <div>Type: {cardInfo.document.type}</div>
-              <div>Connections: {cardInfo.document.connections}</div>
-              <div>Language: {cardInfo.document.language}</div>
-              <div>Pages: {cardInfo.document.pages}</div>
-              {cardInfo.document.zoneID ? (
-                <div>
-                  Zone:{" "}
-                  {
-                    zones.find(
-                      (zone: any) => zone.id === cardInfo.document.zoneID
-                    )?.name
-                  }
-                </div>
+              <div>Title: {cardInfo.title} </div>
+              <div>Stakeholders: {cardInfo.stakeholders}</div>
+              <div>Scale: {cardInfo.scale}</div>
+              <div>Issuance date: {cardInfo.issuanceDate}</div>
+              <div>Type: {cardInfo.type}</div>
+              <div>Connections: {cardInfo.connections}</div>
+              <div>Language: {cardInfo.language ? cardInfo.language : "-"}</div>
+              <div>Pages: {cardInfo.pages ? cardInfo.pages : "-"}</div>
+              {/*Removed zone since no requirement about it(actually they told us they dont't want it somehow) */}
+              {/*cardInfo.zoneID ? (
+                <div>Zone: {cardInfo.zoneID}</div>
               ) : (
                 <div>
-                  <div>Latitude: {cardInfo.document.latitude}</div>
-                  <div>Longitude: {cardInfo.document.longitude} </div>
+                  <div>Latitude: {cardInfo.latitude}</div>
+                  <div>Longitude: {cardInfo.longitude} </div>
                 </div>
-              )}
+              )*/}
             </Col>
             <Col md={5} style={{ borderLeft: "1px solid gray" }}>
               Description:
-              <div>{cardInfo.document.description}</div>
+              <div>{cardInfo.description}</div>
             </Col>
           </Row>
         </Container>

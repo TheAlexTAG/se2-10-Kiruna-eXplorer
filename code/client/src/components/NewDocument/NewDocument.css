@@ -30,7 +30,10 @@
 }
 
 .document-form button {
-  width: 100%;
   font-size: 1.1em;
   padding: 10px;
+}
+*/ .light-placeholder::placeholder {
+  color: #d3d3d3;
+  opacity: 1;
 }
