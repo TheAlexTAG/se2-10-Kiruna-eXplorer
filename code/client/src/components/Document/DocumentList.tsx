@@ -35,7 +35,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
     type: "",
     language: "",
   });
-
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const stakeholderOptions: string[] = [
     "LKAB",
     "Municipalty",
@@ -187,12 +187,16 @@ export const DocumentList = ({ userInfo }: userProps) => {
   };
 
   return (
-    <div className="mx-4 document-list">
+    <div className="mx-4 document-list" style={{ paddingBottom: "20px" }}>
       {/* Header */}
       <div className="my-4 d-flex justify-content-between align-items-center">
         <h2>Documents</h2>
         {userInfo?.role === "Urban Planner" && (
-          <NewDocument updateTable={fetchDocuments} userInfo={userInfo} />
+          <NewDocument
+            setSuccessMessage={setSuccessMessage}
+            updateTable={fetchDocuments}
+            userInfo={userInfo}
+          />
         )}
       </div>
 
@@ -315,7 +319,11 @@ export const DocumentList = ({ userInfo }: userProps) => {
           </Form>
         </div>
       </Collapse>
-
+      {successMessage && (
+        <Alert variant="success" dismissible>
+          {successMessage}
+        </Alert>
+      )}
       <div>
         <Table striped bordered hover className="text-center">
           <thead>
@@ -413,7 +421,9 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 </div>
 
                 {document.resource.map((resource: any, index: number) => {
-                  const cleanedResource = resource.replace("resources/", "");
+                  const cleanedResource =
+                    document.id + "-" + resource.replace("resources/", "");
+
                   return (
                     <div key={index}>
                       <Button

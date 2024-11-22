@@ -174,7 +174,7 @@ export default function EditDocumentModal({
                 step="0.0001"
                 value={latitude ?? ""}
                 onChange={handleLatitudeChange}
-                disabled={zoneID !== null}
+                disabled={zoneID !== null || tempCustom !== null}
               />
             </Form.Group>
 
@@ -185,7 +185,7 @@ export default function EditDocumentModal({
                 step="0.0001"
                 value={longitude ?? ""}
                 onChange={handleLongitudeChange}
-                disabled={zoneID !== null}
+                disabled={zoneID !== null || tempCustom !== null}
               />
             </Form.Group>
             <Form.Group
@@ -274,7 +274,6 @@ export default function EditDocumentModal({
         </Modal.Header>
         <Modal.Body>
           <MapComponent
-            onLocationSelect={handleLocationSelect}
             tempCoordinates={tempCoordinates}
             setTempCoordinates={setTempCoordinates}
             onZoneSelect={handleZoneSelect}
@@ -283,7 +282,6 @@ export default function EditDocumentModal({
             setSelectionMode={setSelectionMode}
             highlightedZoneId={highlightedZoneId}
             setHighlightedZoneId={setHighlightedZoneId}
-            tempCustom={tempCustom}
             setTempCustom={setTempCustom}
             kirunaBoundary={kirunaBoundary}
             setKirunaBoundary={setKirunaBoundary}

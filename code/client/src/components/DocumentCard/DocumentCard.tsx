@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 
 interface DocumentCardProps {
   cardInfo: any;
+  iconToShow: string | undefined;
 }
 
-export const DocumentCard = ({ cardInfo }: DocumentCardProps) => {
+export const DocumentCard = ({ cardInfo, iconToShow }: DocumentCardProps) => {
   const [zones, setZones] = useState<any>([]);
   const fetchZones = () => {
     API.getZones().then((res) => {
@@ -17,6 +18,8 @@ export const DocumentCard = ({ cardInfo }: DocumentCardProps) => {
   useEffect(() => {
     fetchZones();
   }, []);
+
+  console.log(cardInfo);
 
   return (
     <>
@@ -30,7 +33,10 @@ export const DocumentCard = ({ cardInfo }: DocumentCardProps) => {
         >
           <Row>
             <Col md={2} className="d-flex justify-content-center">
-              <i className="bi bi-building" style={{ fontSize: "60px" }}></i>
+              <img
+                src={iconToShow ? iconToShow : "/img/doc.png"}
+                style={{ width: "60px", height: "60px" }}
+              ></img>
             </Col>
             <Col md={5} style={{ borderLeft: "1px solid gray" }}>
               <div>Title: {cardInfo.title} </div>
@@ -39,19 +45,17 @@ export const DocumentCard = ({ cardInfo }: DocumentCardProps) => {
               <div>Issuance date: {cardInfo.issuanceDate}</div>
               <div>Type: {cardInfo.type}</div>
               <div>Connections: {cardInfo.connections}</div>
-              <div>Language: {cardInfo.language}</div>
-              <div>Pages: {cardInfo.pages}</div>
-              {cardInfo.zoneID ? (
-                <div>
-                  Zone:{" "}
-                  {zones.find((zone: any) => zone.id === cardInfo.zoneID)?.name}
-                </div>
+              <div>Language: {cardInfo.language ? cardInfo.language : "-"}</div>
+              <div>Pages: {cardInfo.pages ? cardInfo.pages : "-"}</div>
+              {/*Removed zone since no requirement about it(actually they told us they dont't want it somehow) */}
+              {/*cardInfo.zoneID ? (
+                <div>Zone: {cardInfo.zoneID}</div>
               ) : (
                 <div>
                   <div>Latitude: {cardInfo.latitude}</div>
                   <div>Longitude: {cardInfo.longitude} </div>
                 </div>
-              )}
+              )*/}
             </Col>
             <Col md={5} style={{ borderLeft: "1px solid gray" }}>
               Description:

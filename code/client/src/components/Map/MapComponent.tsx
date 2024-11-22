@@ -19,7 +19,6 @@ import API from "../../API/API";
 import { Alert } from "react-bootstrap";
 
 interface MapComponentProps {
-  onLocationSelect: () => void;
   tempCoordinates: { lat: number | null; lng: number | null };
   setTempCoordinates: (coords: {
     lat: number | null;
@@ -31,7 +30,6 @@ interface MapComponentProps {
   setSelectionMode: (selectionMode: "point" | "zone" | "custom") => void;
   highlightedZoneId: number | null;
   setHighlightedZoneId: (zoneId: number | null) => void;
-  tempCustom: any;
   setTempCustom: (tempCustom: any) => void;
   kirunaBoundary: Feature<GeoJSONPolygon> | null;
   setKirunaBoundary: (kirunaBoundary: Feature<GeoJSONPolygon> | null) => void;
@@ -46,16 +44,13 @@ type ZoneProps = {
 };
 
 const MapComponent: React.FC<MapComponentProps> = ({
-  onLocationSelect,
   tempCoordinates,
   setTempCoordinates,
   onZoneSelect,
-  setTempZoneId,
   selectionMode,
   setSelectionMode,
   highlightedZoneId,
   setHighlightedZoneId,
-  tempCustom,
   setTempCustom,
   kirunaBoundary,
   setKirunaBoundary,
