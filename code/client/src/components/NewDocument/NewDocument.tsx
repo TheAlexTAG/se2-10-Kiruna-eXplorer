@@ -35,6 +35,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [show, setShow] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
 
@@ -112,6 +113,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
     setLanguage(null);
     setPages(null);
     setErrorMessage(null);
+    setFieldErrors({});
     setShow(false);
   };
   const handleShow = () => setShow(true);
@@ -119,18 +121,21 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !title ||
-      !icon ||
-      !description ||
-      !stakeholders ||
-      !scale ||
-      !issuanceDate ||
-      !type
-    ) {
-      setErrorMessage(
-        "The fields Title, Icon, Description, Stakeholders, Scale, Issuance Date, and Type are mandatory."
-      );
+    const errors = {
+      title: !title,
+      description: !description,
+      stakeholders: !stakeholders,
+      scale: !scale,
+      issuanceDate: !issuanceDate,
+      type: !type,
+      latitude: latitude === null && zoneID === null,
+      longitude: longitude === null && zoneID === null,
+    };
+
+    setFieldErrors(errors);
+
+    if (Object.values(errors).some((hasError) => hasError)) {
+      setErrorMessage("One or more required field(s) are missing.");
       return;
     }
 
@@ -145,6 +150,8 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       const newZone = await API.createZone(tempCustom);
       setZoneID(newZone);
     }
+
+    setErrorMessage(null);
     setIsReady(true);
   };
 
@@ -272,6 +279,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       return null;
     }
   };
+  
 
   return (
     <div className="document-container">
@@ -297,17 +305,22 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formTitle">
-                <Form.Label>Title</Form.Label>
+                <Form.Label>Title*</Form.Label>
                 <Form.Control
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  required
                 />
+                {fieldErrors.title && (
+                  <div className="text-danger">
+                    <i className="bi bi-x-circle-fill text-danger"></i> This
+                    field is required
+                  </div>
+                )}
               </Form.Group>
 
               <Form.Group as={Col} controlId="formStakeholders">
-                <Form.Label>Stakeholders</Form.Label>
+                <Form.Label>Stakeholders*</Form.Label>
                 <Select
                   options={stakeholderOptions}
                   isMulti={true}
@@ -315,11 +328,17 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   placeholder="Select Stakeholders"
                 />
                 <input type="hidden" name="stakeholders" value={stakeholders} />
+                {fieldErrors.stakeholders && (
+                  <div className="text-danger">
+                    <i className="bi bi-x-circle-fill text-danger"></i> This
+                    field is required
+                  </div>
+                )}
               </Form.Group>
             </Row>
 
             <Form.Group className="mb-3" controlId="formDescription">
-              <Form.Label>Description</Form.Label>
+              <Form.Label>Description*</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
@@ -327,11 +346,17 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 required
               />
+              {fieldErrors.description && (
+                  <div className="text-danger">
+                    <i className="bi bi-x-circle-fill text-danger"></i> This
+                    field is required
+                  </div>
+                )}
             </Form.Group>
 
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formLatitude">
-                <Form.Label>Latitude</Form.Label>
+                <Form.Label>Latitude*</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.0001"
@@ -339,10 +364,16 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   onChange={handleLatitudeChange}
                   disabled={zoneID !== null || tempCustom !== null}
                 />
+                {fieldErrors.latitude && (
+                  <div className="text-danger">
+                    <i className="bi bi-x-circle-fill text-danger"></i> This
+                    field is required
+                  </div>
+                )}
               </Form.Group>
 
               <Form.Group as={Col} controlId="formLongitude">
-                <Form.Label>Longitude</Form.Label>
+                <Form.Label>Longitude*</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.0001"
@@ -350,6 +381,12 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   onChange={handleLongitudeChange}
                   disabled={zoneID !== null || tempCustom !== null}
                 />
+                {fieldErrors.longitude && (
+                  <div className="text-danger">
+                    <i className="bi bi-x-circle-fill text-danger"></i> This
+                    field is required
+                  </div>
+                )}
               </Form.Group>
               <Form.Group as={Col} controlId="formLongitude">
                 <Button
@@ -361,25 +398,47 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                 </Button>
               </Form.Group>
             </Row>
-
+            <Row className="mb-3">
+              <Form.Group controlId="formAssignToKiruna">
+                <Form.Switch
+                  label="Assign document to entire Kiruna area"
+                  checked={zoneID === 0}
+                  onChange={(e) => {
+                    setZoneID(e.target.checked ? 0 : null);
+                    if (e.target.checked) {
+                      setLatitude(null);
+                      setLongitude(null);
+                    }
+                  }}
+                />
+              </Form.Group>
+            </Row>
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formScale">
-                <Form.Label>Scale</Form.Label>
-                <Form.Control
-                  type="text"
-                  className="light-placeholder"
-                  placeholder="1:1000"
-                  value={scale}
+                <Form.Label>Scale*</Form.Label>
+                <Form.Select
+                  value={scale ?? ""}
                   onChange={(e) => setScale(e.target.value)}
-                  required
-                />
+                >
+                  <option value="">Select Scale</option>
+                  <option value="1:1000">1:1000</option>
+                  <option value="1:5000">1:5000</option>
+                  <option value="1:10000">1:10000</option>
+                  <option value="1:100000">1:100000</option>
+                </Form.Select>
+                {fieldErrors.scale && (
+                  <div className="text-danger">
+                    <i className="bi bi-x-circle-fill text-danger"></i> This
+                    field is required
+                  </div>
+                )}
               </Form.Group>
             </Row>
 
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formIssuanceDate">
                 <Form.Label style={{ display: "block" }}>
-                  Date of Issue
+                  Date of Issue*
                 </Form.Label>
                 <DatePicker
                   selected={parsedDate()}
@@ -396,10 +455,16 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   value={issuanceDate}
                   onChange={handleManualDateChange}
                 />
+                {fieldErrors.issuanceDate && (
+                  <div className="text-danger">
+                    <i className="bi bi-x-circle-fill text-danger"></i> This
+                    field is required
+                  </div>
+                )}
               </Form.Group>
 
               <Form.Group as={Col} controlId="formType">
-                <Form.Label>Type</Form.Label>
+                <Form.Label>Type*</Form.Label>
                 <Form.Select
                   value={type}
                   onChange={(e) => {
@@ -420,6 +485,12 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                     </option>
                   ))}
                 </Form.Select>
+                {fieldErrors.type && (
+                  <div className="text-danger">
+                    <i className="bi bi-x-circle-fill text-danger"></i> This
+                    field is required
+                  </div>
+                )}
               </Form.Group>
             </Row>
 
@@ -456,20 +527,11 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                 />
               </Form.Group>
             </Row>
-            <Form.Group controlId="formAssignToKiruna">
-              <Form.Check
-                type="checkbox"
-                label="Assign document to entire Kiruna area"
-                checked={zoneID === 0}
-                onChange={(e) => {
-                  setZoneID(e.target.checked ? 0 : null);
-                  if (e.target.checked) {
-                    setLatitude(null);
-                    setLongitude(null);
-                  }
-                }}
-              />
-            </Form.Group>
+            <Row>
+              <div className="required-fields-note" style={{ color: "gray" }}>
+                *Required fields
+              </div>
+            </Row>
           </Form>
         </Modal.Body>
         <Modal.Footer>
