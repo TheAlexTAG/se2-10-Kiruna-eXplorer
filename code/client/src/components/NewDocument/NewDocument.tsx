@@ -425,6 +425,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   <option value="1:5000">1:5000</option>
                   <option value="1:10000">1:10000</option>
                   <option value="1:100000">1:100000</option>
+                  <option value="blueprints/effects">blueprints/effects</option>
                 </Form.Select>
                 {fieldErrors.scale && (
                   <div className="text-danger">
