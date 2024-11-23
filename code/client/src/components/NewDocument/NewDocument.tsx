@@ -421,11 +421,13 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   onChange={(e) => setScale(e.target.value)}
                 >
                   <option value="">Select Scale</option>
-                  <option value="1:1000">1:1000</option>
-                  <option value="1:5000">1:5000</option>
-                  <option value="1:10000">1:10000</option>
-                  <option value="1:100000">1:100000</option>
-                  <option value="blueprints/effects">blueprints/effects</option>
+                  <option value="1:1,000">1:1,000</option>
+                  <option value="1:5,000">1:5,000</option>
+                  <option value="1:10,000">1:10,000</option>
+                  <option value="1:100,000">1:100,000</option>
+                  <option value="Blueprints/effects">Blueprints/effects</option>
+                  <option value="Text">Text</option>
+                  <option value="Concept">Concept</option>
                 </Form.Select>
                 {fieldErrors.scale && (
                   <div className="text-danger">
