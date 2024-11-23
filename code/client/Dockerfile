@@ -9,6 +9,7 @@ COPY . .
 
 RUN npm install
 
+ENV DOCKER=1
 
 # Expose port 5173 to the outside world
 EXPOSE 5173
