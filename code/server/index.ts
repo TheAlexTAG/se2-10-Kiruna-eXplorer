@@ -33,12 +33,15 @@ app.use('/resources', express.static(resourceDir));
 }
 
 /*** Passport ***/
+
+/*const controller = new UserController();*/
 /** provisorial user for the login */
 const user = new User(1, 'username', Role.PLANNER);
 
 // set up the "username and password" login strategy with a function to verify username and password
 passport.use(
   new LocalStrategy(async function verify(username: string,password: string,callback: any){
+    /*const user = await controller.getUser(username, password);*/
     if (!user) {
       return callback(null, false, {message: "Incorrect username or password"});
     }
@@ -52,6 +55,7 @@ passport.serializeUser((user: any, callback: any) => {
 
 passport.deserializeUser(async function (id: number, callback: any) {
   try {
+    /*const user = await controller.getUserById(id);*/
     callback(null, user);
   } catch (err) {
     callback(err, null);
@@ -77,8 +81,12 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 /* ROUTES */
-
-
+/*
+new DocumentRoutes(app);
+new UserRoutes(app, passport, isLoggedIn);
+new LinkDocumentRoutes(app);
+new ZoneRoutes(app);
+*/
 /*** Other express-related instructions ***/
 // activate the server
 const server= app.listen(port, () => {
