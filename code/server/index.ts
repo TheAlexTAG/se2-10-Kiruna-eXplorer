@@ -2,6 +2,8 @@ import express from "express";
 import { testConnection } from "./src/db/db";
 import { Kiruna } from "./src/helper";
 import { Role, User } from "./src/components/user";
+import { UserRoutes } from "./src/routers/userRoutes";
+import { UserController } from "./src/controllers/userController";
 
 
 const morgan = require("morgan"); // logging middleware
@@ -34,14 +36,13 @@ app.use('/resources', express.static(resourceDir));
 
 /*** Passport ***/
 
-/*const controller = new UserController();*/
-/** provisorial user for the login */
-const user = new User(1, 'username', Role.PLANNER);
+const controller = new UserController();
+
 
 // set up the "username and password" login strategy with a function to verify username and password
 passport.use(
   new LocalStrategy(async function verify(username: string,password: string,callback: any){
-    /*const user = await controller.getUser(username, password);*/
+    const user = await controller.getUser(username, password);
     if (!user) {
       return callback(null, false, {message: "Incorrect username or password"});
     }
@@ -55,7 +56,7 @@ passport.serializeUser((user: any, callback: any) => {
 
 passport.deserializeUser(async function (id: number, callback: any) {
   try {
-    /*const user = await controller.getUserById(id);*/
+    const user = await controller.getUserById(id);
     callback(null, user);
   } catch (err) {
     callback(err, null);
@@ -83,10 +84,11 @@ app.use(passport.session());
 /* ROUTES */
 /*
 new DocumentRoutes(app);
-new UserRoutes(app, passport, isLoggedIn);
 new LinkDocumentRoutes(app);
 new ZoneRoutes(app);
 */
+
+new UserRoutes(app, passport, isLoggedIn);
 /*** Other express-related instructions ***/
 // activate the server
 const server= app.listen(port, () => {
