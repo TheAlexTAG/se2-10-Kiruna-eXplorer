@@ -1,4 +1,4 @@
-import { CoordinatesOutOfBoundsError } from "../../../server/src/errors/documentErrors";
+import { CoordinatesOutOfBoundsError } from "../errors/general";
 
 const SERVER_URL = "http://localhost:3001/api";
 

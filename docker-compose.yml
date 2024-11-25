@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  client:
+    build:
+      context: ./code/client
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./code/client:/app
+      - /app/node_modules
+    command: npm run dev
+
+  server:
+    build:
+      context: ./code/server
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./code/server:/app
+      - /app/node_modules
+    command: npm run dev
+
+networks:
+  default:
+    name: se10Kiruna-network
+

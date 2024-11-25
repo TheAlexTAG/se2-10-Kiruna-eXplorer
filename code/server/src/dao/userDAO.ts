@@ -1,5 +1,7 @@
+import { promisify } from "util";
 import { User } from "../components/user";
 import db from "../db/db";
+import { error } from "console";
 
 const crypto = require("crypto");
 
@@ -15,22 +17,21 @@ class UserDAO {
    * @param id The id of the user to retrieve
    * @returns A Promise that resolves the information of the requested user
    */
-  getUserById(id: number): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const sql = "SELECT * FROM user WHERE userID = ?";
-      db.get(sql, [id], (err: Error | null, row: any) => {
-        if (err) {
-          reject(err);
-        } 
-        else if (row === undefined) {
-          resolve({ error: "User not found." });
-        } 
-        else {
-          const user = new User(DOMPurify.sanitize(row.userID),DOMPurify.sanitize(row.username),DOMPurify.sanitize(row.role));
-          resolve(user);
-        }
-      });
-    });
+  async getUserById(id: number): Promise<any> {
+    let conn;
+    try {
+        const sql = "SELECT * FROM user WHERE userID = ?"
+        conn = await db.pool.getConnection();
+        let result = await conn.query(sql, [id]);
+        if (result.length === 0) return({ error: "User not found."});
+        const user = new User(DOMPurify.sanitize(result[0].userID),DOMPurify.sanitize(result[0].username),DOMPurify.sanitize(result[0].role))
+        return user;
+    } catch(err) {
+        console.error(error);
+        throw err;
+    } finally {
+        conn?.release();
+    }
   }
 
   /**
@@ -39,30 +40,25 @@ class UserDAO {
    * @param password The password of the user to retrieve
    * @returns A Promise that resolves the information of the requested user
    */
-  getUser(username: string, password: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      const sql = "SELECT * FROM user WHERE username = ?";
-      db.get(sql, [username], (err: Error | null, row: any) => {
-        if (err) {
-          return reject(err);
-        } 
-        else if (row === undefined) {
-          return resolve(false);
+  async getUser(username: string, password: string): Promise<any> {
+    let conn;
+    try {
+        const sql = "SELECT * FROM user WHERE username = ?";
+        conn = await db.pool.getConnection();
+        let result = await conn.query(sql, [username]);
+        if (result.length === 0) return false;
+        const user = new User(DOMPurify.sanitize(result[0].userID),DOMPurify.sanitize(result[0].username),DOMPurify.sanitize(result[0].role))
+        const scryptAsync = promisify(crypto.scrypt);
+        const hashedPassword = await scryptAsync(password, result[0].salt, 32);
+        if (!crypto.timingSafeEqual(Buffer.from(result[0].password, "hex"), hashedPassword)) {
+            return false;
         }
-        const user = new User(DOMPurify.sanitize(row.userID),DOMPurify.sanitize(row.username),DOMPurify.sanitize(row.role));
-
-        crypto.scrypt(password,row.salt,32,(err: Error | null, hashedPassword: Buffer) => {
-            if (err) {
-              return reject(err);
-            }
-            if ( !crypto.timingSafeEqual(Buffer.from(row.password, "hex"), hashedPassword)) {
-              return resolve(false);
-            }
-            return resolve(user);
-          }
-        );
-      });
-    });
+        return user;
+    } catch(err) {
+        throw err;
+    } finally {
+        conn?.release();
+    }
   }
 }
 

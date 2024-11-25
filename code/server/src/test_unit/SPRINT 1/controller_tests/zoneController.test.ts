@@ -1,14 +1,14 @@
 import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
-import {ZoneDAO} from "../../dao/zoneDAO";
-import {ZoneController} from "../../controllers/zoneController";
-import {Zone} from "../../components/zone"
-import {ZoneError} from "../../errors/zoneError"
+import {ZoneDAO} from "../../../dao/zoneDAO";
+import {ZoneController} from "../../../controllers/zoneController";
+import {Zone} from "../../../components/zone"
+import {ZoneError} from "../../../errors/zoneError"
 import { GeoJSON } from 'geojson';
-import { InternalServerError } from "../../errors/link_docError";
+import { InternalServerError } from "../../../errors/link_docError";
 
 const wellknown = require('wellknown');
 
-jest.mock("../../dao/zoneDAO")
+jest.mock("../../../dao/zoneDAO")
 
 let controller : ZoneController;
 
@@ -27,9 +27,8 @@ describe("Controller zone unit tests", () => {
         });
 
         test("It should get a specific zone", async () => {
-            const zoneName : string = 'Kiruna municipal area';
-            const coord: GeoJSON = {type: 'Feature', geometry: wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))'), properties: {name: zoneName}};
-            const zone: Zone = new Zone(1, zoneName, coord);
+            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const zone: Zone = new Zone(1, coord);
             jest.spyOn(ZoneDAO.prototype,"getZone").mockResolvedValue(zone);
 
             const result = await controller.getZone(1);
@@ -59,7 +58,7 @@ describe("Controller zone unit tests", () => {
  
     });
 
-
+    
     describe("getAllZone", () => {
     
         afterEach(() => {
@@ -69,9 +68,10 @@ describe("Controller zone unit tests", () => {
         });
 
         test("It should return all zone", async () => {
-            const zone1: Zone = new Zone(1, 'Kiruna municipal area');
-            const zone2: Zone = new Zone(2, 'Zone 2');
-            const zone3: Zone = new Zone(3, 'Zone 3');
+            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const zone1: Zone = new Zone(1, coord);
+            const zone2: Zone = new Zone(2, coord);
+            const zone3: Zone = new Zone(3, coord);
             jest.spyOn(ZoneDAO.prototype,"getAllZone").mockResolvedValue([zone1, zone2, zone3]);
 
             const result = await controller.getAllZone();
@@ -97,34 +97,6 @@ describe("Controller zone unit tests", () => {
         });
  
     });
-
-    describe("checkKiruna", () => {
-    
-        afterEach(() => {
-            jest.clearAllMocks();
-            jest.resetAllMocks();
-            jest.restoreAllMocks();
-        });
-
-        test("It should do nothing if Kiruna info are already present", async () => {
-            jest.spyOn(ZoneDAO.prototype,"getKirunaPolygon").mockResolvedValue('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
-
-            await controller.checkKiruna();
-    
-            expect(ZoneDAO.prototype.insertKirunaPolygon).not.toHaveBeenCalled();
-        });
-
-        test("It should add Kiruna info if they are not present", async () => {
-            jest.spyOn(ZoneDAO.prototype,"getKirunaPolygon").mockResolvedValue('');
-
-            await controller.checkKiruna();
-    
-            expect(ZoneDAO.prototype.insertKirunaPolygon).toHaveBeenCalledTimes(1);
-        });
-
- 
-    });
-
 
 })
 

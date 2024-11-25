@@ -9,7 +9,7 @@ export const Home = () => {
             <Col className="d-flex align-items-center">
               <div>
                 <img
-                  src="./src/assets/kiruna.webp"
+                  src="./src/assets/kiruna1.jpg"
                   style={{ width: "100%", borderRadius: "12px" }}
                 />
               </div>
@@ -56,18 +56,18 @@ export const Home = () => {
             <Col className="d-flex align-items-center">
               <div>
                 <img
-                  src="./src/assets/kiruna-move.jpg"
+                  src="./src/assets/kiruna2.jpg"
                   style={{ width: "100%", borderRadius: "12px" }}
                 />
               </div>
             </Col>
           </Row>
           <hr className="mx-2" />
-          <Row className="w-100">
+          <Row className="w-100" style={{ paddingBottom: "12px" }}>
             <Col className="d-flex align-items-center">
               <div>
                 <img
-                  src="./src/assets/kiruna-city.webp"
+                  src="./src/assets/kiruna3.jpg"
                   style={{ width: "100%", borderRadius: "12px" }}
                 />
               </div>

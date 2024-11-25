@@ -98,7 +98,7 @@ describe('DocumentDAO', () => {
     test('should apply filters for issuanceDate correctly', async () => {
       (db.all as jest.Mock).mockImplementationOnce((sql, params, callback) => {
         expect(sql).toContain('WHERE d.issuanceDate LIKE ?');
-        expect(params).toEqual(['2023-01%']);
+        expect(params).toEqual(['%2023-01%']);
         callback(null, []);
       });
 

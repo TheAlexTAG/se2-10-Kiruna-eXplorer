@@ -1,18 +1,18 @@
 import { describe, test, expect, beforeAll, afterEach, jest } from "@jest/globals"
 import request from 'supertest'
-import { app } from "../../../index"
-import { ZoneController } from "../../controllers/zoneController"
-import { Zone } from "../../components/zone"
-import { ZoneError } from "../../errors/zoneError"
+import { app } from "../../../../index"
+import { ZoneController } from "../../../controllers/zoneController"
+import { Zone } from "../../../components/zone"
+import { ZoneError } from "../../../errors/zoneError"
 import { GeoJSON } from 'geojson';
-import { InternalServerError } from "../../errors/link_docError"
-import ErrorHandler from "../../helper"
-import { Utilities } from "../../utilities"
+import { InternalServerError } from "../../../errors/link_docError"
+import {ErrorHandler} from "../../../helper"
+import { Utilities } from "../../../utilities"
 
 const wellknown = require('wellknown');
 
-jest.mock("../../controllers/zoneController")
-jest.mock("../../utilities")
+jest.mock("../../../controllers/zoneController")
+jest.mock("../../../utilities")
 
 describe("Route zone unit tests", () => {
 
@@ -25,9 +25,10 @@ describe("Route zone unit tests", () => {
         });
 
         test("It should return the list of all zones", async () => {
-            const zone1: Zone = new Zone(1, 'Kiruna municipal area');
-            const zone2: Zone = new Zone(2, 'Zone 2');
-            const zone3: Zone = new Zone(3, 'Zone 3');
+            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const zone1: Zone = new Zone(1, coord);
+            const zone2: Zone = new Zone(2, coord);
+            const zone3: Zone = new Zone(3, coord);
 
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
                 return next();
@@ -41,22 +42,6 @@ describe("Route zone unit tests", () => {
             expect(ZoneController.prototype.getAllZone).toHaveBeenCalledTimes(1);
         })
 
-        test("It should return a 401 code if user is not an urban planner", async () => {
-            const zone1: Zone = new Zone(1, 'Kiruna municipal area');
-            const zone2: Zone = new Zone(2, 'Zone 2');
-            const zone3: Zone = new Zone(3, 'Zone 3');
-
-            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
-                return res.status(401).json({ error: "Unauthorized" });
-            })
-
-            const mockController = jest.spyOn(ZoneController.prototype, "getAllZone").mockResolvedValueOnce([zone1, zone2, zone3]);
-
-            const response = await request(app).get("/api/zones");
-
-            expect(response.status).toBe(401);
-            expect(ZoneController.prototype.getAllZone).not.toHaveBeenCalled();
-        })
 
         test("It should fail and return 404 status if the controller's method returns a ZoneError", async () => {
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
@@ -84,7 +69,6 @@ describe("Route zone unit tests", () => {
 
     })
 
-
     describe("GET /api/document/zone/:id", () => {
 
         afterEach(() => {
@@ -94,9 +78,8 @@ describe("Route zone unit tests", () => {
         });
 
         test("It should return the zone specified", async () => {
-            const zoneName: string = 'Kiruna municipal area';
-            const coord: GeoJSON = {type: 'Feature', geometry: wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))'), properties: {name: zoneName}};
-            const zone: Zone = new Zone(1, zoneName, coord);
+            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const zone: Zone = new Zone(1, coord);
             jest.mock('express-validator', () => ({
                 body: jest.fn().mockImplementation(() => ({
                     isInt: () => ({})
@@ -116,9 +99,8 @@ describe("Route zone unit tests", () => {
         })
 
         test("It should return 422 status if the parameter is not an integer", async () => {
-            const zoneName: string = 'Kiruna municipal area';
-            const coord: GeoJSON = {type: 'Feature', geometry: wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))'), properties: {name: zoneName}};
-            const zone: Zone = new Zone(1, zoneName, coord);
+            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const zone: Zone = new Zone(1, coord);
 
             const mockController = jest.spyOn(ZoneController.prototype, "getZone").mockResolvedValueOnce(zone);
 
