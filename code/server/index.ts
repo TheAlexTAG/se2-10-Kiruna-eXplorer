@@ -1,6 +1,5 @@
 import express from "express";
 import { testConnection } from "./src/db/db";
-import { Kiruna } from "./src/helper";
 import { Role, User } from "./src/components/user";
 import { UserRoutes } from "./src/routers/userRoutes";
 import { UserController } from "./src/controllers/userController";
