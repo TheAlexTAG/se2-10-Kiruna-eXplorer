@@ -1,7 +1,11 @@
 import express from "express";
-import { testConnection } from "./src/db/db";
+import {DocumentRoutes} from "./src/routers/documentRoutes"
+import {UserController} from "./src/controllers/userController";
+import {UserRoutes} from "./src/routers/userRoutes";
+import {LinkDocumentRoutes} from "./src/routers/link_docRoutes";
+import {ZoneRoutes} from "./src/routers/zoneRoutes";
+import db from "./src/db/db";
 import { Kiruna } from "./src/helper";
-import { Role, User } from "./src/components/user";
 
 
 const morgan = require("morgan"); // logging middleware
@@ -33,12 +37,12 @@ app.use('/resources', express.static(resourceDir));
 }
 
 /*** Passport ***/
-/** provisorial user for the login */
-const user = new User(1, 'username', Role.PLANNER);
+const controller = new UserController();
 
 // set up the "username and password" login strategy with a function to verify username and password
 passport.use(
   new LocalStrategy(async function verify(username: string,password: string,callback: any){
+    const user = await controller.getUser(username, password);
     if (!user) {
       return callback(null, false, {message: "Incorrect username or password"});
     }
@@ -52,6 +56,7 @@ passport.serializeUser((user: any, callback: any) => {
 
 passport.deserializeUser(async function (id: number, callback: any) {
   try {
+    const user = await controller.getUserById(id);
     callback(null, user);
   } catch (err) {
     callback(err, null);
@@ -78,29 +83,20 @@ app.use(passport.session());
 
 /* ROUTES */
 
+new DocumentRoutes(app);
+new UserRoutes(app, passport, isLoggedIn);
+new LinkDocumentRoutes(app);
+new ZoneRoutes(app);
+const kiruna= new Kiruna();
+kiruna.checkKiruna().catch((err: any)=>{
+  console.error(`Error code:${err.code}\nMessage:${err.message}`);
+  db.close();
+});;
 
 /*** Other express-related instructions ***/
 // activate the server
 const server= app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
-
-testConnection();
-/*
-  example query with mariaDB, be sure to always open the connection and close it in finally
-  app.get("/api/zones", async function(req: any, res: any, next: any) {
-    let conn;
-    try {
-      conn = await db.pool.getConnection();
-      let result = await conn.query("SELECT * FROM zone");
-      console.log(result);
-      res.status(200).json(result);
-    } catch (err) {
-      res.status(400).json(err);
-    } finally {
-      if(conn) conn.release();
-    }
-  })
-*/
 
 export {app, server};
