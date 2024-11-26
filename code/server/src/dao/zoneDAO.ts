@@ -1,5 +1,6 @@
 import { Zone } from "../components/zone";
 import db from "../db/db";
+import { InternalServerError } from "../errors/link_docError";
 import { ZoneError, InsertZoneError, ModifyZoneError } from "../errors/zoneError";
 
 const createDOMPurify = require("dompurify");
@@ -25,12 +26,27 @@ class ZoneDAO {
         try {
             conn = await db.pool.getConnection();
             const sql= "SELECT * FROM zone WHERE zoneID=?";
-            const result: any = conn.query(sql, [id]);
+            const result = await conn.query(sql, [id]);
             if(result.length === 0) throw new ZoneError();
             let zone = ZoneDAO.createZone(+DOMPurify.sanitize(result[0].zoneID), DOMPurify.sanitize(result[0].coordinates))
             return zone;
-        } catch (err) {
-            throw err;
+        } catch (err: any) {
+            if(err instanceof ZoneError) throw err;
+            else throw new InternalServerError(err.message? err.message : "")
+        } finally {
+            conn?.release();
+        }
+    }
+
+    async zoneExists(coordinates: number): Promise<boolean> {
+        let conn;
+        try {
+            conn = await db.pool.getConnection();
+            const sql = "SELECT COUNT(*) AS count FROM zone WHERE coordinates = ?"
+            const result = await conn.query(sql, [coordinates]);
+            return Number(result[0].count)? true : false;
+        } catch(err: any) {
+            throw new InternalServerError(err.message? err.message : "");
         } finally {
             conn?.release();
         }
