@@ -5,8 +5,7 @@ import kiruna from "../kiruna.json"
 import { ZoneDAO } from "../dao/zoneDAO";
 import { Geometry } from "geojson";
 import { InsertZoneError } from "../errors/zoneError";
-
-const wellknown = require("wellknown");
+import wellknown from "wellknown"
 
 class DocumentController {
     private dao: DocumentDAO
@@ -36,12 +35,12 @@ class DocumentController {
             }
             else if(coordinates && zoneID == null && latitude == null && longitude == null) {
                 const geo: Geometry= turf.geometry("Polygon", [coordinates])
-                const zoneExists = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geo));
+                const zoneExists = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geo as wellknown.GeoJSONGeometry));
                 if(zoneExists) throw new InsertZoneError();
                 const checkCoordinates = await this.checkPolygonValidity(geo);
                 if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
                 let centroid = turf.centroid(geo);
-                let lastID = await this.dao.createDocumentNode(title, description, zoneID, wellknown.stringify(geo), centroid.geometry.coordinates[1], centroid.geometry.coordinates[0], stakeholders, scale, issuanceDate, type, language, pages);
+                let lastID = await this.dao.createDocumentNode(title, description, zoneID, wellknown.stringify(geo as wellknown.GeoJSONGeometry), centroid.geometry.coordinates[1], centroid.geometry.coordinates[0], stakeholders, scale, issuanceDate, type, language, pages);
                     return lastID;
             }
             else if(coordinates ==  null && zoneID == null && latitude != null && longitude != null) {
@@ -71,12 +70,12 @@ class DocumentController {
             }
             else if(coordinates && zoneID == null && latitude == null && longitude == null) {
                 const geo: Geometry= turf.geometry("Polygon", [coordinates]);
-                const zoneExists = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geo));
+                const zoneExists = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geo as wellknown.GeoJSONGeometry));
                 if(zoneExists) throw new InsertZoneError();
                 const checkCoordinates = await this.checkPolygonValidity(geo);
                 if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
                 let centroid = turf.centroid(geo);
-                let response = await this.dao.updateDocumentGeoref(documentID, zoneID, wellknown.stringify(geo), centroid.geometry.coordinates[0], centroid.geometry.coordinates[1]);
+                let response = await this.dao.updateDocumentGeoref(documentID, zoneID, wellknown.stringify(geo as wellknown.GeoJSONGeometry), centroid.geometry.coordinates[0], centroid.geometry.coordinates[1]);
                 return response;
             }
             else if(coordinates ==  null && zoneID == null && latitude != null && longitude != null) {

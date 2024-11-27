@@ -15,10 +15,9 @@ class DocumentRoutes {
         this.controller = new DocumentController();
         this.errorHandler = new ErrorHandler();
         this.utilities = new Utilities();
-        this.initRoutes();
     }
 
-    initRoutes(): void {
+    initRoutes = () => {
         this.app.post("/api/document",
             body("title").isString().notEmpty(),
             body("description").isString().notEmpty(),

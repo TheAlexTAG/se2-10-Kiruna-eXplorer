@@ -38,7 +38,7 @@ class ZoneDAO {
         }
     }
 
-    static async zoneExistsCoord(coordinates: number): Promise<boolean> {
+    static async zoneExistsCoord(coordinates: string): Promise<boolean> {
         let conn;
         try {
             conn = await db.pool.getConnection();

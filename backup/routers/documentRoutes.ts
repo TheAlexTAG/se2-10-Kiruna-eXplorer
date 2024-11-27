@@ -57,7 +57,7 @@ class DocumentRoutes {
 /**
  * function for initializing all the routes
  */
-    initRoutes(): void {
+    initRoutes = () => {
         /**
          * route for inserting a document node into the database. It returns the id of the last document node created
          */

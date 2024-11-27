@@ -89,7 +89,11 @@ new ZoneRoutes(app);
 */
 
 new UserRoutes(app, passport, isLoggedIn);
-new DocumentRoutes(app);
+const documentRoutes = new DocumentRoutes(app);
+
+documentRoutes.initRoutes();
+
+
 
 /*** Other express-related instructions ***/
 // activate the server
