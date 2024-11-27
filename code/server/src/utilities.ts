@@ -1,4 +1,5 @@
 import {User, Role} from "./components/user";
+import { DocumentDAO } from "./dao/documentDAO";
 
 class Utilities{    
     static checkUrbanDeveloper(user: User): boolean{
@@ -58,6 +59,13 @@ class Utilities{
         return res.status(401).json({ error: "User is not authorized"});
     }
 
+    async documentExists(req: any, res: any, next: any) {
+        if (await DocumentDAO.documentExists(req.params.id)) {
+            return next();
+        }
+        return res.status(404).json({ error: "Document not found"});
+    }
+    
 }
 
 export {Utilities};

@@ -31,30 +31,29 @@ class DocumentRoutes {
             body("type").isString().notEmpty(),
             body("language").optional({nullable:true}).isString(),
             body("pages").optional({nullable:true}).isString(),
-            body("isKiruna").optional({nullable:true}).isBoolean(), //set true only if the zone is kiruna, otherwise null or false
             body('coordinates').optional({nullable:true}).isArray(), //set only if the zone is new, otherwise null
             body("coordinates.*").optional({nullable:true}).isArray({ min: 2, max: 2}),
             body("coordinates.*.0").optional({nullable:true}).isFloat({ min: -180, max: 180 }),
             body("coordinates.*.1").optional({nullable:true}).isFloat({ min: -90, max: 90 }),
             this.utilities.isUrbanPlanner,
             this.errorHandler.validateRequest,
-        (req: any, res: any, next: any) => this.controller.createNode(req.body.title, req.body.description, req.body.zoneID, req.body.coordinates, req.body.latitude, req.body.longitude, req.body.stakeholders, req.body.scale, req.body.issuanceDate, req.body.type, req.body.language, req.body.pages, req.body.isKiruna)
+        (req: any, res: any, next: any) => this.controller.createNode(req.body.title, req.body.description, req.body.zoneID, req.body.coordinates, req.body.latitude, req.body.longitude, req.body.stakeholders, req.body.scale, req.body.issuanceDate, req.body.type, req.body.language, req.body.pages)
         .then((lastID: number) => res.status(200).json(lastID))
         .catch((err: any) => {console.error(err.stack);res.status(err.code? err.code : 500).json({error: err.message})}))
 
         this.app.put("/api/document/:id",
             param("id").isInt(),
+            this.utilities.documentExists,
             body("zoneID").optional({nullable: true}).isInt(), // send only if the zone already exists, otherwise null, if kiruna set null
             body("latitude").optional({nullable:true}).isFloat(), //send only if the georeference is a point, otherwise null
             body("longitude").optional({nullable:true}).isFloat(), //send only if the georeference is a point, otherwise null
-            body("isKiruna").optional({nullable:true}).isBoolean(), //set true only if the zone is kiruna, otherwise false or null
             body('coordinates').optional({nullable:true}).isArray(), //set only if the zone is new, otherwise null
             body("coordinates.*").optional({nullable:true}).isArray({ min: 2, max: 2}),
             body("coordinates.*.0").optional({nullable:true}).isFloat({ min: -180, max: 180 }),
             body("coordinates.*.1").optional({nullable:true}).isFloat({ min: -90, max: 90 }),
             this.utilities.isUrbanPlanner,
             this.errorHandler.validateRequest,
-        (req: any, res: any, next: any) => this.controller.updateDocumentGeoref(req.params.id, req.body.zoneID, req.body.coordinates, req.body.latitude, req.body.longitude, req.body.isKiruna)
+        (req: any, res: any, next: any) => this.controller.updateDocumentGeoref(req.params.id, req.body.zoneID, req.body.coordinates, req.body.latitude, req.body.longitude)
         .then((val: boolean) => res.status(200).json(val))
         .catch((err) => res.status(err.code? err.code : 500).json({error: err.message})))
     }
