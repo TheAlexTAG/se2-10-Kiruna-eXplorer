@@ -1,7 +1,7 @@
 import request from "supertest";
-import { app } from "../../../../../index";
-import { Document } from '../../../../components/document';
-import { DocumentController } from "../../../../controllers/documentController";
+import { app } from "../../../../index";
+import { Document } from '../../../../src/components/document';
+import { DocumentController } from "../../../../src/controllers/documentController";
 
 jest.mock("../../../../controllers/documentController");
 
