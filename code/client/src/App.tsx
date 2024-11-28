@@ -6,6 +6,7 @@ import { useAuth } from "./contexts/GlobalStateProvider";
 import GeoreferenceDocument from "./components/DocumentsMap/DocumentsMap";
 import { DocumentList } from "./components/Document/DocumentList";
 import { Home } from "./components/Home/Home";
+import { Diagram } from "./components/Diagram/Diagram";
 
 function App() {
   const location = useLocation();
@@ -18,8 +19,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/map" element={<GeoreferenceDocument />} />
-
         <Route path="/document" element={<DocumentList userInfo={user} />} />
+        <Route path="/diagram" element={<Diagram/>}/>
       </Routes>
     </>
   );
