@@ -6,6 +6,7 @@ import { ZoneDAO } from "../dao/zoneDAO";
 import { Geometry } from "geojson";
 import { InsertZoneError } from "../errors/zoneError";
 import wellknown from "wellknown"
+import { Document } from "../components/document";
 
 class DocumentController {
     private dao: DocumentDAO
@@ -96,6 +97,36 @@ class DocumentController {
         }
     }
 
+    async getDocument(documentID: number): Promise<Document> {
+        try {
+            const document = await this.dao.getDocumentByID(documentID);
+            return document;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    async getDocuments(filters: any): Promise<Document[]> {
+        try {
+            const documents = await this.dao.getDocsWithFilters(filters);
+            return documents;
+        } catch(err) {
+            throw err;
+        }
+    }
+
+    async deleteAllDocuments(): Promise<boolean> {
+        try {
+            const response = await this.dao.deleteAllDocuments();
+            return response;
+        } catch(err) {
+            throw err;
+        }
+    }
+
+    async addResource(documentID: number, filesname: string[]): Promise<boolean>{
+        return await this.dao.addResource(documentID, filesname);
+      }
 }
 
 export {DocumentController}
