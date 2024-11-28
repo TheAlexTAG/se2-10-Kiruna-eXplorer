@@ -1,27 +1,26 @@
-import { LinkDocument } from "../components/link_doc";
+import { LinkDocument, Relationship } from "../components/link_doc";
 import db from "../db/db";
-import { DocumentNotFoundError } from "../errors/documentErrors";
 import { InternalServerError, LinkError } from "../errors/link_docError";
 
 /* Sanitize input */
-const createDOMPurify = require("dompurify");
-const { JSDOM } = require("jsdom");
+import createDOMPurify from "dompurify";
+import { JSDOM } from "jsdom";
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
 class LinkDocumentDAO {
 
-  getLink(firstDoc: number, secondDoc: number): Promise<any> {
+  getLink(firstDoc: number, secondDoc: number, relationship: Relationship): Promise<any> {
     return new Promise<any>((resolve, reject) => {
-      const sql = "SELECT * FROM link WHERE (firstDoc=? AND secondDoc=?) OR (firstDoc=? AND secondDoc=?)";
-      db.get(sql, [firstDoc, secondDoc, secondDoc, firstDoc], (err: Error | null, row: any) => {
+      const sql = "SELECT * FROM link WHERE (firstDoc=? AND secondDoc=?) OR (firstDoc=? AND secondDoc=?) AND relationship=?";
+      db.get(sql, [firstDoc, secondDoc, secondDoc, firstDoc, relationship], (err: Error | null, row: any) => {
         if (err) {
           return reject(new InternalServerError(err.message));
         }
         if (!row) {
           return resolve(null);
         }
-        return resolve(new LinkDocument(+DOMPurify.sanitize(row.firstDoc), +DOMPurify.sanitize(row.secondDoc), DOMPurify.sanitize(row.relationship)));
+        return resolve(new LinkDocument(+DOMPurify.sanitize(row.firstDoc), +DOMPurify.sanitize(row.secondDoc), DOMPurify.sanitize(row.relationship) as Relationship));
       }
       );
     }
