@@ -1,4 +1,7 @@
 import {User, Role} from "./components/user";
+import { DocumentDAO } from "./dao/documentDAO";
+import { DocumentNotFoundError } from "./errors/documentErrors";
+import { InternalServerError } from "./errors/link_docError";
 
 class Utilities{    
     static checkUrbanDeveloper(user: User): boolean{
@@ -58,6 +61,22 @@ class Utilities{
         return res.status(401).json({ error: "User is not authorized"});
     }
 
+    async documentExists(req: any, res: any, next: any) {
+        try {
+            await DocumentDAO.documentExists(req.params.id) 
+            return next();
+        } catch(err: any) {
+            if(err instanceof DocumentNotFoundError) throw err;
+            else throw new InternalServerError(err.message? err.message : "");
+        }
+    }
+
+    async paginationCheck(req: any, res: any, next: any) {
+        if((req.query.pageSize && req.query.pageNumber) || (!req.query.pageSize && !req.query.pageNumber)) 
+            return next();
+        else res.status(422).json({error: "Pagination error: page size or page number missing"});
+    }
+    
 }
 
 export {Utilities};

@@ -3,6 +3,7 @@ import { testConnection } from "./src/db/db";
 import { Role, User } from "./src/components/user";
 import { UserRoutes } from "./src/routers/userRoutes";
 import { UserController } from "./src/controllers/userController";
+import { DocumentRoutes } from "./src/routers/documentRoutes";
 
 
 const morgan = require("morgan"); // logging middleware
@@ -88,6 +89,12 @@ new ZoneRoutes(app);
 */
 
 new UserRoutes(app, passport, isLoggedIn);
+const documentRoutes = new DocumentRoutes(app);
+
+documentRoutes.initRoutes();
+
+
+
 /*** Other express-related instructions ***/
 // activate the server
 const server= app.listen(port, () => {
