@@ -11,7 +11,7 @@ class DocumentDAO {
     static async documentExists(documentID: number): Promise<boolean> {
         let conn;
         try {
-            conn = await db.pool.getConnection();
+            conn = await db.getConnection();
             const sql = `SELECT COUNT(*) AS count FROM document WHERE documentID = ?`
             const result = await conn.query(sql, [documentID]);
             return Number(result[0].count)? true : false;
@@ -25,7 +25,7 @@ class DocumentDAO {
     async createDocumentNode(title: string, description: string, zoneID: number | null, coordinates: string | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
         let conn;
         try {
-            conn = await db.pool.getConnection();
+            conn = await db.getConnection();
             await conn.beginTransaction();
             if(coordinates) {
                 let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [coordinates]);
@@ -49,7 +49,7 @@ class DocumentDAO {
     async updateDocumentGeoref(documentID: number, zoneID: number | null, coordinates: string | null, latitude: number | null, longitude: number | null): Promise<boolean> {
         let conn;
         try {
-            conn = await db.pool.getConnection();
+            conn = await db.getConnection();
             await conn.beginTransaction();
             if(coordinates) {
                 let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [coordinates]);
@@ -59,7 +59,6 @@ class DocumentDAO {
             const sql = `UPDATE document SET zoneID = ?, longitude = ?, latitude = ? WHERE documentID = ?`;
             const result = await conn.query(sql, [zoneID, longitude, latitude, documentID]);
             if(!result.affectedRows) throw new WrongGeoreferenceUpdateError();
-            console.log(result);
             await conn.commit();
             return true;
         } catch (err: any) {
@@ -74,7 +73,7 @@ class DocumentDAO {
     async getDocumentByID(documentID: number): Promise<Document> {
         let conn;
         try {
-            conn = await db.pool.getConnection();
+            conn = await db.getConnection();
             const sql = `
             SELECT d.documentID,
                 d.title,
@@ -108,7 +107,6 @@ class DocumentDAO {
             WHERE d.documentID = ?
             GROUP BY d.documentID`
             const result = await conn.query(sql, [documentID]);
-            console.log(result[0]);
             if(result.length === 0) throw new DocumentNotFoundError();
             return new Document(
                 result[0].documentID,
@@ -139,7 +137,7 @@ class DocumentDAO {
     async getDocsWithFilters(filters: any): Promise<Document[]> {
         let conn;
         try{
-            conn = await db.pool.getConnection();
+            conn = await db.getConnection();
             let sql = `
             SELECT d.documentID,
                 d.title,
@@ -246,7 +244,7 @@ class DocumentDAO {
     async deleteAllDocuments(): Promise<boolean> {
         let conn;
         try {
-            conn = await db.pool.getConnection();
+            conn = await db.getConnection();
             const sql = "DELETE FROM document";
             await conn.query(sql, []);
             return true;
@@ -260,11 +258,10 @@ class DocumentDAO {
     async addResource(documentID: number, paths: string[]): Promise<boolean> {
         let conn;
         try {
-            conn = await db.pool.getConnection();
+            conn = await db.getConnection();
             await conn.beginTransaction();
             //const params = names.map((name, index) => [documentID, name, links[index]]); for adding also names
             const params = paths.map((path: string) => [documentID, 'placeholdername', path])
-            console.log(params);
             const sql = "INSERT INTO resource (documentID, name, path) VALUES (?, ?, ?)";
             await conn.batch(sql, params);
             await conn.commit();

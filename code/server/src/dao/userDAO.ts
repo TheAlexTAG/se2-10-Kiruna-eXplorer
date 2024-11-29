@@ -21,7 +21,7 @@ class UserDAO {
     let conn;
     try {
         const sql = "SELECT * FROM user WHERE userID = ?"
-        conn = await db.pool.getConnection();
+        conn = await db.getConnection();
         let result = await conn.query(sql, [id]);
         if (result.length === 0) return({ error: "User not found."});
         const user = new User(DOMPurify.sanitize(result[0].userID),DOMPurify.sanitize(result[0].username),DOMPurify.sanitize(result[0].role))
@@ -44,7 +44,7 @@ class UserDAO {
     let conn;
     try {
         const sql = "SELECT * FROM user WHERE username = ?";
-        conn = await db.pool.getConnection();
+        conn = await db.getConnection();
         let result = await conn.query(sql, [username]);
         if (result.length === 0) return false;
         const user = new User(DOMPurify.sanitize(result[0].userID),DOMPurify.sanitize(result[0].username),DOMPurify.sanitize(result[0].role))

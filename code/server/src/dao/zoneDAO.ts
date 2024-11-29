@@ -24,7 +24,7 @@ class ZoneDAO {
     async getZone(id: number): Promise<Zone> {
         let conn;
         try {
-            conn = await db.pool.getConnection();
+            conn = await db.getConnection();
             const sql= "SELECT * FROM zone WHERE zoneID=?";
             const result = await conn.query(sql, [id]);
             if(result.length === 0) throw new ZoneError();
@@ -41,7 +41,7 @@ class ZoneDAO {
     static async zoneExistsCoord(coordinates: string): Promise<boolean> {
         let conn;
         try {
-            conn = await db.pool.getConnection();
+            conn = await db.getConnection();
             const sql = "SELECT COUNT(*) AS count FROM zone WHERE coordinates = ?"
             const result = await conn.query(sql, [coordinates]);
             return Number(result[0].count)? true : false;

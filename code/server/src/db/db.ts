@@ -1,20 +1,18 @@
-import mariadb, {Pool} from "mariadb"
+import mariadb from "mariadb"
 
-const db : {pool: Pool} = {
-    pool: mariadb.createPool({
+const db= mariadb.createPool(
+    {
         host: 'localhost',
         user: 'root',
-        password: 'root',
+        password: "root",
         database: 'kiruna_explorer',
-        port: 3306,
-        connectionLimit: 10
-    })
-}
+        connectionLimit: 10}
+    )
 
 async function testConnection(): Promise<void> {
     let conn;
     try {
-        conn = await db.pool.getConnection();
+        conn = await db.getConnection();
         console.log("MariaDB connected");
     } catch (err) {
         console.error("Failed to connect to MariaDB:", err);
