@@ -17,7 +17,7 @@ async function testConnection(): Promise<void> {
     } catch (err) {
         console.error("Failed to connect to MariaDB:", err);
     } finally {
-        if (conn) conn.release();
+        await conn?.release();
     }
 }
 

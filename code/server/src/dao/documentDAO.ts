@@ -18,7 +18,7 @@ class DocumentDAO {
         } catch(err: any) {
             throw new InternalServerError(err.message? err.message : "");
         } finally {
-            conn?.release();
+            await conn?.release();
         }
     }
 
@@ -38,11 +38,11 @@ class DocumentDAO {
             await conn.commit();
             return Number(result.insertId);
         } catch (err: any) {
-            conn?.rollback();
+            await conn?.rollback();
             if(err instanceof ZoneError) throw err;
             else throw new InternalServerError(err.message? err.message : "");
         } finally {
-            conn?.release();
+            await conn?.release();
         }
     }
 
@@ -62,11 +62,11 @@ class DocumentDAO {
             await conn.commit();
             return true;
         } catch (err: any) {
-            conn?.rollback();
+            await conn?.rollback();
             if(err instanceof ZoneError || err instanceof WrongGeoreferenceUpdateError) throw err;
             else throw new InternalServerError(err.message? err.message : "");
         } finally {
-            conn?.release();
+            await conn?.release();
         }
     }
 
@@ -130,7 +130,7 @@ class DocumentDAO {
             if (err instanceof DocumentNotFoundError) throw err;
             else throw new InternalServerError(err.message? err.message : "");
         } finally {
-            conn?.release();
+            await conn?.release();
         }
     }
 
@@ -237,7 +237,7 @@ class DocumentDAO {
         } catch (err: any) {
             throw new InternalServerError(err.message? err.message : "");
         } finally {
-            conn?.release();
+            await conn?.release();
         }
     }
 
@@ -251,7 +251,7 @@ class DocumentDAO {
         } catch(err: any) {
             throw new InternalServerError(err.message? err.message : "")
         } finally {
-            conn?.release();
+            await conn?.release();
         }
     }
 
@@ -267,10 +267,10 @@ class DocumentDAO {
             await conn.commit();
             return true;
         } catch(err: any) {
-            conn?.rollback();
+            await conn?.rollback();
             throw new InternalServerError(err.message? err.message : "");
         } finally {
-            conn?.release();
+            await conn?.release();
         }
     }
 }
