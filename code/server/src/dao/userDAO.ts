@@ -30,7 +30,7 @@ class UserDAO {
         console.error(error);
         throw err;
     } finally {
-        conn?.release();
+        await conn?.release();
     }
   }
 
@@ -57,7 +57,7 @@ class UserDAO {
     } catch(err) {
         throw err;
     } finally {
-        conn?.release();
+        await conn?.release();
     }
   }
 }
