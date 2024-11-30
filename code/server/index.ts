@@ -1,19 +1,18 @@
 import express from "express";
-import {DocumentRoutes} from "./src/routers/documentRoutes"
-import {UserController} from "./src/controllers/userController";
-import {UserRoutes} from "./src/routers/userRoutes";
-import {LinkDocumentRoutes} from "./src/routers/link_docRoutes";
-import {ZoneRoutes} from "./src/routers/zoneRoutes";
+import { DocumentRoutes } from "./src/routers/documentRoutes";
+import { UserController } from "./src/controllers/userController";
+import { UserRoutes } from "./src/routers/userRoutes";
+import { LinkDocumentRoutes } from "./src/routers/link_docRoutes";
+import { ZoneRoutes } from "./src/routers/zoneRoutes";
 import db from "./src/db/db";
 import { Kiruna } from "./src/helper";
-
 
 const morgan = require("morgan"); // logging middleware
 const cors = require("cors");
 
-const path = require('path');
-const fs = require('fs');
-const resourceDir = path.join(__dirname,'src/resources');
+const path = require("path");
+const fs = require("fs");
+const resourceDir = path.join(__dirname, "src/resources");
 
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
@@ -31,8 +30,8 @@ app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(morgan("dev"));
 app.use(express.json()); // To automatically decode incoming json
 
-app.use('/resources', express.static(resourceDir));
-  if (!fs.existsSync(resourceDir)) {
+app.use("/resources", express.static(resourceDir));
+if (!fs.existsSync(resourceDir)) {
   fs.mkdirSync(resourceDir);
 }
 
@@ -41,10 +40,16 @@ const controller = new UserController();
 
 // set up the "username and password" login strategy with a function to verify username and password
 passport.use(
-  new LocalStrategy(async function verify(username: string,password: string,callback: any){
+  new LocalStrategy(async function verify(
+    username: string,
+    password: string,
+    callback: any
+  ) {
     const user = await controller.getUser(username, password);
     if (!user) {
-      return callback(null, false, {message: "Incorrect username or password"});
+      return callback(null, false, {
+        message: "Incorrect username or password",
+      });
     }
     return callback(null, user);
   })
@@ -67,15 +72,17 @@ const isLoggedIn = (req: any, res: any, next: any) => {
   if (req.isAuthenticated()) {
     return next();
   }
-  return res.status(401).json({error: "Not authorized"});
+  return res.status(401).json({ error: "Not authorized" });
 };
 
-app.use(session({
-  secret: "team10-project",
-  resave: false,
-  saveUninitialized: false,
-  cookie: { httpOnly: true }
-}));
+app.use(
+  session({
+    secret: "team10-project",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { httpOnly: true },
+  })
+);
 
 // init passport
 app.use(passport.initialize());
@@ -87,16 +94,16 @@ new DocumentRoutes(app);
 new UserRoutes(app, passport, isLoggedIn);
 new LinkDocumentRoutes(app);
 new ZoneRoutes(app);
-const kiruna= new Kiruna();
-kiruna.checkKiruna().catch((err: any)=>{
+const kiruna = new Kiruna();
+kiruna.checkKiruna().catch((err: any) => {
   console.error(`Error code:${err.code}\nMessage:${err.message}`);
   db.close();
-});;
+});
 
 /*** Other express-related instructions ***/
 // activate the server
-const server= app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
 
-export {app, server};
+export { app, server };

@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
+/*import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import "leaflet.markercluster";
@@ -13,9 +12,15 @@ import {
   BsGeoAltFill,
   BsMap,
   BsMapFill,
-} from "react-icons/bs";
-import { FeatureCollection, Geometry } from "geojson";
-import ReactDOMServer from "react-dom/server";
+} from "react-icons/bs";*/
+import {
+  Feature,
+  FeatureCollection,
+  Geometry,
+  Polygon as GeoJSONPolygon,
+} from "geojson"; /*
+import ReactDOMServer from "react-dom/server";*/
+import MapComponent from "../Map/MapComponent";
 
 interface Document {
   id: number;
@@ -31,9 +36,11 @@ interface Zone {
 }
 
 const DocumentsMap: React.FC = () => {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [kirunaBoundary, setKirunaBoundary] =
+    useState<Feature<GeoJSONPolygon> | null>(null);
+  /*const [documents, setDocuments] = useState<Document[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
-  const [kirunaBoundary, setKirunaBoundary] = useState<L.GeoJSON | null>(null);
+  // const [kirunaBoundary, setKirunaBoundary] = useState<L.GeoJSON | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
     null
   );
@@ -55,7 +62,7 @@ const DocumentsMap: React.FC = () => {
       <img src="/img/worker.png" style={{ width: "30px" }} />
     </div>
   );*/
-
+  /*
   const iconsByType: { [key: string]: L.Icon | L.DivIcon } = {
     /*Conflict: L.divIcon({
       html: reactIconHTML,
@@ -64,7 +71,7 @@ const DocumentsMap: React.FC = () => {
       iconAnchor: [15, 15],
       popupAnchor: [0, -15],
     }),*/
-    Consultation: L.icon({
+  /*Consultation: L.icon({
       iconUrl: "/img/consultation-icon.png",
       className: "custom-icon-border",
       iconSize: [30, 30],
@@ -146,27 +153,7 @@ const DocumentsMap: React.FC = () => {
       );
     };
 
-    const fetchZones = async () => {
-      const data = await API.getZones();
-      setZones(data);
-
-      // Extract Kiruna boundary for visualization
-      const kirunaZone = data.find((zone: Zone) => zone.id === 0);
-      if (kirunaZone && mapRef.current) {
-        const boundary = L.geoJSON(kirunaZone.coordinates, {
-          style: {
-            color: "green",
-            weight: 2,
-            dashArray: "5,10",
-            fillOpacity: 0,
-          },
-        }).addTo(mapRef.current);
-        setKirunaBoundary(boundary); //don't really need to set it since kiruna boundary is not gonna be used at all at this point
-      }
-    };
-
     fetchDocuments();
-    fetchZones();
 
     if (mapRef.current === null) {
       mapRef.current = L.map("documents-map", {
@@ -304,21 +291,15 @@ const DocumentsMap: React.FC = () => {
 
       mapRef.current.addLayer(markers);
     }
-  }, [documents]);
+  }, [documents]);*/
 
   return (
     <>
-      <div
-        id="documents-map"
-        style={{
-          position: "fixed",
-          top: "60px",
-          left: 0,
-          height: "calc(100vh - 60px)",
-          width: "100vw",
-          zIndex: 0,
-        }}
-      ></div>
+      <MapComponent
+        kirunaBoundary={kirunaBoundary}
+        setKirunaBoundary={setKirunaBoundary}
+      />
+      {/*
       {selectedDocument && (
         <DocumentCard
           cardInfo={selectedDocument}
@@ -356,7 +337,7 @@ const DocumentsMap: React.FC = () => {
         <span className="tooltip">
           {showZones ? "Hide Zones" : "Show Zones"}
         </span>
-      </div>
+      </div>*/}
     </>
   );
 };
