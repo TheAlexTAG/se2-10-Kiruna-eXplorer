@@ -3,6 +3,10 @@ import { DocumentDAO } from "./dao/documentDAO";
 import { DocumentNotFoundError } from "./errors/documentErrors";
 import { InternalServerError } from "./errors/link_docError";
 
+import kiruna from "./kiruna.json"
+import { booleanContains } from "@turf/boolean-contains";
+import { Geometry } from "geojson";
+
 class Utilities{    
     static checkUrbanDeveloper(user: User): boolean{
         return user.role=== Role.DEVELOPER;
@@ -79,4 +83,14 @@ class Utilities{
     
 }
 
-export {Utilities};
+class Kiruna {
+    static getKirunaGeometry(): Geometry{
+        return kiruna.features[0].geometry as Geometry;
+    }
+    
+    static verifyContainedInKiruna(other: Geometry): boolean{
+        return booleanContains(Kiruna.getKirunaGeometry(),other);
+    }
+}
+
+export {Utilities, Kiruna};

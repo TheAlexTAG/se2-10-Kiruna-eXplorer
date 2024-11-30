@@ -1,22 +1,23 @@
 import express from "express";
-import { testConnection } from "./src/db/db";
-import { Role, User } from "./src/components/user";
-import { UserRoutes } from "./src/routers/userRoutes";
-import { UserController } from "./src/controllers/userController";
-import { DocumentRoutes } from "./src/routers/documentRoutes";
+import {DocumentRoutes} from "./src/routers/documentRoutes"
+import {UserController} from "./src/controllers/userController";
+import {UserRoutes} from "./src/routers/userRoutes";
+import {LinkDocumentRoutes} from "./src/routers/link_docRoutes";
+import {ZoneRoutes} from "./src/routers/zoneRoutes";
+import {testConnection} from "./src/db/db";
 
 
-const morgan = require("morgan"); // logging middleware
-const cors = require("cors");
+import morgan from "morgan"; // logging middleware
+import cors from "cors";
 
 const path = require('path');
 const fs = require('fs');
 const resourceDir = path.join(__dirname,'src/resources');
 
-const passport = require("passport");
+import passport from "passport";
 const LocalStrategy = require("passport-local");
 
-const session = require("express-session"); // Create the session
+import session from "express-session"; // Create the session
 
 // init express
 const app: express.Application = express();
@@ -35,9 +36,7 @@ app.use('/resources', express.static(resourceDir));
 }
 
 /*** Passport ***/
-
 const controller = new UserController();
-
 
 // set up the "username and password" login strategy with a function to verify username and password
 passport.use(
@@ -82,17 +81,17 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 /* ROUTES */
-/*
-new DocumentRoutes(app);
-new LinkDocumentRoutes(app);
-new ZoneRoutes(app);
-*/
+const userRote= new UserRoutes(app, passport, isLoggedIn);
+userRote.initRoutes();
 
-new UserRoutes(app, passport, isLoggedIn);
 const documentRoutes = new DocumentRoutes(app);
-
 documentRoutes.initRoutes();
 
+const linkRoutes= new LinkDocumentRoutes(app);
+linkRoutes.initRoutes();
+
+const zoneRoutes= new ZoneRoutes(app);
+zoneRoutes.initRoutes();
 
 
 /*** Other express-related instructions ***/
@@ -102,21 +101,5 @@ const server= app.listen(port, () => {
 });
 
 testConnection();
-/*
-  example query with mariaDB, be sure to always open the connection and close it in finally
-  app.get("/api/zones", async function(req: any, res: any, next: any) {
-    let conn;
-    try {
-      conn = await db.pool.getConnection();
-      let result = await conn.query("SELECT * FROM zone");
-      console.log(result);
-      res.status(200).json(result);
-    } catch (err) {
-      res.status(400).json(err);
-    } finally {
-      if(conn) conn.release();
-    }
-  })
-*/
 
 export {app, server};

@@ -1,14 +1,15 @@
 import { Zone } from "../components/zone";
 import db from "../db/db";
 import { InternalServerError } from "../errors/link_docError";
-import { ZoneError, InsertZoneError, ModifyZoneError } from "../errors/zoneError";
+import { ZoneError, ModifyZoneError } from "../errors/zoneError";
+import wellknown from 'wellknown';
 
-const createDOMPurify = require("dompurify");
-const { JSDOM } = require("jsdom");
+import createDOMPurify from "dompurify";
+import { JSDOM } from "jsdom";
+import { WrongGeoreferenceUpdateError } from "../errors/documentErrors";
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
-const wellknown = require('wellknown');
 
 class ZoneDAO {
 
@@ -27,12 +28,12 @@ class ZoneDAO {
             conn = await db.getConnection();
             const sql= "SELECT * FROM zone WHERE zoneID=?";
             const result = await conn.query(sql, [id]);
-            if(result.length === 0) throw new ZoneError();
-            let zone = ZoneDAO.createZone(+DOMPurify.sanitize(result[0].zoneID), DOMPurify.sanitize(result[0].coordinates))
-            return zone;
+            if(!result || result.length === 0) throw new ZoneError();
+            
+            return ZoneDAO.createZone(+DOMPurify.sanitize(result[0].zoneID), DOMPurify.sanitize(result[0].coordinates));
         } catch (err: any) {
             if(err instanceof ZoneError) throw err;
-            else throw new InternalServerError(err.message? err.message : "")
+            throw new InternalServerError(err.message ? err.message : "Error with the server!");
         } finally {
             await conn?.release();
         }
@@ -51,6 +52,68 @@ class ZoneDAO {
             await conn?.release();
         }
     }
+
+    async getAllZone(): Promise<Zone[]> {
+        let conn;
+
+        try {
+            conn= await db.getConnection();
+            const rows= await conn.query("SELECT * FROM zone");
+            if(!rows || rows.length=== 0){
+                throw new ZoneError();
+            }
+            const zones: Zone[]= rows.map((row: any) => ZoneDAO.createZone(+DOMPurify.sanitize(row.zoneID), DOMPurify.sanitize(row.coordinates)));
+            return zones;
+            
+        } catch (err: any) {
+            if(err instanceof ZoneError){
+                throw err;
+            }
+            throw new InternalServerError(err.message ? err.message : "Error with the server!");
+        }
+        finally {
+            if (conn) {
+                await conn.release();      
+            }
+        }
+    }
+
+    async modifyZone(zoneID: number, coordinates: string, lat: number, long: number): Promise<boolean> {
+        let conn;
+
+        try {
+            conn= await db.getConnection();
+            await conn.beginTransaction();
+
+            const res= await conn.query("update zone set coordinates=? where zoneID=?", [coordinates, zoneID]);
+            if(!res || res.affectedRows!== 1){
+                throw new ModifyZoneError();
+            }
+
+            const documentsUpdate= await conn.query("update document set latitude=?, longitude=? where zoneID=?", [lat, long, zoneID]);
+            if(!documentsUpdate || !documentsUpdate.affectedRows){
+                throw new WrongGeoreferenceUpdateError();
+            }
+            
+            await conn.commit();
+            return true;
+            
+        } catch (err: any) {
+            if (conn) {
+                await conn.rollback();
+            }
+            if(err instanceof ModifyZoneError || err instanceof WrongGeoreferenceUpdateError){
+                throw err;
+            }
+            throw new InternalServerError(err.message ? err.message : "Error with the server!");
+        }
+        finally {
+            if (conn) {
+                await conn.release();      
+            }
+        }
+    }
+
 }
 
 

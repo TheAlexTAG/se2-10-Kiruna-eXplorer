@@ -1,7 +1,5 @@
 import express from "express"
-import { DatabaseConnectionError } from "./errors/zoneError";
-
-const { validationResult } = require("express-validator");
+import { validationResult } from "express-validator";
 
 /**
  * The ErrorHandler class is used to handle errors in the application.
