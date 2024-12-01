@@ -12,7 +12,7 @@ import { ZoneError } from "../errors/zoneError";
 const path = require('path');
 const multer = require('multer');
 
-const resourceDir = path.join(__dirname,'..','resources');
+const resourceDir = path.join(__dirname,'..','..','resources');
 
 const storage = multer.diskStorage({
   destination: (req: any, file: any, cb: any) => {
@@ -175,7 +175,7 @@ class DocumentRoutes {
 
         this.app.post("/api/resource/:documentID", 
             param('documentID').isInt(),
-            Utilities.prototype.isUrbanPlanner,
+            //Utilities.prototype.isUrbanPlanner,
             this.errorHandler.validateRequest,
             this.documentExist,
             upload.array('files', 10),
@@ -193,7 +193,7 @@ class DocumentRoutes {
                     });
                     if (!validName)
                         return res.status(400).json({error: 'Invalid file name'});
-                    const filesName = files.map((f: any) => f.originalname);
+                    const filesName = files.map((f: any) => 'resources/'+document.id+'-'+f.originalname);
                     await this.controller.addResource(document.id, filesName);
                     return res.status(200).json('Files saved successfully')
                 }

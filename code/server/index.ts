@@ -13,7 +13,7 @@ const cors = require("cors");
 
 const path = require('path');
 const fs = require('fs');
-const resourceDir = path.join(__dirname,'src/resources');
+const resourceDir = path.join(__dirname,'resources');
 
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
