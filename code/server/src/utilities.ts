@@ -88,7 +88,7 @@ class Kiruna {
         return kiruna.features[0].geometry as Geometry;
     }
     
-    static verifyContainedInKiruna(other: Geometry): boolean{
+    static async verifyContainedInKiruna(other: Geometry): Promise<boolean>{
         return booleanContains(Kiruna.getKirunaGeometry(),other);
     }
 }

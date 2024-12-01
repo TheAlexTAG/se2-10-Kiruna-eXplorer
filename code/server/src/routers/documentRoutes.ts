@@ -57,7 +57,7 @@ class DocumentRoutes {
             this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => this.controller.createNode(req.body.title, req.body.description, req.body.zoneID, req.body.coordinates, req.body.latitude, req.body.longitude, req.body.stakeholders, req.body.scale, req.body.issuanceDate, req.body.type, req.body.language, req.body.pages)
         .then((lastID: number) => res.status(200).json(lastID))
-        .catch((err: any) => {console.error(err.stack);res.status(err.code? err.code : 500).json({error: err.message})}))
+        .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
 
         this.app.put("/api/document/:id",
             param("id").isInt(),

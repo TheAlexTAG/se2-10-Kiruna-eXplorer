@@ -7,6 +7,7 @@ import { Geometry } from "geojson";
 import { InsertZoneError } from "../errors/zoneError";
 import wellknown from "wellknown"
 import { Document } from "../components/document";
+import { Kiruna } from "../utilities";
 
 class DocumentController {
     private dao: DocumentDAO
@@ -22,11 +23,6 @@ class DocumentController {
         return Promise.resolve(checkInside);
     }
 
-    private async checkPolygonValidity(polygon: Geometry): Promise<boolean> {
-        const checkInside = turf.booleanContains(kiruna.features[0].geometry as GeoJSON.MultiPolygon, polygon)
-        return Promise.resolve(checkInside);
-    }
-
     async createNode(title: string, description: string, zoneID: number | null, coordinates: any | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
         try {
             if(coordinates == null && zoneID == 0 && latitude == null && longitude == null) {
@@ -38,7 +34,7 @@ class DocumentController {
                 const geo: Geometry= turf.geometry("Polygon", [coordinates])
                 const zoneExists = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geo as wellknown.GeoJSONGeometry));
                 if(zoneExists) throw new InsertZoneError();
-                const checkCoordinates = await this.checkPolygonValidity(geo);
+                const checkCoordinates = await Kiruna.verifyContainedInKiruna(geo);
                 if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
                 let centroid = turf.centroid(geo);
                 let lastID = await this.dao.createDocumentNode(title, description, zoneID, wellknown.stringify(geo as wellknown.GeoJSONGeometry), centroid.geometry.coordinates[1], centroid.geometry.coordinates[0], stakeholders, scale, issuanceDate, type, language, pages);
@@ -73,7 +69,7 @@ class DocumentController {
                 const geo: Geometry= turf.geometry("Polygon", [coordinates]);
                 const zoneExists = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geo as wellknown.GeoJSONGeometry));
                 if(zoneExists) throw new InsertZoneError();
-                const checkCoordinates = await this.checkPolygonValidity(geo);
+                const checkCoordinates = await Kiruna.verifyContainedInKiruna(geo);
                 if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
                 let centroid = turf.centroid(geo);
                 let response = await this.dao.updateDocumentGeoref(documentID, zoneID, wellknown.stringify(geo as wellknown.GeoJSONGeometry), centroid.geometry.coordinates[0], centroid.geometry.coordinates[1]);
