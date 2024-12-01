@@ -243,15 +243,21 @@ export const DocumentList = ({ userInfo }: userProps) => {
               </Form.Group>
               <Form.Group as={Col} controlId="filterScale">
                 <Form.Label>Scale</Form.Label>
-                <Form.Control
-                  type="text"
+                <Form.Select
                   name="scale"
                   value={filters.scale}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
                     handleFilterChange(event)
                   }
-                />
+                >
+                  <option value="">Select Scale</option>
+                  <option value="1:1000">1:1000</option>
+                  <option value="1:5000">1:5000</option>
+                  <option value="1:10000">1:10000</option>
+                  <option value="1:100000">1:100000</option>
+                </Form.Select>
               </Form.Group>
+              
             </Row>
             <Row>
               <Form.Group as={Col} controlId="filterIssuanceDate">

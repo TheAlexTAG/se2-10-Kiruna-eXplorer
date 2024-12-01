@@ -31,7 +31,10 @@ export const TopBar = ({ user, logout }: TopBarProps) => {
               Home
             </Link>
             <Link className="nav-link" to="/document">
-              Document
+              Documents
+            </Link>
+            <Link className="nav-link" to="/diagram">
+              Diagram
             </Link>
             <Link className="nav-link" to="/map">
               Map

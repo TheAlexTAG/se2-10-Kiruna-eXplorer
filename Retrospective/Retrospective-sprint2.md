@@ -26,6 +26,7 @@ sections:
 
 | Story | # Tasks | Points | Hours est. | Hours actual |
 | ----- | ------- | ------ | ---------- | ------------ |
+| _#0_  | 22      |        | 49h        | 48h30m       |
 | _#4_  | 4       | 8      | 6h         | 6h           |
 | _#5_  | 11      | 8      | 16h        | 17h30m       |
 | _#6_  | 4       | 1      | 3h30m      | 3h30m        |
@@ -34,15 +35,15 @@ sections:
 | _#9_  | 10      | 3      | 16h        | 15h30m       |
 
 - Hours per task average, standard deviation (estimate and actual)
-  - estimate: `average: 1 hours 21 minutes` `standard deviation: 15 minutes`
-  - actual: `average: 1 hours 24 minutes` `standard deviation: 17 minutes`
+  - estimate: `average: 1 hours 28 minutes` `standard deviation: 22 minutes`
+  - actual: `average: 1 hours 30 minutes` `standard deviation: 2 minutes`
 - Total estimation error ratio: sum of total hours spent / sum of total hours effort - 1
 
-  $$\frac{\sum_i spent_{task_i}}{\sum_i estimation_{task_i}} - 1 = 0.0357 $$
+  $$\frac{\sum_i spent_{task_i}}{\sum_i estimation_{task_i}} - 1 = 0.0156 $$
 
 - Absolute relative task estimation error: sum( abs( spent-task-i / estimation-task-i - 1))/n
 
-  $$\frac{1}{n}\sum_i^n \left| \frac{spent_{task_i}}{estimation_task_i}-1 \right| =0.0588 $$
+  $$\frac{1}{n}\sum_i^n \left| \frac{spent_{task_i}}{estimation_task_i}-1 \right| =0.0342 $$
 
 ## QUALITY MEASURES
 

@@ -12,7 +12,7 @@ import cors from "cors";
 
 const path = require('path');
 const fs = require('fs');
-const resourceDir = path.join(__dirname,'src/resources');
+const resourceDir = path.join(__dirname,'resources');
 
 import passport from "passport";
 const LocalStrategy = require("passport-local");
