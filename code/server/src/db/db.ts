@@ -1,14 +1,26 @@
-import { Database } from "sqlite3";
-const sqlite = require("sqlite3");
+import mariadb from "mariadb"
 
+const db= mariadb.createPool(
+    {
+        host: 'localhost',
+        user: 'root',
+        password: "root",
+        database: 'kiruna_explorer',
+        connectionLimit: 10}
+    )
 
-let env = process.env.NODE_ENV ? process.env.NODE_ENV.trim() : "development"
+async function testConnection(): Promise<void> {
+    let conn;
+    try {
+        conn = await db.getConnection();
+        console.log("MariaDB connected");
+    } catch (err: any) {
+        console.error("Failed to connect to MariaDB:", err);
+    } finally {
+        await conn?.release();
+    }
+}
 
-const dbFilePath = env === "test" ? "./src/db/testdb.db" : "./src/db/db.db"
-
-const db: Database = new sqlite.Database(dbFilePath, (err: Error | null) => {
-    if (err) throw err
-    db.run("PRAGMA foreign_keys = ON")
-})
 
 export default db;
+export {testConnection};

@@ -10,76 +10,103 @@ const DOMPurify = createDOMPurify(window);
 
 class LinkDocumentDAO {
 
-  getLink(firstDoc: number, secondDoc: number, relationship: Relationship): Promise<any> {
-    return new Promise<any>((resolve, reject) => {
+  async getLink(firstDoc: number, secondDoc: number, relationship: Relationship): Promise<LinkDocument | null> {
+    let conn;
+
+    try {
+      conn= await db.getConnection();
       const sql = "SELECT * FROM link WHERE (firstDoc=? AND secondDoc=?) OR (firstDoc=? AND secondDoc=?) AND relationship=?";
-      db.get(sql, [firstDoc, secondDoc, secondDoc, firstDoc, relationship], (err: Error | null, row: any) => {
-        if (err) {
-          return reject(new InternalServerError(err.message));
-        }
-        if (!row) {
-          return resolve(null);
-        }
-        return resolve(new LinkDocument(+DOMPurify.sanitize(row.firstDoc), +DOMPurify.sanitize(row.secondDoc), DOMPurify.sanitize(row.relationship) as Relationship));
+
+      const row= await conn.query(sql, [firstDoc, secondDoc, secondDoc, firstDoc, relationship]);
+      if(!row || row.length=== 0){
+        return null;
       }
-      );
+      return new LinkDocument(+DOMPurify.sanitize(row[0].firstDoc), +DOMPurify.sanitize(row[0].secondDoc), DOMPurify.sanitize(row[0].relationship) as Relationship);
+    
+    } catch (err: any) {
+      throw new InternalServerError(err.message ? err.message : "Error with the server!");
     }
-    );
+    finally {
+      if (conn) {
+        await conn.release();      
+      }
+    }
   };
 
-  getDocumentConnections(documentID: number): Promise<number> {
-    return new Promise<number>((resolve, reject) => {
+  async getDocumentConnections(documentID: number): Promise<number> {
+    let conn;
+
+    try {
+      conn= await db.getConnection();
       const sql = "SELECT count(*) as tot FROM link WHERE firstDoc=? OR secondDoc=?";
-      db.get(sql, [documentID, documentID], (err: Error | null, row: any) => {
-        if (err) {
-          return reject(new InternalServerError(err.message));
-        }
-        if (!row.tot) {
-          return reject(new LinkError());
-        }
-        return resolve(+DOMPurify.sanitize(row.tot));
+
+      const row= await conn.query(sql, [documentID, documentID]);
+      if (!row || row.length=== 0) {
+        throw new LinkError();
       }
-      );
+      return +DOMPurify.sanitize(row[0].tot);
+
+    } catch (err: any) {
+      if(err instanceof LinkError){
+        throw err; 
+      }
+      throw new InternalServerError(err.message ? err.message : "Error with the server!");
     }
-    );
+    finally{
+      if (conn) {
+        await conn.release();      
+      }
+    }
   };
 
-  checkDocuments(first: number, secondDoc: number): Promise<boolean> {
-    return new Promise<boolean>((resolve, reject) => {
+  async checkDocuments(first: number, secondDoc: number): Promise<boolean> {
+    let conn;
+
+    try {
+      conn= await db.getConnection();
       const sql = "SELECT count(*) as tot FROM document WHERE documentID=? OR documentID=?";
-      db.get(sql, [first, secondDoc], (err: Error | null, row: any) => {
-        if (err) {
-          return reject(new InternalServerError(err.message));
-        }
-        const spy: number = +DOMPurify.sanitize(row.tot);
 
-        if (spy < 2) {
-          return resolve(false);
-        }
-        return resolve(true);
+      const row= await conn.query(sql, [first, secondDoc]);
+      const spy: number= +DOMPurify.sanitize(row[0].tot);
+      
+      if (spy < 2) {
+        return false;
       }
-      );
+      return true;
+
+    } catch (err: any) {
+      throw new InternalServerError(err.message ? err.message : "Error with the server!");
     }
-    );
+    finally{
+      if (conn) {
+        await conn.release();      
+      }
+    }
   };
 
-  insertLink(links: LinkDocument[]): Promise<boolean> {
-    return new Promise<boolean>(function (resolve, reject) {
-      const placeholders = links.map(() => "(?,?,?)").join();
-      const sql = `insert into link(firstDoc, secondDoc, relationship) VALUES ${placeholders}`;
-      const values= links.flatMap(link=> [link.firstDoc, link.secondDoc, link.relationship]);
+  async insertLink(links: (number | Relationship)[][]): Promise<boolean> {
+    let conn;
 
-      db.run(sql, values, async function (err: Error | null) {
-        if (err) {
-          return reject(new InternalServerError(err.message));
-        }
-        return resolve(true);
+    try {
+      conn= await db.getConnection();
+      await conn.beginTransaction();
+      
+      await conn.batch("insert into link(firstDoc, secondDoc, relationship) VALUES (?,?,?)", links);
+      await conn.commit();
+      return true;
+
+    } catch (err: any) {
+      if (conn) {
+        await conn.rollback();
       }
-     );
+      throw new InternalServerError(err.message ? err.message : "Error with the server!");
     }
-   );
+    finally{
+      if (conn) {
+        await conn.release();      
+      }
+    }
   };
-
 }
 
 export {LinkDocumentDAO};
