@@ -84,12 +84,12 @@ class Utilities{
 }
 
 class Kiruna {
-    static getKirunaGeometry(): Geometry{
+    static async getKirunaGeometry(): Promise<Geometry>{
         return kiruna.features[0].geometry as Geometry;
     }
     
     static async verifyContainedInKiruna(other: Geometry): Promise<boolean>{
-        return booleanContains(Kiruna.getKirunaGeometry(),other);
+        return booleanContains(await Kiruna.getKirunaGeometry(),other);
     }
 }
 

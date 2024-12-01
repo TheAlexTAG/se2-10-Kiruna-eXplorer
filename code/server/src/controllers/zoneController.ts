@@ -14,18 +14,21 @@ class ZoneController{
     }
 
     async getZone(id: number): Promise<Zone>{
+        if(id=== 0){
+            return new Zone(id,await Kiruna.getKirunaGeometry());
+        }
         return await this.dao.getZone(id);
     }
 
     async getAllZone(): Promise<Zone[]>{
         const res: Zone[]= await this.dao.getAllZone();
-        res.push(new Zone(0,Kiruna.getKirunaGeometry()));
+        res.push(new Zone(0,await Kiruna.getKirunaGeometry()));
         return res;
     }
 
     async modifyZone(zoneID: number, coordinates: Geometry): Promise<boolean>{
         const strCoord: string=  wellknown.stringify(coordinates as wellknown.GeoJSONGeometry); 
-        if(! Kiruna.verifyContainedInKiruna(coordinates) || await ZoneDAO.zoneExistsCoord(strCoord)){
+        if(!await Kiruna.verifyContainedInKiruna(coordinates) || await ZoneDAO.zoneExistsCoord(strCoord)){
             throw new InvalidDocumentZoneError();
         }
 

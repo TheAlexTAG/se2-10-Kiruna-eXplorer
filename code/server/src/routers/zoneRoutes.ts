@@ -4,7 +4,6 @@ import { Utilities } from '../utilities';
 import { Zone } from '../components/zone';
 import { Geometry } from 'geojson';
 import { geometry } from "@turf/helpers";
-import { Kiruna } from '../utilities';
 
 import {param, body, validationResult} from 'express-validator'; // validation middleware
 
@@ -46,13 +45,8 @@ class ZoneRoutes {
                 return res.status(422).json({error: "Invalid input"});
             }
 
-            const zoneID: number= +DOMPurify.sanitize(req.params.id);
-            if(zoneID=== 0){
-                return res.json(new Zone(zoneID,Kiruna.getKirunaGeometry()));
-            }
-
             try {
-                const zone: Zone = await this.controller.getZone(zoneID);
+                const zone: Zone = await this.controller.getZone(+DOMPurify.sanitize(req.params.id));
                 return res.json(zone);
 
             } catch (err: any) {
