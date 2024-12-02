@@ -145,9 +145,9 @@ class DocumentRoutes {
                         if (r.name===req.params.fileName)
                            relativeFilePath = r.path;
                     });
-                    const filePath = path.join(__dirname, '..', '..', relativeFilePath);
+                    const filePath: string = path.join(__dirname, '..', '..', relativeFilePath);
                     const fileName: string = req.params.documentID+'-'+req.params.fileName;
-                    if (fs.existsSync(filePath)) {
+                    if (relativeFilePath.length!==0 && fs.existsSync(filePath)) {
                         res.download(filePath, fileName, (err: any) => {
                             if (err) {
                                 return res.status(500).json({error: 'Error in downloading the file'});
