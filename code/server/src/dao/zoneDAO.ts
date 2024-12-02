@@ -1,161 +1,120 @@
 import { Zone } from "../components/zone";
 import db from "../db/db";
 import { InternalServerError } from "../errors/link_docError";
-import { ZoneError, InsertZoneError, ModifyZoneError } from "../errors/zoneError";
+import { ZoneError, ModifyZoneError } from "../errors/zoneError";
+import wellknown from 'wellknown';
 
-
-/* Sanitize input */
-const createDOMPurify = require("dompurify");
-const { JSDOM } = require("jsdom");
+import createDOMPurify from "dompurify";
+import { JSDOM } from "jsdom";
+import { WrongGeoreferenceUpdateError } from "../errors/documentErrors";
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
-const wellknown = require('wellknown');
 
 class ZoneDAO {
 
-  static createZone(id: number, coordinates: string): Zone{
-    const geo= wellknown.parse(coordinates);
-    if(!geo){
-      throw new ZoneError(); // in this case geo= null;
+    static createZone(id: number, coordinates: string): Zone{
+      const geo= wellknown.parse(coordinates);
+      if(!geo){
+        throw new ZoneError(); // in this case geo= null;
+      }
+      
+      return new Zone(id, geo);
     }
-    
-    return new Zone(id, geo);
-  }
 
-  getZone(id: number): Promise<Zone> {
-    return new Promise<Zone>((resolve, reject) => {
-      const sql= "SELECT * FROM zone WHERE zoneID=?";
-      db.get(sql, [id], (err: Error | null, row: any) => {
-        if(err){
-          return reject(new InternalServerError(err.message));
-        }
-        if(!row){
-          return reject(new ZoneError());
-        }
+    async getZone(id: number): Promise<Zone> {
+        let conn;
         try {
-          return resolve(ZoneDAO.createZone(+DOMPurify.sanitize(row.zoneID), DOMPurify.sanitize(row.coordinates)));
-
-        } catch (error: any) {
-          return reject(error);
+            conn = await db.getConnection();
+            const sql= "SELECT * FROM zone WHERE zoneID=?";
+            const result = await conn.query(sql, [id]);
+            if(!result || result.length === 0) throw new ZoneError();
+            
+            return ZoneDAO.createZone(+DOMPurify.sanitize(result[0].zoneID), DOMPurify.sanitize(result[0].coordinates));
+        } catch (err: any) {
+            if(err instanceof ZoneError) throw err;
+            throw new InternalServerError(err.message ? err.message : "Error with the server!");
+        } finally {
+            await conn?.release();
         }
-      }
-     );
     }
-   );
-  };
 
-  getAllZone(): Promise<Zone[]> {
-    return new Promise<Zone[]>((resolve, reject) => {
-      const sql= "SELECT * FROM zone";
-      db.all(sql, [], (err: Error | null, rows: any) => {
-        if (err) {
-          return reject(new InternalServerError(err.message));
+    static async zoneExistsCoord(coordinates: string): Promise<boolean> {
+        let conn;
+        try {
+            conn = await db.getConnection();
+            const sql = "SELECT COUNT(*) AS count FROM zone WHERE coordinates = ?"
+            const result = await conn.query(sql, [coordinates]);
+            return Number(result[0].count)? true : false;
+        } catch(err: any) {
+            throw new InternalServerError(err.message? err.message : "");
+        } finally {
+            await conn?.release();
         }
-        if (!rows || rows.length=== 0) {
-          return reject(new ZoneError());
-        }
+    }
+
+    async getAllZone(): Promise<Zone[]> {
+        let conn;
 
         try {
-          const zones: Zone[] = rows.map((row: any) => ZoneDAO.createZone(+DOMPurify.sanitize(row.zoneID), DOMPurify.sanitize(row.coordinates)));
-          return resolve(zones);
-        } catch (error) {
-          return reject(error);
+            conn= await db.getConnection();
+            const rows= await conn.query("SELECT * FROM zone");
+            if(!rows || rows.length=== 0){
+                throw new ZoneError();
+            }
+            const zones: Zone[]= rows.map((row: any) => ZoneDAO.createZone(+DOMPurify.sanitize(row.zoneID), DOMPurify.sanitize(row.coordinates)));
+            return zones;
+            
+        } catch (err: any) {
+            if(err instanceof ZoneError){
+                throw err;
+            }
+            throw new InternalServerError(err.message ? err.message : "Error with the server!");
         }
-      }
-     );
+        finally {
+            if (conn) {
+                await conn.release();      
+            }
+        }
     }
-   );
-  };
 
-  /**
-   * Retrieves the whole Kiruna area as a WKT polygon
-   * @returns the wkt string of the Kiruna polygon
-   * @throws MissingKirunaZoneError if the Kiruna area is not in the database
-   * @throws generic error if the database query fails
-  */
-  getKirunaPolygon(): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const sql = "SELECT coordinates FROM zone WHERE zoneID = 0";
-      db.get(sql, [], (err: Error, row: any) => {
-        if (err) reject(err);
-        row ? resolve(row.coordinates) : resolve('')
-      })
-    })
-  };
+    async modifyZone(zoneID: number, coordinates: string, lat: number, long: number): Promise<boolean> {
+        let conn;
 
-  insertKirunaPolygon(): Promise<boolean> {
-    return new Promise<boolean>(function (resolve, reject) {
-      const sql = "insert into zone(zoneID, coordinates) VALUES(0, 'POLYGON ((20.0884348 67.8795522, 20.0777938 67.8461752, 20.0959903 67.8137874, 20.1313601 67.8009557, 20.20173 67.789142, 20.2526948 67.780064, 20.3284129 67.8017275, 20.3586137 67.820848, 20.3775067 67.8372408, 20.3644607 67.8659746, 20.2542569 67.8805869, 20.2082529 67.8834303, 20.0884348 67.8795522))')";
-      db.run(sql, [], async function (err: Error | null) {
-        if (err) {
-          if(err.message.includes('UNIQUE constraint failed')){
-            return resolve(false);
-          }
-          return reject(new InternalServerError(err.message));
+        try {
+            conn= await db.getConnection();
+            await conn.beginTransaction();
+
+            const res= await conn.query("update zone set coordinates=? where zoneID=?", [coordinates, zoneID]);
+            if(!res || res.affectedRows!== 1){
+                throw new ModifyZoneError();
+            }
+
+            const documentsUpdate= await conn.query("update document set latitude=?, longitude=? where zoneID=?", [lat, long, zoneID]);
+            if(!documentsUpdate || !documentsUpdate.affectedRows){
+                throw new WrongGeoreferenceUpdateError();
+            }
+            
+            await conn.commit();
+            return true;
+            
+        } catch (err: any) {
+            if (conn) {
+                await conn.rollback();
+            }
+            if(err instanceof ModifyZoneError || err instanceof WrongGeoreferenceUpdateError){
+                throw err;
+            }
+            throw new InternalServerError(err.message ? err.message : "Error with the server!");
         }
-        return resolve(true);
-      }
-     );
+        finally {
+            if (conn) {
+                await conn.release();      
+            }
+        }
     }
-   );
-  };
-
-  insertZone(coordinates: string): Promise<number> {
-    return new Promise<number>(function (resolve, reject) {
-      const sql = "insert into zone(coordinates) VALUES(?)";
-      db.run(sql, [coordinates], function (err: Error | null) {
-        if (err) {
-          return reject(new InternalServerError(err.message));
-        }
-
-        if(this.lastID){
-          return resolve(this.lastID);
-        }
-
-        return reject(new InsertZoneError());
-      }
-     );
-    }
-   );
-  };
-
-  countDocumentsInZone(zoneID: number): Promise<number> {
-    return new Promise<number>((resolve, reject) => {
-      const sql = "SELECT count(*) as tot FROM document WHERE zoneID=?";
-      db.get(sql, [zoneID], (err: Error | null, row: any) => {
-        if (err) {
-          return reject(new InternalServerError(err.message));
-        }
-        if (!row.tot) {
-          return reject(new ZoneError());
-        }
-        return resolve(+DOMPurify.sanitize(row.tot));
-      }
-     );
-    }
-   );
-  };
-
-  modifyZone(zoneID: number, coordinates: string): Promise<boolean> {
-    return new Promise<boolean>(function (resolve, reject) {
-      const sql = "update zone set coordinates=? where zoneID=?";
-      db.run(sql, [coordinates,zoneID], function (err: Error | null) {
-        if (err) {
-          return reject(new InternalServerError(err.message));
-        }
-
-        if(this.changes!== 1){
-          return reject(new ModifyZoneError());
-        }
-
-        return resolve(true);
-      }
-     );
-    }
-   );
-  };
 
 }
+
 
 export {ZoneDAO};

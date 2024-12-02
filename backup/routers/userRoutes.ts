@@ -9,9 +9,10 @@ class UserRoutes {
         this.app = app;
         this.passport = passport;
         this.isLoggedIn = isLoggedIn;
+        this.initRoutes();
     }
 
-    initRoutes= () => {
+    initRoutes(): void{
         const passport: any = this.passport;
         
         // POST api/sessions

@@ -1,13 +1,29 @@
 /**
  * Represents a document in the database
 */
+
+interface Resource {
+    name: string,
+    path: string
+}
+
+interface Attachment {
+    name: string,
+    path: string
+}
+
+interface link {
+    documentID: number,
+    relationship: string 
+}
+
 class Document {
     id: number;
     title: string;
     description: string;
     zoneID: number | null;
-    latitude: number;
-    longitude: number;
+    latitude: number | null;
+    longitude: number | null;
     stakeholders: string;
     scale: string;
     issuanceDate: string;
@@ -15,9 +31,9 @@ class Document {
     language: string | null;
     pages: number | null;
     connections: number;
-    attachment: string[];
-    resource: string[];
-    links: number[];
+    attachment: Attachment[];
+    resource: Resource[];
+    links: link[];
 
   
     /**
@@ -40,9 +56,9 @@ class Document {
      * @param resource list of resource URLs related to the document
      * @param links the id of the documents linked to the actual document
     */
-    constructor(id: number, title: string, description: string, zoneID: number | null, latitude: number, longitude: number,
+    constructor(id: number, title: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null,
         stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: number | null, connections: number, 
-        attachment: string[] = [], resource: string[] = [], links: number[] = []) {
+        attachment: Attachment[] = [], resource: Resource[] = [], links: link[] = []) {
         this.id = id;
         this.title = title;
         this.description = description;

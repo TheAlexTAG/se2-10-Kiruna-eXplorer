@@ -4,20 +4,19 @@ import { UserController } from "./src/controllers/userController";
 import { UserRoutes } from "./src/routers/userRoutes";
 import { LinkDocumentRoutes } from "./src/routers/link_docRoutes";
 import { ZoneRoutes } from "./src/routers/zoneRoutes";
-import db from "./src/db/db";
-import { Kiruna } from "./src/helper";
+import { testConnection } from "./src/db/db";
 
-const morgan = require("morgan"); // logging middleware
-const cors = require("cors");
+import morgan from "morgan"; // logging middleware
+import cors from "cors";
 
 const path = require("path");
 const fs = require("fs");
 const resourceDir = path.join(__dirname, "resources");
 
-const passport = require("passport");
+import passport from "passport";
 const LocalStrategy = require("passport-local");
 
-const session = require("express-session"); // Create the session
+import session from "express-session"; // Create the session
 
 // init express
 const app: express.Application = express();
@@ -89,21 +88,24 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 /* ROUTES */
+const userRote = new UserRoutes(app, passport, isLoggedIn);
+userRote.initRoutes();
 
-new DocumentRoutes(app);
-new UserRoutes(app, passport, isLoggedIn);
-new LinkDocumentRoutes(app);
-new ZoneRoutes(app);
-const kiruna = new Kiruna();
-kiruna.checkKiruna().catch((err: any) => {
-  console.error(`Error code:${err.code}\nMessage:${err.message}`);
-  db.close();
-});
+const documentRoutes = new DocumentRoutes(app);
+documentRoutes.initRoutes();
+
+const linkRoutes = new LinkDocumentRoutes(app);
+linkRoutes.initRoutes();
+
+const zoneRoutes = new ZoneRoutes(app);
+zoneRoutes.initRoutes();
 
 /*** Other express-related instructions ***/
 // activate the server
 const server = app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
+
+testConnection();
 
 export { app, server };
