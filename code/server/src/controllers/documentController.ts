@@ -120,8 +120,8 @@ class DocumentController {
         }
     }
 
-    async addResource(documentID: number, filesname: string[]): Promise<boolean>{
-        return await this.dao.addResource(documentID, filesname);
+    async addResource(documentID: number, names: string[], paths: string[]): Promise<boolean>{
+        return await this.dao.addResource(documentID, names, paths);
       }
 }
 
