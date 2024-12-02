@@ -72,7 +72,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
   const stakeholderOptions: OptionType[] = [
     { value: "LKAB", label: "LKAB" },
-    { value: "Municipalty", label: "Municipalty" },
+    { value: "Municipality", label: "Municipalty" },
     { value: "Regional authority", label: "Regional authority" },
     { value: "Architecture firms", label: "Architecture firms" },
     { value: "Citizens", label: "Citizens" },

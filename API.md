@@ -149,7 +149,7 @@
       - It should return status code `500 Internal Server Error` if the database query throws and error;
       - It should return status code `404 Document Not Found` if the document to modify doesn't exist.
 
-- GET `/api/document`
+- GET `/api/documents`
     - description: route for retrieving all documents. Pagination and filters can be activated through query params;
     - query params: 
         `ZoneID`: the id of the zone;
