@@ -7,16 +7,18 @@ import { Document } from "../components/document"
 
 const path = require('path');
 const multer = require('multer');
+const fs = require('fs');
 
-const resourceDir = path.join(__dirname,'..','resources');
+
+const resourceDir = path.join(__dirname,'..','..','resources');
 
 const storage = multer.diskStorage({
   destination: (req: any, file: any, cb: any) => {
     cb(null, resourceDir);
   },
   filename: (req: any, file: any, cb: any) => {
-    const doc: number = req.params.documentID;
-    const fullname: string = doc+'-'+file.originalname;
+    const documentID: number = req.params.documentID;
+    const fullname: string = documentID+'-'+file.originalname;
     cb(null, fullname);
   }
 });
@@ -120,12 +122,43 @@ class DocumentRoutes {
                     });
                     if (!validName)
                         return res.status(400).json({error: 'Invalid file name'});
-                    const filesName = files.map((f: any) => f.originalname);
-                    await this.controller.addResource(document.id, filesName);
+                    const names: string[] = files.map((f: any) => f.originalname);
+                    const paths: string[] = files.map((f: any) => 'resources/'+document.id+'-'+f.originalname);
+                    await this.controller.addResource(document.id, names, paths);
                     return res.status(200).json('Files saved successfully')
                 }
                 catch (err: any) {
                     res.status(err.code? err.code : 500).json({error: err.message});
+                }
+            }
+        )
+
+        this.app.get("/api/resource/download/:documentID/:fileName",
+            param("documentID").isInt(),
+            param('fileName').isString().notEmpty(),
+            this.errorHandler.validateRequest,
+            async (req: any, res: any) => {
+                try{
+                    const document: Document = await this.controller.getDocument(+req.params.documentID);
+                    let relativeFilePath: string = '';
+                    document.resource.forEach((r: any) => {
+                        if (r.name===req.params.fileName)
+                           relativeFilePath = r.path;
+                    });
+                    const filePath = path.join(__dirname, '..', '..', relativeFilePath);
+                    const fileName: string = req.params.documentID+'-'+req.params.fileName;
+                    if (fs.existsSync(filePath)) {
+                        res.download(filePath, fileName, (err: any) => {
+                            if (err) {
+                                return res.status(500).json({error: 'Error in downloading the file'});
+                            }
+                        });
+                    } else {
+                        return res.status(404).json({error: 'File not found'});
+                    }
+                }
+                catch (err: any) {
+                    res.status(err.code? err.code : 500).json({error: err.message})
                 }
             }
         )

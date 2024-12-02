@@ -31,7 +31,7 @@ app.use(morgan("dev"));
 app.use(express.json()); // To automatically decode incoming json
 
 app.use('/resources', express.static(resourceDir));
-  if (!fs.existsSync(resourceDir)) {
+if (!fs.existsSync(resourceDir)) {
   fs.mkdirSync(resourceDir);
 }
 

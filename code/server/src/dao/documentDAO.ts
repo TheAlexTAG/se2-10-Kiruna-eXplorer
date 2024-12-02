@@ -255,13 +255,12 @@ class DocumentDAO {
         }
     }
 
-    async addResource(documentID: number, paths: string[]): Promise<boolean> {
+    async addResource(documentID: number, names: string[], paths: string[]): Promise<boolean> {
         let conn;
         try {
             conn = await db.getConnection();
             await conn.beginTransaction();
-            //const params = names.map((name, index) => [documentID, name, links[index]]); for adding also names
-            const params = paths.map((path: string) => [documentID, 'placeholdername', path])
+            const params = names.map((name, index) => [documentID, name, paths[index]]);
             const sql = "INSERT INTO resource (documentID, name, path) VALUES (?, ?, ?)";
             await conn.batch(sql, params);
             await conn.commit();
