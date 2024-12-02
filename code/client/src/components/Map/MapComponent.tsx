@@ -8,8 +8,9 @@ import {
   FeatureGroup,
   useMapEvent,
   GeoJSON,
-  useMap,
 } from "react-leaflet";
+import MarkerClusterGroup from "react-leaflet-markercluster";
+import "react-leaflet-markercluster/dist/styles.min.css";
 import L from "leaflet";
 import { EditControl } from "react-leaflet-draw";
 import "leaflet/dist/leaflet.css";
@@ -21,6 +22,14 @@ import API from "../../API/API";
 import { Alert } from "react-bootstrap";
 import "./MapComponent.css";
 import { BsEye, BsEyeSlash, BsMap, BsMapFill } from "react-icons/bs";
+
+type Document = {
+  id: number;
+  title: string;
+  type: string;
+  latitude: number;
+  longitude: number;
+};
 
 interface MapComponentProps {
   tempCoordinates?: { lat: number | null; lng: number | null };
@@ -61,40 +70,36 @@ const MapComponent: React.FC<MapComponentProps> = ({
   kirunaBoundary,
   setKirunaBoundary,
 }) => {
-  const mapRef = useRef<L.Map | null>(null);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [zones, setZones] = useState<ZoneProps[]>([]);
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
   const [polygonExists, setPolygonExists] = useState(false);
   const [editControlKey, setEditControlKey] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isSatelliteView, setIsSatelliteView] = useState(false);
+  const [isSatelliteView, setIsSatelliteView] = useState(true);
   const [showZones, setShowZones] = useState(false);
-  /*const defaultTileLayer = L.tileLayer(
+
+  const defaultTileLayer = [
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    { attribution: "&copy; OpenStreetMap contributors" }
-  );*/
-  const defaultTileLayer = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-  const satelliteTileLayer =
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+    "&copy; OpenStreetMap contributors",
+  ];
+  const satelliteTileLayer = [
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+  ];
 
   useEffect(() => {
-    if (mapRef.current) {
-      const newLayer = L.tileLayer(
-        isSatelliteView ? satelliteTileLayer : defaultTileLayer,
-        {
-          attribution: isSatelliteView
-            ? "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community"
-            : "&copy; OpenStreetMap contributors",
-        }
-      );
-      mapRef.current.eachLayer((layer) => {
-        if (layer instanceof L.TileLayer) mapRef.current?.removeLayer(layer);
-      });
-      newLayer.addTo(mapRef.current);
-    }
-  }, [isSatelliteView]);
+    const fetchDocuments = async () => {
+      try {
+        const data = await API.getDocuments();
+        setDocuments(
+          data.filter((doc: Document) => doc.latitude && doc.longitude)
+        );
+      } catch (err) {
+        console.error("Error fetching documents: ", err);
+      }
+    };
 
-  useEffect(() => {
     const fetchZones = async () => {
       try {
         const zonesData = await API.getZones();
@@ -110,6 +115,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         console.error("Error fetching zones:", err);
       }
     };
+    fetchDocuments();
     fetchZones();
   }, []);
 
@@ -245,6 +251,53 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setShowZones((prev) => !prev);
   };
 
+  const renderZones = () => {
+    if (!showZones) return null;
+
+    return (
+      <FeatureGroup>
+        {zones
+          .filter((zone) => zone.id !== 0)
+          .map((zone) => (
+            <Polygon
+              key={zone.id}
+              positions={zone.coordinates.coordinates[0].map(([lng, lat]) => [
+                lat,
+                lng,
+              ])}
+              pathOptions={{
+                color: highlightedZoneId === zone.id ? "blue" : "green",
+                fillOpacity: 0.2,
+              }}
+              eventHandlers={{
+                click: () => {
+                  if (onZoneSelect) onZoneSelect(zone.id);
+                  if (setHighlightedZoneId) setHighlightedZoneId(zone.id);
+                },
+              }}
+            />
+          ))}
+      </FeatureGroup>
+    );
+  };
+
+  const getIconByType = (type: string) => {
+    const iconUrls: { [key: string]: string } = {
+      Agreement: "/img/agreement-icon.png",
+      Conflict: "/img/conflict-icon.png",
+      Consultation: "/img/consultation-icon.png",
+      "Material effect": "/img/worker.png",
+      default: "/img/doc.png",
+    };
+
+    return L.icon({
+      iconUrl: iconUrls[type] || iconUrls.default,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15],
+      popupAnchor: [0, -15],
+    });
+  };
+
   return (
     <div>
       {selectionMode && (
@@ -316,13 +369,36 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 zIndex: 0,
               }
         }
-        whenReady={(mapInstance) => {
-          mapRef.current = mapInstance;
-          L.tileLayer(defaultTileLayer, {
-            attribution: "&copy; OpenStreetMap contributors",
-          }).addTo(mapInstance);
-        }}
       >
+        {isSatelliteView ? (
+          <TileLayer
+            key="satellite"
+            url={satelliteTileLayer[0]}
+            attribution={satelliteTileLayer[1]}
+          />
+        ) : (
+          <TileLayer
+            key="default"
+            url={defaultTileLayer[0]}
+            attribution={defaultTileLayer[1]}
+          />
+        )}
+
+        <MarkerClusterGroup>
+          {documents.map((doc) => (
+            <Marker
+              key={doc.id}
+              position={[doc.latitude, doc.longitude]}
+              icon={getIconByType(doc.type)}
+            >
+              <Popup>
+                <b>{doc.title}</b>
+                <br />
+                Type: {doc.type}
+              </Popup>
+            </Marker>
+          ))}
+        </MarkerClusterGroup>
         <div
           onClick={toggleSatelliteView}
           className="map-toggle-btn"
@@ -355,11 +431,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
             {showZones ? "Hide Zones" : "Show Zones"}
           </span>
         </div>
-        */
-        <TileLayer
-          attribution="&copy; OpenStreetMap contributors"
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        {renderZones()}
+
         <PointClickHandler />
         {renderKirunaBoundary()}
         {tempCoordinates && tempCoordinates.lat && tempCoordinates.lng && (

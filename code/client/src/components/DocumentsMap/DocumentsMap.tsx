@@ -8,7 +8,7 @@ import "./DocumentsMap.css";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
 import {
   BsEye,
-  BsEyeSlash,
+  BsEyeSlash, x
   BsGeoAltFill,
   BsMap,
   BsMapFill,
