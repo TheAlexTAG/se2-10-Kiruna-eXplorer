@@ -72,7 +72,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
   const stakeholderOptions: OptionType[] = [
     { value: "LKAB", label: "LKAB" },
-    { value: "Municipalty", label: "Municipalty" },
+    { value: "Municipality", label: "Municipalty" },
     { value: "Regional authority", label: "Regional authority" },
     { value: "Architecture firms", label: "Architecture firms" },
     { value: "Citizens", label: "Citizens" },
@@ -421,13 +421,13 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   onChange={(e) => setScale(e.target.value)}
                 >
                   <option value="">Select Scale</option>
+                  <option value="Blueprints/effects">Blueprints/effects</option>
                   <option value="1:1,000">1:1,000</option>
                   <option value="1:5,000">1:5,000</option>
                   <option value="1:10,000">1:10,000</option>
                   <option value="1:100,000">1:100,000</option>
-                  <option value="Blueprints/effects">Blueprints/effects</option>
-                  <option value="Text">Text</option>
                   <option value="Concept">Concept</option>
+                  <option value="Text">Text</option>
                 </Form.Select>
                 {fieldErrors.scale && (
                   <div className="text-danger">

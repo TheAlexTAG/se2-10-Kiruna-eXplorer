@@ -98,7 +98,7 @@ const getZones = async () => {
 };
 
 const getDocuments = async () => {
-  const response = await fetch(`${SERVER_URL}/documents/links`, {
+  const response = await fetch(`${SERVER_URL}/documents`, {
     method: "GET",
     credentials: "include",
     headers: {
@@ -188,7 +188,7 @@ const filterDocuments = async (
 
     // Fai la richiesta con i parametri dinamici
     const response = await fetch(
-      `${SERVER_URL}/documents/links?${params.toString()}`,
+      `${SERVER_URL}/documents?${params.toString()}`,
       {
         method: "GET",
         credentials: "include",
