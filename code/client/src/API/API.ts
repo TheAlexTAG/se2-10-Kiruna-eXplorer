@@ -98,7 +98,7 @@ const getZones = async () => {
 };
 
 const getDocuments = async () => {
-  const response = await fetch(`${SERVER_URL}/documents/links`, {
+  const response = await fetch(`${SERVER_URL}/documents`, {
     method: "GET",
     credentials: "include",
     headers: {

@@ -4,7 +4,7 @@ import MapComponent from "../../Map/MapComponent";
 import Select from "react-select";
 import API from "../../../API/API";
 import "./EditDocumentsModal.css";
-import { Feature, Polygon as GeoJSONPolygon } from "geojson";
+import { Feature, Polygon as GeoJSONPolygon, MultiPolygon } from "geojson";
 
 interface EditDocumentProps {
   document: any;
@@ -26,7 +26,7 @@ export default function EditDocumentModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [tempZoneId, setTempZoneId] = useState<number | null>(null);
   const [selectionMode, setSelectionMode] = useState<
-    "point" | "zone" | "custom"
+    "point" | "zone" | "custom" | null
   >("point");
   const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
     null
@@ -42,7 +42,7 @@ export default function EditDocumentModal({
   });
   const [isReady, setIsReady] = useState(false);
   const [kirunaBoundary, setKirunaBoundary] =
-    useState<Feature<GeoJSONPolygon> | null>(null);
+    useState<Feature<MultiPolygon> | null>(null);
 
   const stakeholderOptions = [
     { value: "LKAB", label: "LKAB" },

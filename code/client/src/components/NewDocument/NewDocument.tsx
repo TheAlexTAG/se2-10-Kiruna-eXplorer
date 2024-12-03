@@ -4,7 +4,7 @@ import API from "../../API/API";
 import "./NewDocument.css";
 import MapComponent from "../Map/MapComponent";
 import Select, { MultiValue } from "react-select";
-import { Feature, Polygon as GeoJSONPolygon } from "geojson";
+import { Feature, Polygon as GeoJSONPolygon, MultiPolygon } from "geojson";
 import { CoordinatesOutOfBoundsError } from "../../errors/general";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -34,6 +34,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   const [pages, setPages] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [coordinates, setCoordinates] = useState(null);
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [show, setShow] = useState(false);
@@ -90,15 +91,15 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
   const [tempZoneId, setTempZoneId] = useState<number | null>(null);
   const [selectionMode, setSelectionMode] = useState<
-    "point" | "zone" | "custom"
+    "point" | "zone" | "custom" | null
   >("point");
   const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
     null
   );
   const [tempCustom, setTempCustom] = useState<any>(null);
   const [kirunaBoundary, setKirunaBoundary] =
-    useState<Feature<GeoJSONPolygon> | null>(null);
-
+    useState<Feature<MultiPolygon> | null>(null);
+  console.log("coordinates is ", tempCustom);
   const handleClose = () => {
     setTitle("");
     setIcon("");
@@ -128,8 +129,8 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       scale: !scale,
       issuanceDate: !issuanceDate,
       type: !type,
-      latitude: latitude === null && zoneID === null,
-      longitude: longitude === null && zoneID === null,
+      latitude: latitude === null && zoneID === null && tempCustom === null,
+      longitude: longitude === null && zoneID === null && tempCustom === null,
     };
 
     setFieldErrors(errors);
@@ -139,18 +140,18 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       return;
     }
 
-    if (zoneID === null && tempCustom === null) {
-      if (latitude === null || longitude === null) {
-        setErrorMessage(
-          "Please provide valid coordinates if no zone is selected."
-        );
-        return;
-      }
-    } else if (zoneID === null && tempCustom !== null) {
-      const newZone = await API.createZone(tempCustom);
-      setZoneID(newZone);
+    if (
+      zoneID === null &&
+      tempCustom === null &&
+      latitude === null &&
+      longitude === null
+    ) {
+      setErrorMessage(
+        "Please provide valid coordinates if no zone is selected."
+      );
+      return;
     }
-
+    setCoordinates(tempCustom);
     setErrorMessage(null);
     setIsReady(true);
   };
@@ -171,6 +172,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
         type,
         language,
         pages,
+        coordinates,
       };
 
       try {
@@ -279,7 +281,6 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       return null;
     }
   };
-  
 
   return (
     <div className="document-container">
@@ -347,11 +348,11 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                 required
               />
               {fieldErrors.description && (
-                  <div className="text-danger">
-                    <i className="bi bi-x-circle-fill text-danger"></i> This
-                    field is required
-                  </div>
-                )}
+                <div className="text-danger">
+                  <i className="bi bi-x-circle-fill text-danger"></i> This field
+                  is required
+                </div>
+              )}
             </Form.Group>
 
             <Row className="mb-3">

@@ -17,11 +17,12 @@ import "leaflet/dist/leaflet.css";
 import "leaflet-draw/dist/leaflet.draw.css";
 import * as turf from "@turf/turf";
 import booleanWithin from "@turf/boolean-within";
-import { Feature, Polygon as GeoJSONPolygon } from "geojson"; // Import from GeoJSON spec
+import { Feature, Polygon as GeoJSONPolygon, MultiPolygon } from "geojson"; // Import from GeoJSON spec
 import API from "../../API/API";
-import { Alert } from "react-bootstrap";
+import { Alert, Button } from "react-bootstrap";
 import "./MapComponent.css";
 import { BsEye, BsEyeSlash, BsMap, BsMapFill } from "react-icons/bs";
+import { DocumentCard } from "../DocumentCard/DocumentCard";
 
 type Document = {
   id: number;
@@ -46,8 +47,8 @@ interface MapComponentProps {
   highlightedZoneId?: number | null;
   setHighlightedZoneId?: (zoneId: number | null) => void;
   setTempCustom?: (tempCustom: any) => void;
-  kirunaBoundary: Feature<GeoJSONPolygon> | null;
-  setKirunaBoundary: (kirunaBoundary: Feature<GeoJSONPolygon> | null) => void;
+  kirunaBoundary: Feature<MultiPolygon> | null;
+  setKirunaBoundary: (kirunaBoundary: Feature<MultiPolygon> | null) => void;
 }
 
 type ZoneProps = {
@@ -71,6 +72,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
   setKirunaBoundary,
 }) => {
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(
+    null
+  );
   const [zones, setZones] = useState<ZoneProps[]>([]);
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
   const [polygonExists, setPolygonExists] = useState(false);
@@ -103,10 +107,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const fetchZones = async () => {
       try {
         const zonesData = await API.getZones();
+        console.log("zonesdata is ", zonesData);
         setZones(zonesData as ZoneProps[]);
         const kirunaZone = zonesData.find((zone: ZoneProps) => zone.id === 0);
         if (kirunaZone) {
-          const boundary: Feature<GeoJSONPolygon> = turf.polygon(
+          const boundary: Feature<MultiPolygon> = turf.multiPolygon(
             kirunaZone.coordinates.coordinates
           );
           setKirunaBoundary(boundary);
@@ -119,6 +124,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     fetchZones();
   }, []);
 
+  console.log("kiruna boundary is ", kirunaBoundary);
   const clearCustomPolygon = () => {
     if (setTempCustom !== undefined && featureGroupRef.current) {
       featureGroupRef.current.clearLayers();
@@ -177,6 +183,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     if (setTempCoordinates && setTempCoordinates && setSelectionMode) {
       clearCustomPolygon();
       setTempCoordinates({ lat: null, lng: null });
+      setShowZones(true);
       setSelectionMode("zone");
     }
   };
@@ -195,13 +202,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
       setSelectionMode("custom");
     }
   };
-
-  const getZoneStyle = (zoneId: number) => ({
-    color: highlightedZoneId === zoneId ? "blue" : "green",
-    weight: 2,
-    fillColor: highlightedZoneId === zoneId ? "blue" : "green",
-    fillOpacity: highlightedZoneId === zoneId ? 0.4 : 0.2,
-  });
 
   const handleZoneClick = (zoneId: number | null) => {
     if (setHighlightedZoneId && onZoneSelect && selectionMode === "zone") {
@@ -237,6 +237,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
             dashArray: "5,10",
             fillOpacity: 0.05,
           }}
+          eventHandlers={{
+            click: () => {
+              handleZoneClick(null);
+            },
+          }}
         />
       );
     }
@@ -248,7 +253,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setIsSatelliteView((prev) => !prev);
   };
   const toggleZonesView = () => {
-    setShowZones((prev) => !prev);
+    if (selectionMode !== "zone") setShowZones((prev) => !prev);
   };
 
   const renderZones = () => {
@@ -271,8 +276,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
               }}
               eventHandlers={{
                 click: () => {
-                  if (onZoneSelect) onZoneSelect(zone.id);
-                  if (setHighlightedZoneId) setHighlightedZoneId(zone.id);
+                  handleZoneClick(zone.id);
                 },
               }}
             />
@@ -297,6 +301,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
       popupAnchor: [0, -15],
     });
   };
+  console.log("get icon by type gives me ", getIconByType("Conflict"));
+  const handleMoreClick = (doc: Document) => {
+    setSelectedDocument(doc);
+  };
+  console.log("selected document is ", selectedDocument);
 
   return (
     <div>
@@ -350,7 +359,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
           {errorMessage}
         </Alert>
       )}
-
       <MapContainer
         center={[67.8558, 20.2253]}
         zoom={13}
@@ -395,6 +403,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 <b>{doc.title}</b>
                 <br />
                 Type: {doc.type}
+                <br />
+                <div className="moreBtn" onClick={() => handleMoreClick(doc)}>
+                  More
+                </div>
               </Popup>
             </Marker>
           ))}
@@ -464,38 +476,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
             />
           </FeatureGroup>
         )}
-        {setHighlightedZoneId &&
-          onZoneSelect &&
-          zones.map((zone) => {
-            if (zone.id === 0) {
-              return (
-                <Polygon
-                  key={0}
-                  positions={zone.coordinates.coordinates[0].map(
-                    ([lng, lat]) => [lat, lng]
-                  )}
-                  pathOptions={{ opacity: 0, fillOpacity: 0 }}
-                  eventHandlers={{
-                    click: () => handleZoneClick(null),
-                  }}
-                />
-              );
-            }
-            return (
-              <Polygon
-                key={zone.id}
-                positions={zone.coordinates.coordinates[0].map(([lng, lat]) => [
-                  lat,
-                  lng,
-                ])}
-                pathOptions={getZoneStyle(zone.id)}
-                eventHandlers={{
-                  click: () => handleZoneClick(zone.id),
-                }}
-              />
-            );
-          })}
-      </MapContainer>
+      </MapContainer>{" "}
+      {selectedDocument && (
+        <DocumentCard
+          cardInfo={selectedDocument}
+          iconToShow={getIconByType(selectedDocument.type).options.iconUrl}
+        />
+      )}
     </div>
   );
 };

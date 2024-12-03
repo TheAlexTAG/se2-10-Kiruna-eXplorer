@@ -46,8 +46,11 @@
 }
 
 .moreBtn {
+  background-color: white;
   color: blue;
   cursor: pointer;
+  margin-top: "5px";
+  padding: "5px";
 }
 
 .toggle-satellite-btn {
