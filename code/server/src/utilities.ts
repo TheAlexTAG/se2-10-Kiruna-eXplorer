@@ -67,7 +67,8 @@ class Utilities{
 
     async documentExists(req: any, res: any, next: any) {
         try {
-            await DocumentDAO.documentExists(req.params.id) 
+            let exists = await DocumentDAO.documentExists(req.params.id); 
+            if(!exists) {throw new DocumentNotFoundError()};
             return next();
         } catch(err: any) {
             if(err instanceof DocumentNotFoundError) throw err;
