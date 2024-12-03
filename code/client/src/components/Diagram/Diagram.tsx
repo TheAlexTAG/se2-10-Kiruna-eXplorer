@@ -81,6 +81,14 @@ const parseDate = (dateStr: string): Date => {
   }
 };
 
+const parseScale = (scale: string): Number|String => {
+  if(scale.split(":")[0] != "1") return scale; 
+  const parts = scale.split(":");
+      const numericValue = parseInt(parts[1].replace(/[.,]/g, ""), 10);
+      console.log(numericValue);
+      return numericValue;
+}
+
 const getLineStyle = (relationship: string) => {
   switch (relationship) {
     case "Direct consequence": return "solid";
@@ -116,7 +124,7 @@ const fetchDocuments = async (): Promise<Node[]> => {
     latitude: doc.latitude,
     longitude: doc.longitude,
     stakeholders: doc.stakeholders,
-    scale: doc.scale,
+    scale: parseScale(doc.scale),
     issuanceDate: doc.issuanceDate,
     type: doc.type,
     iconComponent: getIconComponent(doc.type),
@@ -124,6 +132,7 @@ const fetchDocuments = async (): Promise<Node[]> => {
     links: doc.links,
   }));
 };
+
 
 export const Diagram: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -145,20 +154,11 @@ export const Diagram: React.FC = () => {
     const height = 750;
     const margin = { top: 20, right: 300, bottom: 200, left: 100 };
 
-    const scales = [
-      "Text",
-      "Concept",
-      "1:100,000",
-      "1:10,000",
-      "1:5,000",
-      "1:1,000",
-      "Blueprints/effect",
-    ];
-
     const startDate = new Date(2004, 0, 1);
     const endDate = new Date(2025, 0, 1);
+    const newYDomain = ["Concept", "Text", ...nodes.map((node: Node) => node.scale).sort(((a: any, b: any) => b - a)), "Blueprints/effects", ""];
 
-    const yScale = d3.scalePoint().domain([...scales, ""]).range([margin.top, height - margin.bottom]);
+    const yScale = d3.scalePoint().domain(newYDomain as Iterable<string>).range([margin.top, height - margin.bottom]);
     const xScale = d3.scaleTime().domain([startDate, endDate]).range([margin.left, width - margin.right]);
 
     const svg = d3.select(svgRef.current)
@@ -326,7 +326,12 @@ export const Diagram: React.FC = () => {
 
     graphGroup.append("g")
       .attr("transform", `translate(${margin.left},0)`)
-      .call(d3.axisLeft(yScale))
+      .call(d3.axisLeft(yScale).tickFormat((d: any) => {
+        if (d === "Concept" || d === "Text" || d === "Blueprints/effects"|| typeof d != "number") {
+          return d;
+        }
+        else return `1:${d}` 
+      }))
       .attr("font-size", "12px");
 
     const nodeData = nodes.map((d) => ({
@@ -344,22 +349,33 @@ export const Diagram: React.FC = () => {
         const node = d3.select(this);
 
         node.append("g")
-          .html(ReactDOMServer.renderToStaticMarkup(<d.iconComponent width="32px" height="32px" color={getColor(d.stakeholders)} />))
-          .attr("transform", "translate(-15, -15)");
-      });
+          .html(ReactDOMServer.renderToStaticMarkup(<d.iconComponent width="18px" height="18px" color={getColor(d.stakeholders)} />))
+          .attr("transform", "translate(-10, -10)");
 
-    // Add labels for the nodes
-    graphGroup
-      .append("g")
-      .selectAll("text")
-      .data(nodeData)
-      .join("text")
-      .attr("x", (d) => xScale(d.issuanceDate))
-      .attr("y", (d) => yScale(d.scale)! + 30)
-      .attr("text-anchor", "middle")
-      .attr("font-size", 10)
-      .text((d) => d.title);
-
+          node.append("rect")
+          .attr("x", -20) // Un po' più grande rispetto all'icona
+          .attr("y", -20) // Un po' più grande rispetto all'icona
+          .attr("width", 40) // Aumenta la larghezza per l'area di hover
+          .attr("height", 40) // Aumenta l'altezza per l'area di hover
+          .attr("fill", "transparent"); // Rendi il rettangolo invisibile
+    
+        // Aggiungi il testo, inizialmente nascosto
+        node.append("text")
+          .attr("x", 0)
+          .attr("y", 30)
+          .attr("text-anchor", "middle")
+          .attr("font-size", 10)
+          .style("visibility", "hidden")
+          .text(d.title);
+    
+        // Gestisci gli eventi di hover per ogni nodo
+        node.on("mouseover", function () {
+          d3.select(this).select("text").style("visibility", "visible"); // Mostra il testo quando hover
+        })
+        .on("mouseout", function () {
+          d3.select(this).select("text").style("visibility", "hidden"); // Nascondi il testo quando il mouse esce
+        });
+      });    
 
     graphGroup
       .append("g")
