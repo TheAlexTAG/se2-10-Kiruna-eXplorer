@@ -167,6 +167,40 @@ export const Diagram: React.FC = () => {
 
     svg.selectAll("*").remove();
 
+    // Add grid
+  const gridGroup = svg.append("g").attr("class", "grid").attr("transform", `translate(${margin.left + 150}, 0)`);
+
+  // Horizontal grid lines
+  gridGroup
+    .selectAll(".horizontal-line")
+    .data(yScale.domain())
+    .enter()
+    .append("line")
+    .attr("class", "horizontal-line")
+    .attr("x1", margin.left )
+    .attr("x2", width - margin.right)
+    .attr("y1", (d) => yScale(d)!)
+    .attr("y2", (d) => yScale(d)!)
+    .attr("stroke", "#ccc")
+    .attr("stroke-width", 1)
+    .attr("opacity", 0.5);
+
+  // Vertical grid lines
+  const xTicks = xScale.ticks(20); // Ottieni i tick dall'asse temporale
+  gridGroup
+    .selectAll(".vertical-line")
+    .data(xTicks)
+    .enter()
+    .append("line")
+    .attr("class", "vertical-line")
+    .attr("x1", (d) => xScale(d))
+    .attr("x2", (d) => xScale(d))
+    .attr("y1", margin.top)
+    .attr("y2", height - margin.bottom)
+    .attr("stroke", "#ccc")
+    .attr("stroke-width", 1)
+    .attr("opacity", 0.5);
+
     // Add legend
     const legendGroup = svg
       .append("g")
@@ -238,7 +272,7 @@ export const Diagram: React.FC = () => {
             .attr("y", -5)
             .attr("width", 15)
             .attr("height", 15)
-            .attr("fill", item.color);
+            .attr("fill", item.color!);
   
           currentY += 20;
         });
@@ -277,7 +311,7 @@ export const Diagram: React.FC = () => {
             .attr("y2", 5)
             .attr("stroke", "black")
             .attr("stroke-width", 2)
-            .attr("stroke-dasharray", item.lineStyle === "solid" ? "" : item.lineStyle);
+            .attr("stroke-dasharray", item.lineStyle === "solid" ? "" : item.lineStyle!);
   
           currentY += 20;
         });
@@ -300,8 +334,6 @@ export const Diagram: React.FC = () => {
       issuanceDate: parseDate(d.issuanceDate),
     }));
 
-    console.log("nodeData" , nodeData);
-
     graphGroup.selectAll("g.node")
       .data(nodeData)
       .enter()
@@ -323,7 +355,7 @@ export const Diagram: React.FC = () => {
       .data(nodeData)
       .join("text")
       .attr("x", (d) => xScale(d.issuanceDate))
-      .attr("y", (d) => yScale(d.scale) + 30)
+      .attr("y", (d) => yScale(d.scale)! + 30)
       .attr("text-anchor", "middle")
       .attr("font-size", 10)
       .text((d) => d.title);
@@ -351,7 +383,7 @@ export const Diagram: React.FC = () => {
 
            // Calcolo di un punto di controllo per la curva
           const controlX = (startX + endX) / 2; // Punto medio sull'asse X
-          const controlY = ((startY + endY) / 2) - 50 - index * 50; // Punto medio sull'asse Y con offset per separare le curve
+          const controlY = ((startY! + endY!) / 2) - 50 - index * 50; // Punto medio sull'asse Y con offset per separare le curve
 
            // Genera una curva quadratica Bezier
           return `M${startX},${startY} Q${controlX},${controlY} ${endX},${endY}`;
