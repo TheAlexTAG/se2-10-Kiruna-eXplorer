@@ -1,14 +1,15 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
-import AgreementIcon from "../../../public/icons/agreement-icon"
-import ConflictIcon from "../../../public/icons/conflict-icon"
-import ConsultationIcon from "../../../public/icons/consultation-icon"
-import DesignIcon from "../../../public/icons/design-icon"
-import InformativeIcon from "../../../public/icons/informative-icon"
-import MaterialEffectIcon from "../../../public/icons/material-effect-icon"
-import PrescriptiveIcon from "../../../public/icons/prescriptive-icon"
-import TechnicalIcon from "../../../public/icons/technical-icon"
 import ReactDOMServer from "react-dom/server";
+import AgreementIcon from "../../../public/icons/agreement-icon";
+import ConflictIcon from "../../../public/icons/conflict-icon";
+import ConsultationIcon from "../../../public/icons/consultation-icon";
+import DesignIcon from "../../../public/icons/design-icon";
+import InformativeIcon from "../../../public/icons/informative-icon";
+import MaterialEffectIcon from "../../../public/icons/material-effect-icon";
+import PrescriptiveIcon from "../../../public/icons/prescriptive-icon";
+import TechnicalIcon from "../../../public/icons/technical-icon";
+import API from "../../API/API"
 
 interface IconProps {
   width?: string | number;
@@ -20,163 +21,16 @@ type Node = {
   id: number;
   title: string;
   description: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   stakeholders: string;
   scale: string;
   issuanceDate: string;
   type: string;
   iconComponent: React.FC<IconProps>;
   connections: number;
-  links: { documentID: number; relationship: string }[]; 
+  links: { documentID: number; relationship: string }[];
 };
-
-
-
-// Static data 
-const data: Node[] = [
-  {
-    id: 1,
-    title: "Town Hall demolition (64)",
-    description: "After the construction of the new town hall...",
-    latitude: 67.846540237353,
-    longitude: 20.230941710255415,
-    stakeholders: "LKAB",
-    scale: "1:1,000",
-    issuanceDate: "2019", // formato YYYY
-    type: "Material effect",
-    iconComponent: MaterialEffectIcon,
-    connections: 3,
-    links: [
-      { documentID: 3, relationship: "collateral consequence" },
-      { documentID: 4, relationship: "collateral consequence" },
-      { documentID: 2, relationship: "direct consequence" },
-    ],
-  },
-  {
-    id: 2,
-    title: "Construction of Aurora Center begins (65)",
-    description: "Shortly after the construction of the Scandic hotel began...",
-    latitude: 67.849167,
-    longitude: 20.304389,
-    stakeholders: "LKAB",
-    scale: "Concept",
-    issuanceDate: "2009", // formato YYYY
-    type: "Agreement",
-    iconComponent: AgreementIcon,
-    connections: 1,
-    links: [
-      { documentID: 1, relationship: "direct consequence" },
-    ],
-  },
-  {
-    id: 3,
-    title: "Construction of Block 1 begins (69)",
-    description: "Simultaneously with the start of construction on the Aurora Center...",
-    latitude: 67.848556,
-    longitude: 20.300333,
-    stakeholders: "Others",
-    scale: "Text",
-    issuanceDate: "06/2021", // formato MM/YYYY
-    type: "Conflict",
-    iconComponent: ConflictIcon,
-    connections: 1,
-    links: [{ documentID: 1, relationship: "collateral consequence" }],
-  },
-  {
-    id: 4,
-    title: "Construction of Scandic Hotel begins (63)",
-    description: "After two extensions of the land acquisition agreement...",
-    latitude: 67.848528,
-    longitude: 20.3047,
-    stakeholders: "LKAB",
-    scale: "1:100,000",
-    issuanceDate: "12/12/2019", // formato DD/MM/YYYY
-    type: "Consulatation",
-    iconComponent: ConsultationIcon,
-    connections: 1,
-    links: [{ documentID: 1, relationship: "collateral consequence" }],
-  },
-  {
-    id: 5,
-    title: "prova 5",
-    description: "After the construction of the new town hall...",
-    latitude: 67.846540237353,
-    longitude: 20.230941710255415,
-    stakeholders: "Citizens",
-    scale: "1:10,000",
-    issuanceDate: "2007", // formato YYYY
-    type: "Design",
-    iconComponent: DesignIcon,
-    connections: 1,
-    links: [
-      { documentID: 6, relationship: "projection" },
-    ],
-  },
-  {
-    id: 6,
-    title: "prova 6",
-    description: "After the construction of the new town hall...",
-    latitude: 67.846540237353,
-    longitude: 20.230941710255415,
-    stakeholders: "LKAB, Citizens",
-    scale: "1:100,000",
-    issuanceDate: "2009", // formato YYYY
-    type: "Informative",
-    iconComponent: InformativeIcon,
-    connections: 1,
-    links: [
-      { documentID: 5, relationship: "projection" },
-    ],
-  },
-  {
-    id: 7,
-    title: "prova 7",
-    description: "After the construction of the new town hall...",
-    latitude: 67.846540237353,
-    longitude: 20.230941710255415,
-    stakeholders: "Architecture firms",
-    scale: "1:5,000",
-    issuanceDate: "2013", // formato YYYY
-    type: "Prescriptive",
-    iconComponent: PrescriptiveIcon,
-    connections: 1,
-    links: [
-      { documentID: 8, relationship: "update" },
-    ],
-  },
-  {
-    id: 8,
-    title: "prova 8",
-    description: "After the construction of the new town hall...",
-    latitude: 67.846540237353,
-    longitude: 20.230941710255415,
-    stakeholders: "Regional authority",
-    scale: "1:1,000",
-    issuanceDate: "2005", // formato YYYY
-    type: "Technical",
-    iconComponent: TechnicalIcon,
-    connections: 1,
-    links: [
-      { documentID: 7, relationship: "update" },
-    ],
-  },
-  {
-    id: 9,
-    title: "prova 9",
-    description: "After the construction of the new town hall...",
-    latitude: 67.846540237353,
-    longitude: 20.230941710255415,
-    stakeholders: "Municipality",
-    scale: "Blueprints/effect",
-    issuanceDate: "2009", // formato YYYY
-    type: "Technical",
-    iconComponent: TechnicalIcon,
-    connections: 0,
-    links: [],
-  },
-];
-
 
 // Legend Data
 const legendData = [
@@ -201,7 +55,6 @@ const legendData = [
   { label: "Update", lineStyle: "1,5,5,5" },
 ];
 
-// Definisci una funzione per mappare il valore di stakeholder a un colore
 const getColor = (stakeholder: string) => {
   switch (stakeholder) {
     case "LKAB": return "#000000";
@@ -214,52 +67,84 @@ const getColor = (stakeholder: string) => {
   }
 };
 
-  // Function to parse the date string into a Date object
-  const parseDate = (dateStr: string): Date => {
-    let parsedDate: Date;
-    // Prova a interpretare la data nel formato "DD/MM/YYYY"
-    const ddmmyyyy = d3.timeParse("%d/%m/%Y");
-    const mmyyyy = d3.timeParse("%m/%Y");
-    const yyyy = d3.timeParse("%Y");
+const parseDate = (dateStr: string): Date => {
+  const ddmmyyyy = d3.timeParse("%d/%m/%Y");
+  const mmyyyy = d3.timeParse("%m/%Y");
+  const yyyy = d3.timeParse("%Y");
 
-    if (ddmmyyyy(dateStr)) {
-      parsedDate = ddmmyyyy(dateStr)!;
-    } else if (mmyyyy(dateStr)) {
-      parsedDate = mmyyyy(dateStr)!;
-    } else {
-      parsedDate = yyyy(dateStr)!;
-    }
-
-    return parsedDate;
-  };
-
-  // Function for line style based on relationship
-const getLineStyle = (relationship: string) => {
-  switch (relationship) {
-    case "direct consequence":
-      return "solid"; // continue line
-    case "collateral consequence":
-      return "5,5"; // dashed line
-    case "projection":
-      return "1,5,1,5"; // dotted line
-    case "update":
-      return "1,5,5,5"; // dash-dot line
-    default:
-      return "";
+  if (ddmmyyyy(dateStr)) {
+    return ddmmyyyy(dateStr)!;
+  } else if (mmyyyy(dateStr)) {
+    return mmyyyy(dateStr)!;
+  } else {
+    return yyyy(dateStr)!;
   }
 };
 
+const getLineStyle = (relationship: string) => {
+  switch (relationship) {
+    case "Direct consequence": return "solid";
+    case "Collateral consequence": return "5,5";
+    case "Projection": return "1,5,1,5";
+    case "Update": return "1,5,5,5";
+    default: return "";
+  }
+};
 
+// Mappa il tipo di documento a un'icona
+const getIconComponent = (type: string): React.FC<IconProps> => {
+  switch (type) {
+    case "Design doc.": return DesignIcon;
+    case "Informative doc.": return InformativeIcon;
+    case "Prescriptive doc.": return PrescriptiveIcon;
+    case "Technical doc.": return TechnicalIcon;
+    case "Agreement": return AgreementIcon;
+    case "Conflict": return ConflictIcon;
+    case "Consultation": return ConsultationIcon;
+    case "Material effect": return MaterialEffectIcon;
+    default: return DesignIcon; // Fallback
+  }
+};
+
+const fetchDocuments = async (): Promise<Node[]> => {
+  const response = await API.getDocuments(); // Cambia l'endpoint se necessario
+
+  return response.map((doc: any) => ({
+    id: doc.id,
+    title: doc.title,
+    description: doc.description,
+    latitude: doc.latitude,
+    longitude: doc.longitude,
+    stakeholders: doc.stakeholders,
+    scale: doc.scale,
+    issuanceDate: doc.issuanceDate,
+    type: doc.type,
+    iconComponent: getIconComponent(doc.type),
+    connections: doc.connections,
+    links: doc.links,
+  }));
+};
 
 export const Diagram: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const [nodes, setNodes] = useState<Node[]>([]);
 
   useEffect(() => {
+    const loadData = async () => {
+      const fetchedNodes = await fetchDocuments();
+      setNodes(fetchedNodes);
+    };
+
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    if (nodes.length === 0) return;
+
     const width = 1500;
     const height = 750;
     const margin = { top: 20, right: 300, bottom: 200, left: 100 };
 
-    // Define scales and axes
     const scales = [
       "Text",
       "Concept",
@@ -270,29 +155,16 @@ export const Diagram: React.FC = () => {
       "Blueprints/effect",
     ];
 
-    const years = Array.from({ length: 2024 - 2004 + 1 }, (_, i) => 2004 + i);
-
-    // Define y scale
-    const yScale = d3
-      .scalePoint()
-      .domain([...scales, ""]) 
-      .range([margin.top, height - margin.bottom]);
-
     const startDate = new Date(2004, 0, 1);
-    const endDate = new Date(2024, 0, 1);
+    const endDate = new Date(2025, 0, 1);
 
-    // Define x scale
-    const xScale = d3
-      .scaleTime()
-      .domain([startDate, endDate])
-      .range([margin.left, width - margin.right]);
+    const yScale = d3.scalePoint().domain([...scales, ""]).range([margin.top, height - margin.bottom]);
+    const xScale = d3.scaleTime().domain([startDate, endDate]).range([margin.left, width - margin.right]);
 
-    const svg = d3
-      .select(svgRef.current)
+    const svg = d3.select(svgRef.current)
       .attr("viewBox", `0 0 ${width} ${height}`)
       .style("background", "#f9f9f9");
 
-    // Clear previous content
     svg.selectAll("*").remove();
 
     // Add legend
@@ -409,36 +281,29 @@ export const Diagram: React.FC = () => {
   
           currentY += 20;
         });
-  
 
-    // Add graph group
-    const graphGroup = svg
-      .append("g")
-      .attr("transform", `translate(${margin.left + 150}, 0)`);
 
-    // Add axes
-    graphGroup
-      .append("g")
+    const graphGroup = svg.append("g").attr("transform", `translate(${margin.left + 150}, 0)`);
+
+    graphGroup.append("g")
       .attr("transform", `translate(0,${height - margin.bottom})`)
-      .call(d3.axisBottom(xScale).ticks(years.length))
+      .call(d3.axisBottom(xScale).ticks(20))
       .attr("font-size", "12px");
 
-    graphGroup
-      .append("g")
+    graphGroup.append("g")
       .attr("transform", `translate(${margin.left},0)`)
       .call(d3.axisLeft(yScale))
       .attr("font-size", "12px");
 
-    // Parse issuance dates into Date objects using the custom date parser
-    const nodes = data.map((d) => ({
+    const nodeData = nodes.map((d) => ({
       ...d,
-      issuanceDate: parseDate(d.issuanceDate), // Usa la funzione parseDate
+      issuanceDate: parseDate(d.issuanceDate),
     }));
 
-    // Add nodes
-    graphGroup
-      .selectAll("g.node")
-      .data(nodes)
+    console.log("nodeData" , nodeData);
+
+    graphGroup.selectAll("g.node")
+      .data(nodeData)
       .enter()
       .append("g")
       .attr("class", "node")
@@ -446,19 +311,16 @@ export const Diagram: React.FC = () => {
       .each(function (d) {
         const node = d3.select(this);
 
-        // Add icon
-        node
-          .append("g")
-          .html(ReactDOMServer.renderToStaticMarkup(<d.iconComponent width = "32px" height = "32px" 
-            color = {getColor(d.stakeholders)} />))
+        node.append("g")
+          .html(ReactDOMServer.renderToStaticMarkup(<d.iconComponent width="32px" height="32px" color={getColor(d.stakeholders)} />))
           .attr("transform", "translate(-15, -15)");
       });
 
-      // Add labels for the nodes
+    // Add labels for the nodes
     graphGroup
       .append("g")
       .selectAll("text")
-      .data(nodes)
+      .data(nodeData)
       .join("text")
       .attr("x", (d) => xScale(d.issuanceDate))
       .attr("y", (d) => yScale(d.scale) + 30)
@@ -466,35 +328,41 @@ export const Diagram: React.FC = () => {
       .attr("font-size", 10)
       .text((d) => d.title);
 
-    // Add lines (links) between nodes
+
     graphGroup
       .append("g")
       .selectAll("path")
-      .data(nodes.flatMap((sourceNode) =>
-        sourceNode.links.map((link) => ({
+      .data(nodeData.flatMap((sourceNode) =>
+        sourceNode.links.map((link, index) => ({
           sourceNode,
-          targetNode: nodes.find((node) => node.id === link.documentID),
+          targetNode: nodeData.find((node) => node.id === link.documentID),
           relationship: link.relationship,
+          index
         }))
       ))
-      .join("path")
-      .attr("d", ({ sourceNode, targetNode }) => {
+      .enter()
+      .append("path")
+      .attr("d", ({ sourceNode, targetNode, index }) => {
         if (targetNode) {
           const startX = xScale(sourceNode.issuanceDate);
           const startY = yScale(sourceNode.scale);
           const endX = xScale(targetNode.issuanceDate);
           const endY = yScale(targetNode.scale);
 
-          return `M${startX},${startY} L${endX},${endY}`;
+           // Calcolo di un punto di controllo per la curva
+          const controlX = (startX + endX) / 2; // Punto medio sull'asse X
+          const controlY = ((startY + endY) / 2) - 50 - index * 50; // Punto medio sull'asse Y con offset per separare le curve
+
+           // Genera una curva quadratica Bezier
+          return `M${startX},${startY} Q${controlX},${controlY} ${endX},${endY}`;
         }
         return "";
       })
       .attr("stroke", "black")
       .attr("stroke-width", 2)
       .attr("fill", "none")
-      .attr("stroke-dasharray", ({ relationship }) => getLineStyle(relationship)); 
-
-  }, []);
+      .attr("stroke-dasharray", ({ relationship }) => getLineStyle(relationship));
+  }, [nodes]);
 
   return <svg ref={svgRef}></svg>;
 };
