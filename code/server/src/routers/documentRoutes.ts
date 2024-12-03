@@ -104,8 +104,12 @@ class DocumentRoutes {
     
         this.app.post("/api/resource/:documentID", 
             param('documentID').isInt(),
-            this.utilities.isUrbanPlanner,
+            //this.utilities.isUrbanPlanner,
             this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => {
+                req.params.id = req.params.documentID;
+                next();
+            },
             this.utilities.documentExists,
             upload.array('files', 10),
             async (req: any, res: any) => {
