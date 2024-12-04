@@ -396,6 +396,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
                           currentDocument={document}
                           documents={documents}
                           updateTable={fetchDocuments}
+                          setSuccessMessage={setSuccessMessage}
                         />
                       </Dropdown.Item>
                       <Dropdown.Divider />
@@ -452,6 +453,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
               {error}
             </Alert>
           )}
+
           <div>
             {document && document.resource && document.resource.length > 0 && (
               <>

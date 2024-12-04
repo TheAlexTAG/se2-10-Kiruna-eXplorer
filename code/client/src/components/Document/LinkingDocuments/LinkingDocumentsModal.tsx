@@ -6,6 +6,8 @@ import {
   Button,
   Col,
   Container,
+  Form,
+  InputGroup,
   Modal,
   Row,
 } from "react-bootstrap";
@@ -17,17 +19,20 @@ interface documentsProps {
   documents: any;
   currentDocument: any;
   updateTable: any;
+  setSuccessMessage: any;
 }
 
 export const LinkingDocumentsModal = ({
   documents,
   currentDocument,
   updateTable,
+  setSuccessMessage,
 }: documentsProps) => {
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [tab, setTab] = useState(0);
   const [selectedItems, setSelectedItems] = useState<any>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleClose = () => {
     setShow(false);
@@ -67,12 +72,17 @@ export const LinkingDocumentsModal = ({
       API.connectDocuments(currentDocument.id, items)
         .then(() => {
           updateTable();
+          setSuccessMessage("Documents linked successfully");
           handleClose();
         })
         .catch((err) => {
           setError(err.message);
         });
     }
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value.toLowerCase());
   };
 
   return (
@@ -109,12 +119,13 @@ export const LinkingDocumentsModal = ({
                     <Col md={2} className="main-text">
                       {currentDocument.title}
                     </Col>
-                    {/* <Col md={{ span: 2, offset: 8 }}>
+                    <Col md={{ span: 2, offset: 8 }}>
                       <InputGroup className="mb-3">
                         <Form.Control
                           className="form-control"
                           style={{ borderRight: "none" }}
                           placeholder="Search..."
+                          onChange={handleSearch}
                         />
                         <InputGroup.Text
                           style={{ background: "none", borderLeft: "none" }}
@@ -125,7 +136,7 @@ export const LinkingDocumentsModal = ({
                           ></i>
                         </InputGroup.Text>
                       </InputGroup>
-                    </Col> */}
+                    </Col>
                   </Row>
                   <Row>
                     <Col md={2}>
@@ -166,6 +177,9 @@ export const LinkingDocumentsModal = ({
                                   .length !== 4;
                               return hasRelationshipCountEqualTo4;
                             })
+                            .filter((item: any) =>
+                              item.title.toLowerCase().includes(searchQuery)
+                            )
                             .map((option: any) => (
                               <Accordion.Item
                                 eventKey={option.id}

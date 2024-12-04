@@ -49,8 +49,8 @@ export const LinkingDocumentDropdown = ({
                   <Select
                     options={
                       relationshipsFilter.length > 0
-                        ? relationshipList.filter((item) =>
-                            relationshipsFilter.includes(item.value)
+                        ? relationshipList.filter(
+                            (item) => !relationshipsFilter.includes(item.value)
                           )
                         : relationshipList
                     }
