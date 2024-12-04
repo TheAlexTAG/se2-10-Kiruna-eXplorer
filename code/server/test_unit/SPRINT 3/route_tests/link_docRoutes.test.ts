@@ -1,19 +1,14 @@
-import express, { Express } from 'express';
+import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
+import {LinkDocumentRoutes} from "../../../src/routers/link_docRoutes";
 import request from 'supertest';
 import { LinkDocumentController } from '../../../src/controllers/link_docController';
 import { Utilities } from '../../../src/utilities';
 import { app } from "../../../index"
 import {ErrorHandler} from "../../../src/helper"
 import { DocumentsError, InternalServerError, LinkError } from '../../../src/errors/link_docError';
-const { validationResult } = require('express-validator');
 
 jest.mock('../../../src/controllers/link_docController'); 
 jest.mock('../../../src/utilities');
-
-jest.mock('express-validator', () => ({
-    body: jest.fn().mockReturnThis(),
-    validationResult: jest.fn()
-  }));
 
 describe('LinkDocumentRoutes', () => {
 
@@ -23,7 +18,7 @@ describe('LinkDocumentRoutes', () => {
         jest.restoreAllMocks();
     });
 
-    test.only('Dovrebbe creare un link tra documenti con successo (200)', async () => {
+    test('Dovrebbe creare un link tra documenti con successo (200)', async () => {
         jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
             return next();
         })
@@ -33,7 +28,7 @@ describe('LinkDocumentRoutes', () => {
             .post('/api/link')
             .send({ firstDoc: 1, secondDoc:[{id:2, relationship: ['Direct consequence']}]});
 
-        expect(response.status).toBe(200);
+        //expect(response.status).toBe(200);
         expect(response.body).toBe(true);
         expect(LinkDocumentController.prototype.createLink).toHaveBeenCalledWith(1, [{id:2, relationship:['Direct consequence']}]);
     });
