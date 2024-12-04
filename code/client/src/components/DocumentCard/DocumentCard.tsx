@@ -1,8 +1,7 @@
-// import { Dispatch, SetStateAction } from "react";
-// import { Document } from "../Map/MapComponent";
+import { Document } from "../Map/MapComponent";
 import { Button, Container } from "react-bootstrap";
 import API from "../../API/API";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 
 interface DocumentCardProps {
   cardInfo: any;
@@ -15,17 +14,6 @@ export const DocumentCard = ({
   iconToShow,
   setSelectedDocument,
 }: DocumentCardProps) => {
-  const [zones, setZones] = useState<any>([]);
-  const fetchZones = () => {
-    API.getZones().then((res) => {
-      setZones(res);
-    });
-  };
-
-  useEffect(() => {
-    fetchZones();
-  }, []);
-
   return (
     <>
       <div
@@ -44,6 +32,8 @@ export const DocumentCard = ({
             borderRadius: "12px",
             padding: "20px",
             position: "relative",
+            // overflowY: "scroll",
+            height: "85vh",
           }}
         >
           <div className="d-flex justify-content-between">
@@ -65,82 +55,87 @@ export const DocumentCard = ({
           <div className="my-1">
             <h4>Title: {cardInfo.title} </h4>
           </div>
-          <div className="my-1">
-            <strong>Stakeholders:</strong> {cardInfo.stakeholders}
-          </div>
-          <div className="my-1">
-            <strong>Scale:</strong> {cardInfo.scale}
-          </div>
-          <div className="my-1">
-            <strong>Issuance date: </strong>
-            {cardInfo.issuanceDate.toString()}
-          </div>
-          <div className="my-1">
-            <strong>Type: </strong>
-            {cardInfo.type}
-          </div>
-          <div className="my-1">
-            <strong>Connections:</strong> {cardInfo.connections}
-          </div>
-          <div className="my-1">
-            <strong>Language:</strong>{" "}
-            {cardInfo.language ? cardInfo.language : "-"}
-          </div>
-          <div className="my-1">
-            <strong>Pages:</strong> {cardInfo.pages ? cardInfo.pages : "-"}
-          </div>
-
-          <div className="my-1">
-            {" "}
-            <strong>Description:</strong> {cardInfo.description}
-          </div>
-          {((cardInfo.attachment && cardInfo.attachment.length > 0) ||
-            (cardInfo.resource && cardInfo.resource.length > 0)) && (
-            <div>
-              <strong>Material:</strong>
+          <div style={{ overflowY: "scroll", height: "85%" }}>
+            <div className="my-1">
+              <strong>Stakeholders:</strong> {cardInfo.stakeholders}
             </div>
-          )}
-          <div>
-            {cardInfo.attachment && cardInfo.attachment.length > 0 && (
+            <div className="my-1">
+              <strong>Scale:</strong> {cardInfo.scale}
+            </div>
+            <div className="my-1">
+              <strong>Issuance date: </strong>
+              {cardInfo.issuanceDate.toString()}
+            </div>
+            <div className="my-1">
+              <strong>Type: </strong>
+              {cardInfo.type}
+            </div>
+            <div className="my-1">
+              <strong>Connections:</strong> {cardInfo.connections}
+            </div>
+            <div className="my-1">
+              <strong>Language:</strong>{" "}
+              {cardInfo.language ? cardInfo.language : "-"}
+            </div>
+            <div className="my-1">
+              <strong>Pages:</strong> {cardInfo.pages ? cardInfo.pages : "-"}
+            </div>
+
+            <div className="my-1">
+              {" "}
+              <strong>Description:</strong> {cardInfo.description}
+            </div>
+            {((cardInfo.attachment && cardInfo.attachment.length > 0) ||
+              (cardInfo.resource && cardInfo.resource.length > 0)) && (
               <div>
-                {cardInfo.attachments &&
-                  cardInfo.attachments.map((attachment: any, index: number) => (
-                    <div key={index}>
-                      <a target="_blank">{attachment.name}</a>
-                    </div>
-                  ))}
+                <strong>Material:</strong>
               </div>
             )}
-            {cardInfo.resource && (
-              <>
-                <div>Resources:</div>
-                {cardInfo.resource.length > 0 &&
-                  cardInfo.resource.map((resource: any, index: number) => (
-                    <div key={index}>
+            <div>
+              {cardInfo.attachment && cardInfo.attachment.length > 0 && (
+                <div>
+                  {cardInfo.attachments &&
+                    cardInfo.attachments.map(
+                      (attachment: any, index: number) => (
+                        <div key={index}>
+                          <a target="_blank">{attachment.name}</a>
+                        </div>
+                      )
+                    )}
+                </div>
+              )}
+              {cardInfo.resource.length > 0 && (
+                <>
+                  <div>Resources:</div>
+                  {cardInfo.resource.length > 0 &&
+                    cardInfo.resource.map((resource: any, index: number) => (
                       <div key={index}>
-                        <Button
-                          variant="link"
-                          style={{
-                            display: "inline-block",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            width: "100%",
-                          }}
-                          onClick={() =>
-                            API.handleDownloadResource(
-                              cardInfo.id,
-                              resource.name
-                            )
-                          }
-                        >
-                          {resource.name}
-                        </Button>
+                        <div key={index}>
+                          <Button
+                            variant="link"
+                            style={{
+                              display: "inline-block",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              width: "100%",
+                              textAlign: "left",
+                            }}
+                            onClick={() =>
+                              API.handleDownloadResource(
+                                cardInfo.id,
+                                resource.name
+                              )
+                            }
+                          >
+                            {resource.name}
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-              </>
-            )}
+                    ))}
+                </>
+              )}
+            </div>
           </div>
         </Container>
       </div>

@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import ReactDOMServer from "react-dom/server";
-import AgreementIcon from "../../../public/icons/agreement-icon";
-import ConflictIcon from "../../../public/icons/conflict-icon";
-import ConsultationIcon from "../../../public/icons/consultation-icon";
-import DesignIcon from "../../../public/icons/design-icon";
-import InformativeIcon from "../../../public/icons/informative-icon";
-import MaterialEffectIcon from "../../../public/icons/material-effect-icon";
-import PrescriptiveIcon from "../../../public/icons/prescriptive-icon";
-import TechnicalIcon from "../../../public/icons/technical-icon";
+import AgreementIcon from "../../assets/icons/agreement-icon";
+import ConflictIcon from "../../assets/icons/conflict-icon";
+import ConsultationIcon from "../../assets/icons/consultation-icon";
+import DesignIcon from "../../assets/icons/design-icon";
+import InformativeIcon from "../../assets/icons/informative-icon";
+import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
+import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
+import TechnicalIcon from "../../assets/icons/technical-icon";
 import API from "../../API/API";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
 import L from "leaflet";
@@ -34,6 +34,8 @@ type Node = {
   links: { documentID: number; relationship: string }[];
   attachment: [];
   resource: [];
+  parsedScale: number;
+  parsedDate: Date
 };
 
 // Legend Data
@@ -172,7 +174,7 @@ const fetchDocuments = async (): Promise<Node[]> => {
     latitude: doc.latitude,
     longitude: doc.longitude,
     stakeholders: doc.stakeholders,
-    scale: parseScale(doc.scale),
+    scale: doc.scale,
     issuanceDate: doc.issuanceDate,
     type: doc.type,
     iconComponent: getIconComponent(doc.type),
@@ -180,13 +182,14 @@ const fetchDocuments = async (): Promise<Node[]> => {
     links: doc.links,
     attachment: doc.attachment,
     resource: doc.resource,
+    parsedScale: parseScale(doc.scale),
+    parsedDate: parseDate(doc.issuanceDate)
   }));
 };
 
 export const Diagram: React.FC = () => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
-
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
 
   const getIconByType = (type: string) => {
@@ -227,7 +230,7 @@ export const Diagram: React.FC = () => {
     const newYDomain = [
       "Concept",
       "Text",
-      ...nodes.map((node: Node) => node.scale).sort((a: any, b: any) => b - a),
+      ...nodes.map((node: Node) => node.parsedScale).sort((a: any, b: any) => b - a),
       "Blueprints/effects",
       "",
     ];
@@ -438,7 +441,6 @@ export const Diagram: React.FC = () => {
 
     const nodeData = nodes.map((d) => ({
       ...d,
-      issuanceDate: parseDate(d.issuanceDate),
     }));
 
     graphGroup
@@ -449,7 +451,7 @@ export const Diagram: React.FC = () => {
       .attr("class", "node")
       .attr(
         "transform",
-        (d) => `translate(${xScale(d.issuanceDate)}, ${yScale(d.scale)})`
+        (d) => `translate(${xScale(d.parsedDate)}, ${yScale(d.parsedScale as unknown as string)})`
       )
       .each(function (d) {
         const node = d3.select(this);
@@ -498,27 +500,40 @@ export const Diagram: React.FC = () => {
           });
       });
 
+    const seenLinks = new Set();
     graphGroup
       .append("g")
       .selectAll("path")
       .data(
         nodeData.flatMap((sourceNode) =>
-          sourceNode.links.map((link, index) => ({
-            sourceNode,
-            targetNode: nodeData.find((node) => node.id === link.documentID),
-            relationship: link.relationship,
-            index,
-          }))
+          sourceNode.links
+            .map((link, index) => ({
+              sourceNode,
+              targetNode: nodeData.find((node) => node.id === link.documentID),
+              relationship: link.relationship,
+              index,
+            }))
+            .filter(({ sourceNode, targetNode }) => {
+              if (targetNode) {
+                // Crea una chiave unica per la coppia di nodi (indipendentemente dall'ordine)
+                const linkKey = [sourceNode.id, targetNode.id].sort().join("-");
+                if (seenLinks.has(linkKey)) {
+                  return false; // Se il collegamento è già stato visto, escludilo
+                }
+                seenLinks.add(linkKey); // Aggiungi il collegamento al Set
+              }
+              return true; // Mantieni il collegamento se unico
+            })
         )
       )
       .enter()
       .append("path")
       .attr("d", ({ sourceNode, targetNode, index }) => {
         if (targetNode) {
-          const startX = xScale(sourceNode.issuanceDate);
-          const startY = yScale(sourceNode.scale);
-          const endX = xScale(targetNode.issuanceDate);
-          const endY = yScale(targetNode.scale);
+          const startX = xScale(sourceNode.parsedDate);
+          const startY = yScale(sourceNode.parsedScale as unknown as string);
+          const endX = xScale(targetNode.parsedDate);
+          const endY = yScale(targetNode.parsedScale as unknown as string);
 
           // Calcolo di un punto di controllo per la curva
           const controlX = (startX + endX) / 2; // Punto medio sull'asse X
@@ -534,9 +549,9 @@ export const Diagram: React.FC = () => {
       .attr("fill", "none")
       .attr("stroke-dasharray", ({ relationship }) =>
         getLineStyle(relationship)
-      );
-
-    // Clustering logic
+      );  
+/*
+          // Clustering logic
     const clusterThreshold = 25;
     const clusteredNodes: {
       clusterId: number;
@@ -631,7 +646,7 @@ export const Diagram: React.FC = () => {
             .style("visibility", "visible");
         });
       });
-    });
+    });*/
   }, [nodes]);
 
   return (
