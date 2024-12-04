@@ -36,6 +36,9 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
   const [editControlKey, setEditControlKey] = useState(0);
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [highlightedDocumentId, setHighlightedDocumentId] = useState<
+    number | null
+  >(null);
 
   const clearCustomPolygon = () => {
     if (featureGroupRef.current) {
@@ -53,6 +56,7 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
     setSelectionMode("point");
   };
   const handleZoneMode = () => {
+    setHighlightedDocumentId(null);
     clearCustomPolygon();
     setTempCoordinates({ lat: null, lng: null });
     setShowZones(true);
@@ -60,6 +64,7 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
   };
 
   const handleCustomDrawMode = () => {
+    setHighlightedDocumentId(null);
     clearCustomPolygon();
     setTempCoordinates({ lat: null, lng: null });
     setHighlightedZoneId(null);
@@ -133,6 +138,8 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
         clearCustomPolygon={clearCustomPolygon}
         onZoneSelect={onZoneSelect}
         editControlKey={editControlKey}
+        highlightedDocumentId={highlightedDocumentId}
+        setHighlightedDocumentId={setHighlightedDocumentId}
       />
     </div>
   );

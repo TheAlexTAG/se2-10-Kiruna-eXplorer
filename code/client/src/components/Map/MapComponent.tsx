@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef, SetStateAction } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  SetStateAction,
+  Dispatch,
+} from "react";
 import {
   MapContainer,
   TileLayer,
@@ -30,8 +36,8 @@ import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
 import TechnicalIcon from "../../assets/icons/technical-icon";
 import DesignIcon from "../../assets/icons/design-icon";
 import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
-import { GrDocumentText } from "react-icons/gr";
 import KirunaDocs from "./KirunaDocs/KirunaDocs";
+import { PiBird } from "react-icons/pi";
 
 export type Document = {
   id: number;
@@ -68,6 +74,8 @@ interface MapComponentProps {
   setShowZones: React.Dispatch<SetStateAction<boolean>>;
   setErrorMessage?: React.Dispatch<SetStateAction<string | null>>;
   editControlKey?: number;
+  highlightedDocumentId: number | null;
+  setHighlightedDocumentId: Dispatch<SetStateAction<number | null>>;
 }
 
 type ZoneProps = {
@@ -93,6 +101,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
   setShowZones,
   setErrorMessage,
   editControlKey,
+  highlightedDocumentId,
+  setHighlightedDocumentId,
 }) => {
   const [kirunaDocuments, setKirunaDocuments] = useState<
     KirunaDocument[] | null
@@ -193,9 +203,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
   console.log("selection mode is ", selectionMode);
   const PointClickHandler: React.FC = () => {
     useMapEvent("click", (e) => {
-      if (selectedDocument) {
-        setSelectedDocument(null);
-      }
+      setSelectedDocument(null);
+      setHighlightedDocumentId(null);
+
       if (setTempCoordinates && selectionMode === "point") {
         setTempCoordinates({ lat: e.latlng.lat, lng: e.latlng.lng });
       }
@@ -267,7 +277,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     );
   };
 
-  const getIconByType = (type: string) => {
+  const getIconByType = (type: string, isHighlighted: boolean) => {
     const iconComponents: { [key: string]: JSX.Element } = {
       Agreement: <AgreementIcon width={30} height={30} />,
       Conflict: <ConflictIcon width={30} height={30} />,
@@ -281,18 +291,20 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const selectedIcon = iconComponents[type] || iconComponents.default;
     return L.divIcon({
       html: ReactDOMServer.renderToString(selectedIcon),
-      className: "custom-icon",
-      iconSize: [40, 40],
+      className: isHighlighted ? "custom-icon highlighted" : "custom-icon",
+      iconSize: isHighlighted ? [42, 42] : [40, 40],
       iconAnchor: [15, 15],
       popupAnchor: [0, -15],
     });
   };
   const handleMoreClick = (doc: Document | KirunaDocument) => {
     setSelectedDocument(doc);
+    setHighlightedDocumentId(doc.id);
   };
 
   const handleOpenKirunaModal = () => {
     setSelectedDocument(null);
+    setHighlightedDocumentId(null);
     setShowKirunaDocuments(true);
   };
   return (
@@ -330,13 +342,27 @@ const MapComponent: React.FC<MapComponentProps> = ({
           />
         )}
         {/*@ts-ignore*/}
-        <MarkerClusterGroup>
+        <MarkerClusterGroup
+          spiderfyOnMaxZoom={true} // Keep spiderfying behavior
+          zoomToBoundsOnClick={true} // Allow zoom on cluster click
+          showCoverageOnHover={false} // Disable coverage hover
+        >
           {/*for now we ignore MarkerClusterGroup type error, since everything works*/}
           {documents.map((doc) => (
             <Marker
               key={doc.id}
               position={[doc.latitude, doc.longitude]}
-              icon={getIconByType(doc.type)}
+              icon={getIconByType(doc.type, doc.id === highlightedDocumentId)}
+              eventHandlers={
+                selectionMode === "point"
+                  ? {
+                      click: () => {
+                        setHighlightedDocumentId(doc.id);
+                        /*handleMoreClick(doc);*/
+                      },
+                    }
+                  : {}
+              }
             >
               <Popup>
                 <b>{doc.title}</b>
@@ -438,7 +464,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
               zIndex: 1000,
             }}
           >
-            <GrDocumentText />
+            <PiBird />
             <span className="tooltip">Show Kiruna Municipality Documents</span>
           </div>
           <KirunaDocs

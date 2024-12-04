@@ -21,6 +21,9 @@ const DocumentsMap: React.FC = () => {
   const [kirunaBoundary, setKirunaBoundary] =
     useState<Feature<MultiPolygon> | null>(null);
   const [showZones, setShowZones] = useState(false);
+  const [highlightedDocumentId, setHighlightedDocumentId] = useState<
+    number | null
+  >(null);
 
   /*const reactIconHTML = ReactDOMServer.renderToString(
     <div /*className="custom-icon"*/ /*>
@@ -121,6 +124,8 @@ const DocumentsMap: React.FC = () => {
         setShowZones={setShowZones}
         kirunaBoundary={kirunaBoundary}
         setKirunaBoundary={setKirunaBoundary}
+        highlightedDocumentId={highlightedDocumentId}
+        setHighlightedDocumentId={setHighlightedDocumentId}
       />
     </>
   );
