@@ -39,7 +39,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 5;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const handlePageChange = (pageNumber: number) => {
