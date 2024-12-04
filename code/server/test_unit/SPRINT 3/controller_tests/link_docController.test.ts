@@ -15,9 +15,7 @@ describe('LinkDocumentController', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
         jest.resetAllMocks();
-        jest.restoreAllMocks();
     });
 
     test('It should create a link between documents successfully with firstDoc<secondDoc', async () => {

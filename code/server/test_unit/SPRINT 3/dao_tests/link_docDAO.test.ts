@@ -24,9 +24,7 @@ describe('LinkDocumentDAO', () => {
   });
   
   afterEach(() => {
-    jest.clearAllMocks();
     jest.resetAllMocks();
-    jest.restoreAllMocks();
   });
 
   describe('getLink', () => {
