@@ -15,7 +15,7 @@ class LinkDocumentController{
         this.dao= new LinkDocumentDAO();
     }
 
-    async createLink(firstDoc: number, other: {id: string,relationship: string}[]): Promise<boolean>{
+    async createLink(firstDoc: number, other: {id: string,relationship: string[]}[]): Promise<boolean>{
         const value: (number | Relationship)[][]= [];
         
         for(let doc of other){
