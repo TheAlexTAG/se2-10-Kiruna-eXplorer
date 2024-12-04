@@ -111,24 +111,36 @@ export const DocumentCard = ({
                   ))}
               </div>
             )}
-            {cardInfo.resource &&
-              cardInfo.resource.length > 0 &&
-              cardInfo.resource.map((resource: any, index: number) => (
-                <div key={index}>
-                  <a
-                    target="_blank"
-                    style={{
-                      display: "inline-block",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      width: "100%",
-                    }}
-                  >
-                    {resource}
-                  </a>
-                </div>
-              ))}
+            {cardInfo.resource && (
+              <>
+                <div>Resources:</div>
+                {cardInfo.resource.length > 0 &&
+                  cardInfo.resource.map((resource: any, index: number) => (
+                    <div key={index}>
+                      <div key={index}>
+                        <Button
+                          variant="link"
+                          style={{
+                            display: "inline-block",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            width: "100%",
+                          }}
+                          onClick={() =>
+                            API.handleDownloadResource(
+                              cardInfo.id,
+                              resource.name
+                            )
+                          }
+                        >
+                          {resource.name}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+              </>
+            )}
           </div>
         </Container>
       </div>
