@@ -10,6 +10,7 @@ import {
   Alert,
   InputGroup,
   Card,
+  Pagination,
 } from "react-bootstrap";
 import API from "../../API/API";
 import { LinkingDocumentsModal } from "./LinkingDocuments/LinkingDocumentsModal";
@@ -37,6 +38,28 @@ export const DocumentList = ({ userInfo }: userProps) => {
     language: "",
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const handlePageChange = (pageNumber: number) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
+  const paginationItems = [];
+  for (let number = 1; number <= totalPages; number++) {
+    paginationItems.push(
+      <Pagination.Item
+        key={number}
+        active={number === currentPage}
+        onClick={() => handlePageChange(number)}
+      >
+        {number}
+      </Pagination.Item>
+    );
+  }
   const stakeholderOptions: string[] = [
     "LKAB",
     "Municipalty",
@@ -375,58 +398,64 @@ export const DocumentList = ({ userInfo }: userProps) => {
             </tr>
           </thead>
           <tbody>
-            {filteredDocuments.map((document: any, index: number) => (
-              <tr key={index}>
-                <td>{index + 1}</td>
-                <td>{document.title ? document.title : "-"}</td>
-                <td>{document.stakeholders ? document.stakeholders : "-"}</td>
-                <td>{document.scale ? document.scale : "-"}</td>
-                <td>{document.type ? document.type : "-"}</td>
-                <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
-                <td>{document.connections ? document.connections : "-"}</td>
-                <td>{document.language ? document.language : "-"}</td>
-                {userInfo?.role === "Urban Planner" && (
-                  <td>
-                    <DropdownButton
-                      variant="link-black"
-                      title={<i className="bi bi-three-dots-vertical"></i>}
-                    >
-                      <Dropdown.Item>
-                        <LinkingDocumentsModal
-                          currentDocument={document}
-                          documents={documents}
-                          updateTable={fetchDocuments}
-                          setSuccessMessage={setSuccessMessage}
-                        />
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Item>
-                        <div
-                          className="p-2"
-                          onClick={() => handleEditClick(document)}
-                          style={{ color: "green" }}
-                        >
-                          <i className="bi bi-pencil-square"></i> Edit Document
-                        </div>
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Item>
-                        <div
-                          style={{ color: "#2d6efd" }}
-                          onClick={() => handleSelectDiv(document)}
-                          className="p-2"
-                        >
-                          <i className="bi bi-file-earmark-arrow-up-fill"></i>{" "}
-                          Upload Files
-                        </div>
-                      </Dropdown.Item>
-                    </DropdownButton>
-                  </td>
-                )}
-              </tr>
-            ))}
+            {filteredDocuments
+              .slice(startIndex, endIndex)
+              .map((document: any, index: number) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td>{document.title ? document.title : "-"}</td>
+                  <td>{document.stakeholders ? document.stakeholders : "-"}</td>
+                  <td>{document.scale ? document.scale : "-"}</td>
+                  <td>{document.type ? document.type : "-"}</td>
+                  <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
+                  <td>{document.connections ? document.connections : "-"}</td>
+                  <td>{document.language ? document.language : "-"}</td>
+                  {userInfo?.role === "Urban Planner" && (
+                    <td>
+                      <DropdownButton
+                        variant="link-black"
+                        title={<i className="bi bi-three-dots-vertical"></i>}
+                      >
+                        <Dropdown.Item>
+                          <LinkingDocumentsModal
+                            currentDocument={document}
+                            documents={documents}
+                            updateTable={fetchDocuments}
+                            setSuccessMessage={setSuccessMessage}
+                          />
+                        </Dropdown.Item>
+                        <Dropdown.Divider />
+                        <Dropdown.Item>
+                          <div
+                            className="p-2"
+                            onClick={() => handleEditClick(document)}
+                            style={{ color: "green" }}
+                          >
+                            <i className="bi bi-pencil-square"></i> Edit
+                            Document
+                          </div>
+                        </Dropdown.Item>
+                        <Dropdown.Divider />
+                        <Dropdown.Item>
+                          <div
+                            style={{ color: "#2d6efd" }}
+                            onClick={() => handleSelectDiv(document)}
+                            className="p-2"
+                          >
+                            <i className="bi bi-file-earmark-arrow-up-fill"></i>{" "}
+                            Upload Files
+                          </div>
+                        </Dropdown.Item>
+                      </DropdownButton>
+                    </td>
+                  )}
+                </tr>
+              ))}
           </tbody>
         </Table>
+        <div className="d-flex justify-content-center ">
+          <Pagination data-bs-theme="dark">{paginationItems}</Pagination>
+        </div>
       </div>
 
       {selectedDocument && (
