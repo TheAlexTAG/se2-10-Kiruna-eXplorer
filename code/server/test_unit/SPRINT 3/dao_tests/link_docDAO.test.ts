@@ -2,9 +2,7 @@ import { describe, test, expect, jest, beforeAll, beforeEach, afterEach} from "@
 import { LinkDocumentDAO } from '../../../src/dao/link_docDAO';
 import { LinkDocument, Relationship } from '../../../src/components/link_doc';
 import db from '../../../src/db/db';
-import { DocumentNotFoundError } from '../../../src/errors/documentErrors';
-import { DocumentsError, InternalServerError, LinkError } from '../../../src/errors/link_docError';
-import { unwatchFile } from "fs";
+import { InternalServerError, LinkError } from '../../../src/errors/link_docError';
 
 jest.mock("../../../src/db/db.ts")
 
