@@ -1,62 +1,131 @@
-import { Col, Container, Row } from "react-bootstrap";
-import { Dispatch, SetStateAction } from "react";
-import { IoClose } from "react-icons/io5";
-import { Document } from "../Map/MapComponent";
+// import { Dispatch, SetStateAction } from "react";
+// import { Document } from "../Map/MapComponent";
+import { Button, Container } from "react-bootstrap";
+import API from "../../API/API";
+import { useEffect, useState } from "react";
 
 interface DocumentCardProps {
   cardInfo: any;
   iconToShow: string | undefined;
-  setSelectedDocument: Dispatch<SetStateAction<Document | null>>;
+  // setSelectedDocument: Dispatch<SetStateAction<Document | null>>;
+  handleCloseDocumentCard?: () => void;
 }
 
 export const DocumentCard = ({
   cardInfo,
   iconToShow,
-  setSelectedDocument,
+  handleCloseDocumentCard,
 }: DocumentCardProps) => {
+  const [zones, setZones] = useState<any>([]);
+  const fetchZones = () => {
+    API.getZones().then((res) => {
+      setZones(res);
+    });
+  };
+
+  useEffect(() => {
+    fetchZones();
+  }, []);
+
   return (
     <>
-      <div style={{ position: "relative", zIndex: "100" }}>
+      <div
+        style={{
+          position: "relative",
+          zIndex: "100",
+          width: "400px",
+          left: "20px",
+        }}
+      >
         <Container
+          className="main-text"
           style={{
-            backgroundColor: "#fffffff2",
+            backgroundColor: "#212428f5",
             borderRadius: "12px",
             padding: "20px",
             position: "relative",
           }}
         >
-          <Row>
-            <Col md={2} className="d-flex justify-content-center">
-              <img
-                src={iconToShow ? iconToShow : "/img/doc.png"}
-                style={{ width: "60px", height: "60px" }}
-              ></img>
-            </Col>
-            <Col md={5} style={{ borderLeft: "1px solid gray" }}>
-              <div>Title: {cardInfo.title} </div>
-              <div>Stakeholders: {cardInfo.stakeholders}</div>
-              <div>Scale: {cardInfo.scale}</div>
-              <div>Issuance date: {cardInfo.issuanceDate}</div>
-              <div>Type: {cardInfo.type}</div>
-              <div>Connections: {cardInfo.connections}</div>
-              <div>Language: {cardInfo.language ? cardInfo.language : "-"}</div>
-              <div>Pages: {cardInfo.pages ? cardInfo.pages : "-"}</div>
-            </Col>
-            <Col md={5} style={{ borderLeft: "1px solid gray" }}>
-              Description:
-              <div>{cardInfo.description}</div>
-              <IoClose
-                size={30}
-                style={{
-                  position: "absolute",
-                  right: "10px",
-                  top: "7px",
-                  cursor: "pointer",
-                }}
-                onClick={() => setSelectedDocument(null)}
-              />
-            </Col>
-          </Row>
+          <div className="d-flex justify-content-between">
+            <img
+              src={iconToShow ? iconToShow : "/img/doc.png"}
+              style={{
+                width: "60px",
+                height: "60px",
+                background: "#80808075",
+                borderRadius: "12px",
+                padding: "5px",
+              }}
+            ></img>
+            <Button variant="link" onClick={handleCloseDocumentCard}>
+              <i className="bi bi-x-lg" style={{ color: "#dc3545" }}></i>
+            </Button>
+          </div>
+          <div className="my-1">
+            <h4>Title: {cardInfo.title} </h4>
+          </div>
+          <div className="my-1">
+            <strong>Stakeholders:</strong> {cardInfo.stakeholders}
+          </div>
+          <div className="my-1">
+            <strong>Scale:</strong> {cardInfo.scale}
+          </div>
+          <div className="my-1">
+            <strong>Issuance date: </strong>
+            {cardInfo.issuanceDate}
+          </div>
+          <div className="my-1">
+            <strong>Type: </strong>
+            {cardInfo.type}
+          </div>
+          <div className="my-1">
+            <strong>Connections:</strong> {cardInfo.connections}
+          </div>
+          <div className="my-1">
+            <strong>Language:</strong>{" "}
+            {cardInfo.language ? cardInfo.language : "-"}
+          </div>
+          <div className="my-1">
+            <strong>Pages:</strong> {cardInfo.pages ? cardInfo.pages : "-"}
+          </div>
+
+          <div className="my-1">
+            {" "}
+            <strong>Description:</strong> {cardInfo.description}
+          </div>
+          {(cardInfo.attachment.length > 0 || cardInfo.resource.length > 0) && (
+            <div>
+              <strong>Material:</strong>
+            </div>
+          )}
+          <div>
+            {cardInfo.attachment.length > 0 && (
+              <div>
+                {cardInfo.attachments.map((attachment: any, index: number) => (
+                  <div key={index}>
+                    <a target="_blank">{attachment.name}</a>
+                  </div>
+                ))}
+              </div>
+            )}
+            {cardInfo.resource.length > 0 &&
+              cardInfo.resource.map((resource: any, index: number) => (
+                <div key={index}>
+                  <a
+                    target="_blank"
+                    style={{
+                      display: "inline-block",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      width: "100%",
+                    }}
+                  >
+                    {resource}
+                  </a>
+                </div>
+              ))}
+          </div>
         </Container>
       </div>
     </>

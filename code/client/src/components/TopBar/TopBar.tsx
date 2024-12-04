@@ -12,6 +12,10 @@ export const TopBar = ({ user, logout }: TopBarProps) => {
     <>
       <Navbar className="d-flex justify-content-between navbar-component pt-2 pb-0 mx-4">
         <Navbar.Brand as={Link} to="/">
+          <img
+            src="./src/assets/Kiruna_vapen.png"
+            style={{ width: "36px", marginRight: "8px" }}
+          />
           Kiruna Explorer
         </Navbar.Brand>
         <Navbar.Toggle />
@@ -55,7 +59,7 @@ export const TopBar = ({ user, logout }: TopBarProps) => {
           </Nav>
         </Navbar.Collapse>
       </Navbar>
-      <hr className="mx-2" />
+      <hr className="mx-2 main-text" />
     </>
   );
 };

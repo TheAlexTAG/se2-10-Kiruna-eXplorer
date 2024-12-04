@@ -27,3 +27,16 @@
   align-items: center;
   text-align: center;
 }
+
+.main-text {
+  color: whitesmoke;
+}
+
+.custom-input input {
+  border-radius: 8px;
+  color: whitesmoke;
+  border-right: none;
+}
+.custom-input input::placeholder {
+  color: whitesmoke;
+}
