@@ -349,7 +349,7 @@ export const Diagram: React.FC = () => {
         const node = d3.select(this);
 
         node.append("g")
-          .html(ReactDOMServer.renderToStaticMarkup(<d.iconComponent width="18px" height="18px" color={getColor(d.stakeholders)} />))
+          .html(ReactDOMServer.renderToStaticMarkup(<d.iconComponent width="25px" height="25px" color={getColor(d.stakeholders)} />))
           .attr("transform", "translate(-10, -10)");
 
           node.append("rect")
@@ -410,6 +410,81 @@ export const Diagram: React.FC = () => {
       .attr("stroke-width", 2)
       .attr("fill", "none")
       .attr("stroke-dasharray", ({ relationship }) => getLineStyle(relationship));
+
+    // Clustering logic
+    const clusterThreshold = 25;
+    const clusteredNodes: { clusterId: number; x: number; y: number; nodes: Node[] }[] = [];
+
+    nodes.forEach((node) => {
+      const x = xScale(parseDate(node.issuanceDate));
+      const y = yScale(node.scale);
+
+      // Cerca se il nodo può essere raggruppato in un cluster esistente
+      let addedToCluster = false;
+
+      clusteredNodes.forEach((cluster) => {
+        const distance = Math.sqrt((x - cluster.x) ** 2 + (y! - cluster.y) ** 2);
+        if (distance < clusterThreshold) {
+          cluster.nodes.push(node);
+          cluster.x = (cluster.x * (cluster.nodes.length - 1) + x) / cluster.nodes.length;
+          cluster.y = (cluster.y * (cluster.nodes.length - 1) + y!) / cluster.nodes.length;
+          addedToCluster = true;
+        }
+      });
+
+      if (!addedToCluster) {
+        clusteredNodes.push({ clusterId: clusteredNodes.length, x, y, nodes: [node] });
+      }
+    });
+
+    const filteredClusters = clusteredNodes.filter((cluster) => cluster.nodes.length > 1);
+
+    // Disegna i cluster
+    filteredClusters.forEach((cluster) => {
+      const { x, y, nodes: clusterNodes } = cluster;
+
+      // Nascondi i nodi che appartengono al cluster
+      clusterNodes.forEach((node) => {
+        graphGroup.selectAll(`g.node`).filter((d) => d.id === node.id).style("visibility", "hidden");
+      });
+
+      // Disegna il cerchio del cluster
+      const clusterCircle = graphGroup
+        .append("circle")
+        .attr("cx", x)
+        .attr("cy", y)
+        .attr("r", 15)
+        .attr("fill", "#3182CE")
+        .attr("opacity", 0.8)
+        .style("cursor", "pointer")
+        .classed("cluster", true);
+
+      // Etichetta del cluster
+      const clusterLabel = graphGroup
+        .append("text")
+        .attr("x", x)
+        .attr("y", y + 4)
+        .attr("text-anchor", "middle")
+        .attr("font-size", 12)
+        .attr("fill", "white")
+        .text(clusterNodes.length)
+        .classed("cluster-label", true);
+
+      // Evento click sul cluster
+      clusterCircle.on("click", () => {
+        // Rimuove il cerchio del cluster e la sua etichetta
+        clusterCircle.remove();
+        clusterLabel.remove();
+
+        // Mostra i nodi appartenenti al cluster
+        clusterNodes.forEach((node) => {
+          xScale(parseDate(node.issuanceDate));
+          yScale(node.scale);
+          graphGroup.selectAll("g.node").filter((d) => d.id === node.id).style("visibility", "visible");
+        });
+      });
+    });
+
   }, [nodes]);
 
   return <svg ref={svgRef}></svg>;
