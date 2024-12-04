@@ -12,9 +12,7 @@ jest.mock('../../../src/utilities');
 describe('LinkDocumentRoutes', () => {
 
     afterEach(() => {
-        jest.clearAllMocks();
         jest.resetAllMocks();
-        jest.restoreAllMocks();
     });
 
     test('Dovrebbe creare un link tra documenti con successo (200)', async () => {
