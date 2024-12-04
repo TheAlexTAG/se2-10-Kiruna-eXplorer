@@ -461,18 +461,15 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 </div>
 
                 {document.resource.map((resource: any, index: number) => {
-                  const cleanedResource =
-                    document.id + "-" + resource.replace("resources/", "");
-
                   return (
                     <div key={index}>
                       <Button
                         variant="link"
                         onClick={() =>
-                          API.handleDownloadResource(cleanedResource)
+                          API.handleDownloadResource(document.id, resource.name)
                         }
                       >
-                        {cleanedResource}
+                        {resource.name}
                       </Button>
                     </div>
                   );
