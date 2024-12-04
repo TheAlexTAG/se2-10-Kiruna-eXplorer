@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Accordion,
   Alert,
@@ -156,6 +156,16 @@ export const LinkingDocumentsModal = ({
                             .filter(
                               (item: any) => item.id !== currentDocument.id
                             )
+                            .filter((item: any) => {
+                              const hasRelationshipCountEqualTo4 =
+                                currentDocument.links
+                                  .filter(
+                                    (link: any) => link.documentID === item.id
+                                  )
+                                  .map((link: any) => link.relationship)
+                                  .length !== 4;
+                              return hasRelationshipCountEqualTo4;
+                            })
                             .map((option: any) => (
                               <Accordion.Item
                                 eventKey={option.id}
@@ -231,6 +241,7 @@ export const LinkingDocumentsModal = ({
                       }}
                     >
                       <LinkingDocumentDropdown
+                        mainDoc={currentDocument}
                         doc={doc}
                         setRelationship={handleRelationship}
                       />
