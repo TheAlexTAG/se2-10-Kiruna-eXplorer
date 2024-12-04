@@ -22,6 +22,16 @@ import API from "../../API/API";
 import "./MapComponent.css";
 import { BsEye, BsEyeSlash, BsMap, BsMapFill } from "react-icons/bs";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
+import ReactDOMServer from "react-dom/server";
+import AgreementIcon from "../../assets/icons/agreement-icon";
+import ConflictIcon from "../../assets/icons/conflict-icon";
+import ConsultationIcon from "../../assets/icons/consultation-icon";
+import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
+import TechnicalIcon from "../../assets/icons/technical-icon";
+import DesignIcon from "../../assets/icons/design-icon";
+import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
+import { GrDocumentText } from "react-icons/gr";
+import KirunaDocs from "./KirunaDocs/KirunaDocs";
 
 export type Document = {
   id: number;
@@ -29,6 +39,15 @@ export type Document = {
   type: string;
   latitude: number;
   longitude: number;
+  zoneID: number;
+};
+export type KirunaDocument = {
+  id: number;
+  title: string;
+  type: string;
+  latitude: null;
+  longitude: null;
+  zoneID: number;
 };
 
 interface MapComponentProps {
@@ -75,10 +94,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
   setErrorMessage,
   editControlKey,
 }) => {
+  const [kirunaDocuments, setKirunaDocuments] = useState<
+    KirunaDocument[] | null
+  >(null);
+  const [showKirunaDocuments, setShowKirunaDocuments] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(
-    null
-  );
+  const [selectedDocument, setSelectedDocument] = useState<
+    Document | KirunaDocument | null
+  >(null);
   const [zones, setZones] = useState<ZoneProps[]>([]);
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
   const [polygonExists, setPolygonExists] = useState(false);
@@ -97,6 +120,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const fetchDocuments = async () => {
       try {
         const data = await API.getDocuments();
+        console.log("data is ", data);
+        const kirunaDocs = data.filter(
+          (doc: KirunaDocument) => doc.zoneID === 0
+        );
+        setKirunaDocuments(kirunaDocs);
         setDocuments(
           data.filter((doc: Document) => doc.latitude && doc.longitude)
         );
@@ -162,6 +190,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
   };
 
+  console.log("selection mode is ", selectionMode);
   const PointClickHandler: React.FC = () => {
     useMapEvent("click", (e) => {
       if (selectedDocument) {
@@ -187,10 +216,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
             } as GeoJSON.Feature
           }
           style={{
-            color: "green",
+            color: "red",
             weight: 2,
             dashArray: "5,10",
-            fillOpacity: 0.05,
+            fillOpacity: 0.03,
           }}
           eventHandlers={{
             click: () => {
@@ -239,23 +268,32 @@ const MapComponent: React.FC<MapComponentProps> = ({
   };
 
   const getIconByType = (type: string) => {
-    const iconUrls: { [key: string]: string } = {
-      Agreement: "/img/agreement-icon.png",
-      Conflict: "/img/conflict-icon.png",
-      Consultation: "/img/consultation-icon.png",
-      "Material effect": "/img/worker.png",
-      default: "/img/doc.png",
+    const iconComponents: { [key: string]: JSX.Element } = {
+      Agreement: <AgreementIcon width={30} height={30} />,
+      Conflict: <ConflictIcon width={30} height={30} />,
+      Consultation: <ConsultationIcon width={30} height={30} />,
+      "Material effect": <MaterialEffectIcon width={30} height={30} />,
+      "Technical doc.": <TechnicalIcon width={30} height={30} />,
+      "Design doc.": <DesignIcon width={30} height={30} />,
+      "Prescriptive doc.": <PrescriptiveIcon width={30} height={30} />,
+      default: <PrescriptiveIcon width={30} height={30} />,
     };
-
-    return L.icon({
-      iconUrl: iconUrls[type] || iconUrls.default,
-      iconSize: [30, 30],
+    const selectedIcon = iconComponents[type] || iconComponents.default;
+    return L.divIcon({
+      html: ReactDOMServer.renderToString(selectedIcon),
+      className: "custom-icon",
+      iconSize: [40, 40],
       iconAnchor: [15, 15],
       popupAnchor: [0, -15],
     });
   };
-  const handleMoreClick = (doc: Document) => {
+  const handleMoreClick = (doc: Document | KirunaDocument) => {
     setSelectedDocument(doc);
+  };
+
+  const handleOpenKirunaModal = () => {
+    setSelectedDocument(null);
+    setShowKirunaDocuments(true);
   };
   return (
     <div>
@@ -353,7 +391,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
       {selectedDocument && (
         <DocumentCard
           cardInfo={selectedDocument}
-          iconToShow={getIconByType(selectedDocument.type).options.iconUrl}
           setSelectedDocument={setSelectedDocument}
         />
       )}
@@ -389,6 +426,29 @@ const MapComponent: React.FC<MapComponentProps> = ({
           {showZones ? "Hide Zones" : "Show Zones"}
         </span>
       </div>
+      {!selectionMode && (
+        <>
+          <div
+            onClick={handleOpenKirunaModal}
+            className="kiruna-doc-btn"
+            style={{
+              position: "absolute",
+              top: "160px",
+              left: "10px",
+              zIndex: 1000,
+            }}
+          >
+            <GrDocumentText />
+            <span className="tooltip">Show Kiruna Municipality Documents</span>
+          </div>
+          <KirunaDocs
+            show={showKirunaDocuments}
+            onClose={() => setShowKirunaDocuments(false)}
+            kirunaDocuments={kirunaDocuments}
+            handleMoreClick={handleMoreClick}
+          />
+        </>
+      )}
     </div>
   );
 };

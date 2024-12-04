@@ -434,7 +434,7 @@ export const Diagram: React.FC = () => {
             typeof d != "number"
           ) {
             return d;
-          } else return `1:${d}`;
+          } else return `1:${d.toLocaleString('en-US')}`;
         })
       )
       .attr("font-size", "12px");
