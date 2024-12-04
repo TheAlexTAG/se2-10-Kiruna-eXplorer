@@ -56,8 +56,6 @@ export const LinkingDocumentsModal = ({
     const items = selectedItems.map((item: any) => {
       return { id: item.id, relationship: item.relationship };
     });
-    console.log(items);
-
     if (
       items.length === 0 ||
       items.some(

@@ -1,5 +1,5 @@
 import Select, { MultiValue } from "react-select";
-import { Button, Col, Container, Dropdown, Form, Row } from "react-bootstrap";
+import { Col, Container, Form, Row } from "react-bootstrap";
 
 interface LinkingDocumentDropdownProps {
   doc: any;
@@ -54,28 +54,12 @@ export const LinkingDocumentDropdown = ({
                   />
                 </Form.Group>
               </Form>
-              {/* <Dropdown>
-                <Dropdown.Toggle variant="secondary" id="dropdown-basic">
-                  {doc.relationship || "Relationship"}
-                </Dropdown.Toggle>
-
-                <Dropdown.Menu>
-                  {relationshipList.map((item, index) => (
-                    <Dropdown.Item
-                      key={index}
-                      onClick={() => setRelationship(item, doc.id)}
-                    >
-                      {item}
-                    </Dropdown.Item>
-                  ))}
-                </Dropdown.Menu>
-              </Dropdown> */}
             </Col>
-            <Col md={1} className="d-flex align-items-center">
+            {/* <Col md={1} className="d-flex align-items-center">
               <Button variant="outline-danger">
                 <i className="bi bi-x-lg"></i>
               </Button>
-            </Col>
+            </Col> */}
           </Row>
         </Container>
       </div>
