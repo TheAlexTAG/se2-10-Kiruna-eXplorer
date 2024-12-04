@@ -1,4 +1,4 @@
-import { Document } from "../Map/MapComponent";
+import { Document, KirunaDocument } from "../Map/MapComponent";
 import { Button, Container } from "react-bootstrap";
 import API from "../../API/API";
 import { Dispatch, SetStateAction } from "react";
@@ -6,7 +6,9 @@ import { Dispatch, SetStateAction } from "react";
 interface DocumentCardProps {
   cardInfo: any;
   iconToShow: string | undefined;
-  setSelectedDocument: Dispatch<SetStateAction<Document | null>>;
+  setSelectedDocument: Dispatch<
+    SetStateAction<Document | KirunaDocument | null>
+  >;
 }
 
 export const DocumentCard = ({
@@ -19,7 +21,7 @@ export const DocumentCard = ({
       <div
         style={{
           position: "absolute",
-          zIndex: "100",
+          zIndex: "1400",
           width: "400px",
           left: "20px",
           top: "100px",

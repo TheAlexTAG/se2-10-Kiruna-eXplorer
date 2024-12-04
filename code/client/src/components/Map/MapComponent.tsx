@@ -99,9 +99,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
   >(null);
   const [showKirunaDocuments, setShowKirunaDocuments] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(
-    null
-  );
+  const [selectedDocument, setSelectedDocument] = useState<
+    Document | KirunaDocument | null
+  >(null);
   const [zones, setZones] = useState<ZoneProps[]>([]);
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
   const [polygonExists, setPolygonExists] = useState(false);
@@ -287,8 +287,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
       popupAnchor: [0, -15],
     });
   };
-  const handleMoreClick = (doc: Document) => {
+  const handleMoreClick = (doc: Document | KirunaDocument) => {
     setSelectedDocument(doc);
+  };
+
+  const handleOpenKirunaModal = () => {
+    setSelectedDocument(null);
+    setShowKirunaDocuments(true);
   };
   return (
     <div>
@@ -425,7 +430,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       {!selectionMode && (
         <>
           <div
-            onClick={() => setShowKirunaDocuments(true)}
+            onClick={handleOpenKirunaModal}
             className="kiruna-doc-btn"
             style={{
               position: "absolute",
@@ -441,6 +446,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
             show={showKirunaDocuments}
             onClose={() => setShowKirunaDocuments(false)}
             kirunaDocuments={kirunaDocuments}
+            handleMoreClick={handleMoreClick}
           />
         </>
       )}
