@@ -144,19 +144,17 @@ const updateGeoreference = async (
   latitude: number | null
 ) => {
   console.log(documentID, zoneID, longitude, latitude);
-  const response = await fetch(
-    `${SERVER_URL}/document/georef/update/${documentID}`,
-    {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ zoneID, longitude, latitude }),
-    }
-  );
+  const response = await fetch(`${SERVER_URL}/document/${documentID}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ zoneID, longitude, latitude }),
+  });
 
   if (!response.ok) {
+    console.log("response is ", response);
     const errorData = await response.json();
     console.error("Error updating georeference:", errorData);
     throw new Error(errorData.error || "Failed to update georeference");

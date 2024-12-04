@@ -260,7 +260,6 @@ export const DocumentList = ({ userInfo }: userProps) => {
                   <option value="Text">Text</option>
                 </Form.Select>
               </Form.Group>
-              
             </Row>
             <Row>
               <Form.Group as={Col} controlId="filterIssuanceDate">
