@@ -38,7 +38,7 @@ export const Home = () => {
           <div className="main-func">
             <div className="w-100" onClick={() => navigate("/map")}>
               <Button className="w-100" variant="link">
-                <Row>
+                <Row className="m-0 p-0">
                   <Col md={9} className="m-0 p-0">
                     <div className="function-title first-background">
                       <span>Explore The Map</span>
@@ -57,7 +57,7 @@ export const Home = () => {
             </div>
             <div onClick={() => navigate("/document")}>
               <Button className="w-100" variant="link">
-                <Row>
+                <Row className="m-0 p-0">
                   <Col
                     md={3}
                     className="function-image d-flex justify-content-center align-items-center m-0 p-0 "
@@ -77,7 +77,7 @@ export const Home = () => {
             <div onClick={() => navigate("/diagram")}>
               {" "}
               <Button className="w-100" variant="link">
-                <Row>
+                <Row className="m-0 p-0">
                   <Col md={9} className="m-0 p-0">
                     <div className="function-title first-background">
                       <span>Explore The Diagram</span>
