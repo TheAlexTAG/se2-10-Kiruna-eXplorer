@@ -35,7 +35,9 @@ class ZoneDAO {
             if(err instanceof ZoneError) throw err;
             throw new InternalServerError(err.message ? err.message : "Error with the server!");
         } finally {
-            await conn?.release();
+            if (conn) {
+                await conn.release();      
+            }
         }
     }
 
@@ -49,7 +51,9 @@ class ZoneDAO {
         } catch(err: any) {
             throw new InternalServerError(err.message? err.message : "");
         } finally {
-            await conn?.release();
+            if (conn) {
+                await conn.release();      
+            }
         }
     }
 
