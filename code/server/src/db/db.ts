@@ -1,11 +1,13 @@
-import mariadb from "mariadb"
-
+import mariadb from "mariadb";
+import { config } from 'dotenv';
+config();
 const db= mariadb.createPool(
     {
-        host: 'localhost',
-        user: 'root',
-        password: "root",
-        database: 'kiruna_explorer',
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_DATABASE,
+        port: process.env.DB_PORT? parseInt(process.env.DB_PORT, 10): undefined,
         connectionLimit: 10}
     )
 

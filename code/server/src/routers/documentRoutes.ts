@@ -106,6 +106,10 @@ class DocumentRoutes {
             param('documentID').isInt(),
             this.utilities.isUrbanPlanner,
             this.errorHandler.validateRequest,
+            (req: any, res: any, next: any) => {
+                req.params.id = req.params.documentID;
+                next();
+            },
             this.utilities.documentExists,
             upload.array('files', 10),
             async (req: any, res: any) => {
@@ -116,8 +120,7 @@ class DocumentRoutes {
                     const document: Document = await this.controller.getDocument(+req.params.documentID);
                     let validName: boolean = true;
                     files.forEach((f: any) => {
-                        const name: string = 'resources/'+document.id+'-'+f.originalname;
-                        if (f.originalname.length===0 || document.resource.some((item: any) => item.name === name))
+                        if (f.originalname.length===0 || document.resource.some((item: any) => item.name === f.originalname))
                            validName = false;
                     });
                     if (!validName)
@@ -145,10 +148,9 @@ class DocumentRoutes {
                         if (r.name===req.params.fileName)
                            relativeFilePath = r.path;
                     });
-                    const filePath = path.join(__dirname, '..', '..', relativeFilePath);
-                    const fileName: string = req.params.documentID+'-'+req.params.fileName;
-                    if (fs.existsSync(filePath)) {
-                        res.download(filePath, fileName, (err: any) => {
+                    const filePath: string = path.join(__dirname, '..', '..', relativeFilePath);
+                    if (relativeFilePath.length!==0 && fs.existsSync(filePath)) {
+                        res.download(filePath, req.params.fileName, (err: any) => {
                             if (err) {
                                 return res.status(500).json({error: 'Error in downloading the file'});
                             }
