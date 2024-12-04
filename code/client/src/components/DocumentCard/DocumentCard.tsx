@@ -7,14 +7,13 @@ import { useEffect, useState } from "react";
 interface DocumentCardProps {
   cardInfo: any;
   iconToShow: string | undefined;
-  // setSelectedDocument: Dispatch<SetStateAction<Document | null>>;
-  handleCloseDocumentCard?: () => void;
+  setSelectedDocument: Dispatch<SetStateAction<Document | null>>;
 }
 
 export const DocumentCard = ({
   cardInfo,
   iconToShow,
-  handleCloseDocumentCard,
+  setSelectedDocument,
 }: DocumentCardProps) => {
   const [zones, setZones] = useState<any>([]);
   const fetchZones = () => {
@@ -57,7 +56,8 @@ export const DocumentCard = ({
                 padding: "5px",
               }}
             ></img>
-            <Button variant="link" onClick={handleCloseDocumentCard}>
+
+            <Button variant="link" onClick={() => setSelectedDocument(null)}>
               <i className="bi bi-x-lg" style={{ color: "#dc3545" }}></i>
             </Button>
           </div>
