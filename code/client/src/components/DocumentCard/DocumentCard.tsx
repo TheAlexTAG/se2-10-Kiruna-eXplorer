@@ -1,8 +1,7 @@
-// import { Dispatch, SetStateAction } from "react";
-// import { Document } from "../Map/MapComponent";
+import { Document } from "../Map/MapComponent";
 import { Button, Container } from "react-bootstrap";
 import API from "../../API/API";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
 
 interface DocumentCardProps {
   cardInfo: any;
@@ -15,17 +14,6 @@ export const DocumentCard = ({
   iconToShow,
   setSelectedDocument,
 }: DocumentCardProps) => {
-  const [zones, setZones] = useState<any>([]);
-  const fetchZones = () => {
-    API.getZones().then((res) => {
-      setZones(res);
-    });
-  };
-
-  useEffect(() => {
-    fetchZones();
-  }, []);
-
   return (
     <>
       <div

@@ -1,7 +1,6 @@
-import { Alert, Button, Col, Form, Row } from "react-bootstrap";
+import { Alert, Button, Form } from "react-bootstrap";
 import "./Login.css";
 import { useEffect, useState } from "react";
-import API from "../../API/API";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/GlobalStateProvider";
 export const Login = () => {
