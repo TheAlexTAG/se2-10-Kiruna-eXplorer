@@ -14,8 +14,8 @@ import API from "../../API/API";
 import { LinkingDocumentsModal } from "./LinkingDocuments/LinkingDocumentsModal";
 import EditDocumentModal from "./EditDocuments/EditDocumentsModal";
 import NewDocument from "../NewDocument/NewDocument";
-/*import "./DocumentList.css";
-import "./OriginalResources/OriginalResourcesModal.css";*/
+import "./DocumentList.css";
+import "./OriginalResources/OriginalResourcesModal.css";
 interface userProps {
   userInfo: { username: string; role: string } | null;
 }
