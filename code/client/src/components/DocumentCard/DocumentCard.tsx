@@ -30,10 +30,11 @@ export const DocumentCard = ({
     <>
       <div
         style={{
-          position: "relative",
+          position: "absolute",
           zIndex: "100",
           width: "400px",
           left: "20px",
+          top: "100px",
         }}
       >
         <Container
@@ -72,7 +73,7 @@ export const DocumentCard = ({
           </div>
           <div className="my-1">
             <strong>Issuance date: </strong>
-            {cardInfo.issuanceDate}
+            {cardInfo.issuanceDate.toString()}
           </div>
           <div className="my-1">
             <strong>Type: </strong>
@@ -93,22 +94,25 @@ export const DocumentCard = ({
             {" "}
             <strong>Description:</strong> {cardInfo.description}
           </div>
-          {(cardInfo.attachment.length > 0 || cardInfo.resource.length > 0) && (
+          {((cardInfo.attachment && cardInfo.attachment.length > 0) ||
+            (cardInfo.resource && cardInfo.resource.length > 0)) && (
             <div>
               <strong>Material:</strong>
             </div>
           )}
           <div>
-            {cardInfo.attachment.length > 0 && (
+            {cardInfo.attachment && cardInfo.attachment.length > 0 && (
               <div>
-                {cardInfo.attachments.map((attachment: any, index: number) => (
-                  <div key={index}>
-                    <a target="_blank">{attachment.name}</a>
-                  </div>
-                ))}
+                {cardInfo.attachments &&
+                  cardInfo.attachments.map((attachment: any, index: number) => (
+                    <div key={index}>
+                      <a target="_blank">{attachment.name}</a>
+                    </div>
+                  ))}
               </div>
             )}
-            {cardInfo.resource.length > 0 &&
+            {cardInfo.resource &&
+              cardInfo.resource.length > 0 &&
               cardInfo.resource.map((resource: any, index: number) => (
                 <div key={index}>
                   <a
