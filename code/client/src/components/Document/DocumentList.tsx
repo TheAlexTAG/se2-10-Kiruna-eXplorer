@@ -295,7 +295,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 }
               >
                 <option value="">Select Scale</option>
-                <option value="Blueprints/effect">Blueprints/effect</option>
+                <option value="Blueprints/effects">Blueprints/effects</option>
                 <option value="1:1,000">1:1,000</option>
                 <option value="1:5,000">1:5,000</option>
                 <option value="1:10,000">1:10,000</option>
