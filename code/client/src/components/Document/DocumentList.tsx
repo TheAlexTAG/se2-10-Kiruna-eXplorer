@@ -141,10 +141,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
       files.some((existingFile) => existingFile.name === newFile.name)
     );
     const duplicateFilesFromDoc = document?.resource.filter((resource: any) =>
-      selectedFiles.some(
-        (newFile: any) =>
-          "resources/" + document.id + "-" + newFile.name === resource
-      )
+      selectedFiles.some((newFile: any) => newFile.name === resource.name)
     );
     if (duplicateFiles.length > 0) {
       setError(
@@ -163,6 +160,9 @@ export const DocumentList = ({ userInfo }: userProps) => {
     } else {
       setError(null);
       setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 

@@ -273,7 +273,7 @@ const addOriginalResource = async (documentID: number, myFiles: File[]) => {
 };
 
 const handleDownloadResource = async (id: number, fileName: string) => {
-  const fileUrl = `http://localhost:3001/resource/download/${id}/${fileName}`;
+  const fileUrl = `http://localhost:3001/api/resource/download/${id}/${fileName}`;
 
   try {
     const response = await fetch(fileUrl, {

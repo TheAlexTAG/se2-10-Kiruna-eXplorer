@@ -125,7 +125,6 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   const [tempCustom, setTempCustom] = useState<any>(null);
   const [kirunaBoundary, setKirunaBoundary] =
     useState<Feature<MultiPolygon> | null>(null);
-  console.log("coordinates is ", tempCustom);
   const handleClose = () => {
     setTitle("");
     setIcon("");
@@ -200,8 +199,6 @@ const NewDocument: React.FC<NewDocumentProps> = ({
         pages,
         coordinates,
       };
-
-      console.log("Document data is ", documentData);
 
       try {
         await API.createDocumentNode(documentData);
