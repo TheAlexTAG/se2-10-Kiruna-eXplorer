@@ -96,6 +96,7 @@ describe("Route zone unit tests", () => {
             const coord: Geometry = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
             const zone: Zone = new Zone(1, coord);
             jest.spyOn(ZoneController.prototype, "getZone").mockResolvedValueOnce(zone);
+            jest.spyOn(require('@turf/helpers'), 'geometry').mockReturnValue(geo);
             jest.spyOn(ZoneController.prototype, "modifyZone").mockResolvedValueOnce(true);
 
             const response = await request(app).put("/api/zone/1").send({coordinates: coordinates});
@@ -171,10 +172,10 @@ describe("Route zone unit tests", () => {
             const coord: Geometry = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
             const zone: Zone = new Zone(1, coord);
             jest.spyOn(ZoneController.prototype, "getZone").mockResolvedValueOnce(zone);
-            
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
                 return next();
             })
+            jest.spyOn(require('@turf/helpers'), 'geometry').mockReturnValue(geo);
             jest.spyOn(ZoneController.prototype, "modifyZone").mockRejectedValue(new InternalServerError(''));
 
             const response = await request(app).put("/api/zone/1").send({coordinates: coordinates});
@@ -195,6 +196,7 @@ describe("Route zone unit tests", () => {
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
                 return next();
             })
+            jest.spyOn(require('@turf/helpers'), 'geometry').mockReturnValue(geo);
             jest.spyOn(ZoneController.prototype, "modifyZone").mockRejectedValue(new Error);
 
             const response = await request(app).put("/api/zone/1").send({coordinates: coordinates});
@@ -215,6 +217,7 @@ describe("Route zone unit tests", () => {
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
                 return next();
             })
+            jest.spyOn(require('@turf/helpers'), 'geometry').mockReturnValue(geo);
             jest.spyOn(ZoneController.prototype, "modifyZone").mockRejectedValue(new Error('Database error'));
 
             const response = await request(app).put("/api/zone/1").send({coordinates: coordinates});

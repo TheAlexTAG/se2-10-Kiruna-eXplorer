@@ -79,7 +79,7 @@ describe('LinkDocumentDAO', () => {
         expect(result).toBe(3);
     });
 
-    test('Should throw LinkError if the specified document has no links', async () => {
+    test('Should throw LinkError if the db call returns nothing', async () => {
         jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
         jest.spyOn(connMock, 'query').mockResolvedValue([]);
         jest.spyOn(connMock, 'release');
