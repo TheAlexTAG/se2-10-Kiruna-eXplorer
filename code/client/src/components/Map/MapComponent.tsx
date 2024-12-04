@@ -22,6 +22,14 @@ import API from "../../API/API";
 import "./MapComponent.css";
 import { BsEye, BsEyeSlash, BsMap, BsMapFill } from "react-icons/bs";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
+import ReactDOMServer from "react-dom/server";
+import AgreementIcon from "../../assets/icons/agreement-icon";
+import ConflictIcon from "../../assets/icons/conflict-icon";
+import ConsultationIcon from "../../assets/icons/consultation-icon";
+import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
+import TechnicalIcon from "../../assets/icons/technical-icon";
+import DesignIcon from "../../assets/icons/design-icon";
+import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
 
 export type Document = {
   id: number;
@@ -187,10 +195,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
             } as GeoJSON.Feature
           }
           style={{
-            color: "green",
+            color: "red",
             weight: 2,
             dashArray: "5,10",
-            fillOpacity: 0.05,
+            fillOpacity: 0.03,
           }}
           eventHandlers={{
             click: () => {
@@ -239,17 +247,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
   };
 
   const getIconByType = (type: string) => {
-    const iconUrls: { [key: string]: string } = {
-      Agreement: "/img/agreement-icon.png",
-      Conflict: "/img/conflict-icon.png",
-      Consultation: "/img/consultation-icon.png",
-      "Material effect": "/img/worker.png",
-      default: "/img/doc.png",
+    const iconComponents: { [key: string]: JSX.Element } = {
+      Agreement: <AgreementIcon width={30} height={30} />,
+      Conflict: <ConflictIcon width={30} height={30} />,
+      Consultation: <ConsultationIcon width={30} height={30} />,
+      "Material effect": <MaterialEffectIcon width={30} height={30} />,
+      "Technical doc.": <TechnicalIcon width={30} height={30} />,
+      "Design doc.": <DesignIcon width={30} height={30} />,
+      "Prescriptive doc.": <PrescriptiveIcon width={30} height={30} />,
+      default: <PrescriptiveIcon width={30} height={30} />,
     };
-
-    return L.icon({
-      iconUrl: iconUrls[type] || iconUrls.default,
-      iconSize: [30, 30],
+    const selectedIcon = iconComponents[type] || iconComponents.default;
+    return L.divIcon({
+      html: ReactDOMServer.renderToString(selectedIcon),
+      className: "custom-icon",
+      iconSize: [40, 40],
       iconAnchor: [15, 15],
       popupAnchor: [0, -15],
     });
