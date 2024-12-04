@@ -319,7 +319,12 @@ const NewDocument: React.FC<NewDocumentProps> = ({
         <i className="bi bi-plus-lg fs-2"></i>
       </Button>
 
-      <Modal show={show} onHide={handleClose} data-bs-theme="dark">
+      <Modal
+        className="new-doc"
+        show={show}
+        onHide={handleClose}
+        data-bs-theme="dark"
+      >
         <Modal.Header closeButton>
           <Modal.Title className="title main-text">Insert Document</Modal.Title>
         </Modal.Header>
@@ -389,6 +394,12 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             </Form.Group>
             <Row className="main-text mb-2">
               <strong>Location Details*</strong>
+              {(fieldErrors.latitude || fieldErrors.longitude) && (
+                <div className="text-danger">
+                  <i className="bi bi-x-circle-fill text-danger"></i> This field
+                  is required
+                </div>
+              )}
             </Row>
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formLatitude">
@@ -400,12 +411,6 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   onChange={handleLatitudeChange}
                   disabled={zoneID !== null || tempCustom !== null}
                 />
-                {fieldErrors.latitude && (
-                  <div className="text-danger">
-                    <i className="bi bi-x-circle-fill text-danger"></i> This
-                    field is required
-                  </div>
-                )}
               </Form.Group>
 
               <Form.Group as={Col} controlId="formLongitude">
@@ -417,12 +422,6 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   onChange={handleLongitudeChange}
                   disabled={zoneID !== null || tempCustom !== null}
                 />
-                {fieldErrors.longitude && (
-                  <div className="text-danger">
-                    <i className="bi bi-x-circle-fill text-danger"></i> This
-                    field is required
-                  </div>
-                )}
               </Form.Group>
               <Form.Group
                 as={Col}

@@ -67,3 +67,7 @@
 .custom-date-picker .react-datepicker-wrapper {
   opacity: 0;
 }
+
+.new-doc .modal-dialog {
+  max-width: 1000px;
+}
