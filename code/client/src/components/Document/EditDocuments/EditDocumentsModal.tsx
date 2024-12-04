@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
-import MapComponent from "../../Map/MapComponent";
 import Select from "react-select";
 import API from "../../../API/API";
 import "./EditDocumentsModal.css";
-import { Feature, Polygon as GeoJSONPolygon, MultiPolygon } from "geojson";
+import { Feature, MultiPolygon } from "geojson";
+import GeoReferenceComponent from "../../GeoreferenceComponent/GeoreferenceComponent";
 
 interface EditDocumentProps {
   document: any;
@@ -87,10 +87,10 @@ export default function EditDocumentModal({
       return;
     }
 
-    if (tempCustom) {
+    /*if (tempCustom) {
       const newZone = await API.createZone(tempCustom);
       setZoneID(newZone);
-    }
+    }*/
     setIsReady(true);
 
     console.log(document.id, zoneID, longitude, latitude);
@@ -104,6 +104,7 @@ export default function EditDocumentModal({
         updateTable();
         onHide();
       } catch (error: any) {
+        console.log("aaa");
         setErrorMessage(
           error.message || "An error occurred while updating the document."
         );
@@ -273,11 +274,10 @@ export default function EditDocumentModal({
           <Modal.Title>Select Location</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <MapComponent
+          <GeoReferenceComponent
             tempCoordinates={tempCoordinates}
             setTempCoordinates={setTempCoordinates}
             onZoneSelect={handleZoneSelect}
-            setTempZoneId={setTempZoneId}
             selectionMode={selectionMode}
             setSelectionMode={setSelectionMode}
             highlightedZoneId={highlightedZoneId}

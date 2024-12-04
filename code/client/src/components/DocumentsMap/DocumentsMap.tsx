@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState } from "react";
 /*import "leaflet/dist/leaflet.css";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
@@ -13,31 +13,14 @@ import {
   BsMap,
   BsMapFill,
 } from "react-icons/bs";*/
-import {
-  Feature,
-  FeatureCollection,
-  Geometry,
-  Polygon as GeoJSONPolygon,
-} from "geojson"; /*
+import { Feature, MultiPolygon } from "geojson"; /*
 import ReactDOMServer from "react-dom/server";*/
 import MapComponent from "../Map/MapComponent";
 
-interface Document {
-  id: number;
-  title: string;
-  type: string;
-  latitude: number;
-  longitude: number;
-}
-
-interface Zone {
-  id: number;
-  coordinates: GeoJSON.Geometry;
-}
-
 const DocumentsMap: React.FC = () => {
   const [kirunaBoundary, setKirunaBoundary] =
-    useState<Feature<GeoJSONPolygon> | null>(null);
+    useState<Feature<MultiPolygon> | null>(null);
+  const [showZones, setShowZones] = useState(false);
   /*const [documents, setDocuments] = useState<Document[]>([]);
   const [zones, setZones] = useState<Zone[]>([]);
   // const [kirunaBoundary, setKirunaBoundary] = useState<L.GeoJSON | null>(null);
@@ -45,7 +28,7 @@ const DocumentsMap: React.FC = () => {
     null
   );
   const [isSatelliteView, setIsSatelliteView] = useState(false);
-  const [showZones, setShowZones] = useState(false);
+  
 
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
@@ -296,48 +279,11 @@ const DocumentsMap: React.FC = () => {
   return (
     <>
       <MapComponent
+        showZones={showZones}
+        setShowZones={setShowZones}
         kirunaBoundary={kirunaBoundary}
         setKirunaBoundary={setKirunaBoundary}
       />
-      {/*
-      {selectedDocument && (
-        <DocumentCard
-          cardInfo={selectedDocument}
-          iconToShow={iconsByType[selectedDocument.type].options.iconUrl}
-        />
-      )}
-      <div
-        onClick={toggleSatelliteView}
-        className="map-toggle-btn"
-        style={{
-          position: "absolute",
-          bottom: "20px",
-          left: "10px",
-          zIndex: 1000,
-        }}
-      >
-        {isSatelliteView ? <BsMapFill size={20} /> : <BsMap size={20} />}
-        <span className="tooltip">
-          {isSatelliteView
-            ? "Switch to Default View"
-            : "Switch to Satellite View"}
-        </span>
-      </div>
-      <div
-        onClick={toggleZonesView}
-        className="map-toggle-btn"
-        style={{
-          position: "absolute",
-          bottom: "20px",
-          left: "60px",
-          zIndex: 1000,
-        }}
-      >
-        {showZones ? <BsEye size={20} /> : <BsEyeSlash size={20} />}
-        <span className="tooltip">
-          {showZones ? "Hide Zones" : "Show Zones"}
-        </span>
-      </div>*/}
     </>
   );
 };

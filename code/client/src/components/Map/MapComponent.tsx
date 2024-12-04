@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, SetStateAction } from "react";
 import {
   MapContainer,
   TileLayer,
@@ -19,12 +19,11 @@ import * as turf from "@turf/turf";
 import booleanWithin from "@turf/boolean-within";
 import { Feature, Polygon as GeoJSONPolygon, MultiPolygon } from "geojson"; // Import from GeoJSON spec
 import API from "../../API/API";
-import { Alert, Button } from "react-bootstrap";
 import "./MapComponent.css";
 import { BsEye, BsEyeSlash, BsMap, BsMapFill } from "react-icons/bs";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
 
-type Document = {
+export type Document = {
   id: number;
   title: string;
   type: string;
@@ -39,16 +38,17 @@ interface MapComponentProps {
     lng: number | null;
   }) => void;
   onZoneSelect?: (zoneId: number | null) => void;
-  setTempZoneId?: (zoneId: number | null) => void;
   selectionMode?: string | null;
-  setSelectionMode?: (
-    selectionMode: "point" | "zone" | "custom" | null
-  ) => void;
   highlightedZoneId?: number | null;
   setHighlightedZoneId?: (zoneId: number | null) => void;
   setTempCustom?: (tempCustom: any) => void;
   kirunaBoundary: Feature<MultiPolygon> | null;
   setKirunaBoundary: (kirunaBoundary: Feature<MultiPolygon> | null) => void;
+  clearCustomPolygon?: () => void;
+  showZones: boolean;
+  setShowZones: React.Dispatch<SetStateAction<boolean>>;
+  setErrorMessage?: React.Dispatch<SetStateAction<string | null>>;
+  editControlKey?: number;
 }
 
 type ZoneProps = {
@@ -64,12 +64,16 @@ const MapComponent: React.FC<MapComponentProps> = ({
   setTempCoordinates,
   onZoneSelect,
   selectionMode,
-  setSelectionMode,
   highlightedZoneId,
   setHighlightedZoneId,
   setTempCustom,
   kirunaBoundary,
   setKirunaBoundary,
+  clearCustomPolygon,
+  showZones,
+  setShowZones,
+  setErrorMessage,
+  editControlKey,
 }) => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
@@ -78,10 +82,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const [zones, setZones] = useState<ZoneProps[]>([]);
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
   const [polygonExists, setPolygonExists] = useState(false);
-  const [editControlKey, setEditControlKey] = useState(0);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSatelliteView, setIsSatelliteView] = useState(true);
-  const [showZones, setShowZones] = useState(false);
 
   const defaultTileLayer = [
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -107,7 +108,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const fetchZones = async () => {
       try {
         const zonesData = await API.getZones();
-        console.log("zonesdata is ", zonesData);
         setZones(zonesData as ZoneProps[]);
         const kirunaZone = zonesData.find((zone: ZoneProps) => zone.id === 0);
         if (kirunaZone) {
@@ -124,87 +124,39 @@ const MapComponent: React.FC<MapComponentProps> = ({
     fetchZones();
   }, []);
 
-  console.log("kiruna boundary is ", kirunaBoundary);
-  const clearCustomPolygon = () => {
-    if (setTempCustom !== undefined && featureGroupRef.current) {
-      featureGroupRef.current.clearLayers();
-      setTempCustom(null);
-      setPolygonExists(false);
-      setEditControlKey((prev) => prev + 1);
-    }
-  };
-
   const handleCreated = (e: any) => {
     const { layer } = e;
     const geoJson = layer.toGeoJSON();
     const drawnPolygon: Feature<GeoJSONPolygon> = turf.polygon(
       geoJson.geometry.coordinates
     );
-    console.log("drawn polygon is ", drawnPolygon);
-    console.log("drawn kirunaBoundary is ", kirunaBoundary);
-
-    if (
-      setTempCustom !== undefined &&
-      kirunaBoundary &&
-      booleanWithin(drawnPolygon, kirunaBoundary)
-    ) {
-      console.log("Polygon is valid and within Kiruna!");
-      setErrorMessage(null);
-      setTempCustom(geoJson.geometry.coordinates[0]);
-      setPolygonExists(true);
-    } else {
-      console.error("Polygon is outside the Kiruna boundary!");
-      setErrorMessage("Polygon is outside the Kiruna boundary!");
-      if (featureGroupRef.current) {
-        featureGroupRef.current.removeLayer(layer); // Remove invalid polygon
+    if (setErrorMessage) {
+      if (
+        setTempCustom !== undefined &&
+        kirunaBoundary &&
+        booleanWithin(drawnPolygon, kirunaBoundary)
+      ) {
+        setErrorMessage(null);
+        setTempCustom(geoJson.geometry.coordinates[0]);
+        setPolygonExists(true);
+      } else {
+        console.error("Polygon is outside the Kiruna boundary!");
+        setErrorMessage("Polygon is outside the Kiruna boundary!");
+        if (featureGroupRef.current) {
+          featureGroupRef.current.removeLayer(layer); // Remove invalid polygon
+        }
       }
     }
   };
-  console.log("drawn kiruna outside", kirunaBoundary);
 
   const handleDeleted = () => {
-    clearCustomPolygon();
-  };
-
-  const handlePointMode = () => {
-    if (
-      setSelectionMode &&
-      setHighlightedZoneId &&
-      onZoneSelect &&
-      setSelectionMode
-    ) {
-      clearCustomPolygon();
-      setHighlightedZoneId(null);
-      onZoneSelect(null);
-      setSelectionMode("point");
-    }
-  };
-  const handleZoneMode = () => {
-    if (setTempCoordinates && setTempCoordinates && setSelectionMode) {
-      clearCustomPolygon();
-      setTempCoordinates({ lat: null, lng: null });
-      setShowZones(true);
-      setSelectionMode("zone");
-    }
-  };
-
-  const handleCustomDrawMode = () => {
-    if (
-      setTempCoordinates &&
-      setHighlightedZoneId &&
-      onZoneSelect &&
-      setSelectionMode
-    ) {
-      clearCustomPolygon();
-      setTempCoordinates({ lat: null, lng: null });
-      setHighlightedZoneId(null);
-      onZoneSelect(null);
-      setSelectionMode("custom");
-    }
+    if (clearCustomPolygon) clearCustomPolygon();
   };
 
   const handleZoneClick = (zoneId: number | null) => {
+    console.log("ciao");
     if (setHighlightedZoneId && onZoneSelect && selectionMode === "zone") {
+      console.log("ciaone");
       setHighlightedZoneId(zoneId);
       onZoneSelect(zoneId);
     }
@@ -212,6 +164,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   const PointClickHandler: React.FC = () => {
     useMapEvent("click", (e) => {
+      if (selectedDocument) {
+        setSelectedDocument(null);
+      }
       if (setTempCoordinates && selectionMode === "point") {
         setTempCoordinates({ lat: e.latlng.lat, lng: e.latlng.lng });
       }
@@ -247,8 +202,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
     return null;
   };
-  console.log("zones are ", zones);
-  console.log("kiruna boundary is ", kirunaBoundary);
   const toggleSatelliteView = () => {
     setIsSatelliteView((prev) => !prev);
   };
@@ -301,64 +254,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
       popupAnchor: [0, -15],
     });
   };
-  console.log("get icon by type gives me ", getIconByType("Conflict"));
   const handleMoreClick = (doc: Document) => {
     setSelectedDocument(doc);
   };
-  console.log("selected document is ", selectedDocument);
-
   return (
     <div>
-      {selectionMode && (
-        <div>
-          <button
-            onClick={handlePointMode}
-            style={{
-              margin: "10px",
-              padding: "10px",
-              cursor: "pointer",
-              backgroundColor: selectionMode === "point" ? "blue" : "gray",
-              color: "white",
-            }}
-          >
-            Select Point
-          </button>
-          <button
-            onClick={handleZoneMode}
-            style={{
-              margin: "10px",
-              padding: "10px",
-              cursor: "pointer",
-              backgroundColor: selectionMode === "zone" ? "blue" : "gray",
-              color: "white",
-            }}
-          >
-            Select Zone
-          </button>
-          <button
-            onClick={handleCustomDrawMode}
-            style={{
-              margin: "10px",
-              padding: "10px",
-              cursor: "pointer",
-              backgroundColor: selectionMode === "custom" ? "blue" : "gray",
-              color: "white",
-            }}
-            disabled={polygonExists}
-          >
-            Draw Custom Area
-          </button>
-        </div>
-      )}
-      {errorMessage && (
-        <Alert
-          variant="danger"
-          onClose={() => setErrorMessage(null)}
-          dismissible
-        >
-          {errorMessage}
-        </Alert>
-      )}
       <MapContainer
         center={[67.8558, 20.2253]}
         zoom={13}
@@ -391,8 +291,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
             attribution={defaultTileLayer[1]}
           />
         )}
-
+        {/*@ts-ignore*/}
         <MarkerClusterGroup>
+          {/*for now we ignore MarkerClusterGroup type error, since everything works*/}
           {documents.map((doc) => (
             <Marker
               key={doc.id}
@@ -404,46 +305,17 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 <br />
                 Type: {doc.type}
                 <br />
-                <div className="moreBtn" onClick={() => handleMoreClick(doc)}>
-                  More
-                </div>
+                {selectionMode ? (
+                  ""
+                ) : (
+                  <div className="moreBtn" onClick={() => handleMoreClick(doc)}>
+                    More
+                  </div>
+                )}
               </Popup>
             </Marker>
           ))}
         </MarkerClusterGroup>
-        <div
-          onClick={toggleSatelliteView}
-          className="map-toggle-btn"
-          style={{
-            position: "absolute",
-            bottom: "20px",
-            left: "10px",
-            zIndex: 1000,
-          }}
-        >
-          {isSatelliteView ? <BsMapFill size={20} /> : <BsMap size={20} />}
-          <span className="tooltip">
-            {isSatelliteView
-              ? "Switch to Default View"
-              : "Switch to Satellite View"}
-          </span>
-        </div>
-        <div
-          onClick={toggleZonesView}
-          className="map-toggle-btn"
-          style={{
-            position: "absolute",
-            bottom: "20px",
-            left: "60px",
-            zIndex: 1000,
-          }}
-        >
-          {showZones ? <BsEye size={20} /> : <BsEyeSlash size={20} />}
-          <span className="tooltip">
-            {showZones ? "Hide Zones" : "Show Zones"}
-          </span>
-        </div>
-        {renderZones()}
 
         <PointClickHandler />
         {renderKirunaBoundary()}
@@ -476,13 +348,47 @@ const MapComponent: React.FC<MapComponentProps> = ({
             />
           </FeatureGroup>
         )}
-      </MapContainer>{" "}
+        {renderZones()}
+      </MapContainer>
       {selectedDocument && (
         <DocumentCard
           cardInfo={selectedDocument}
           iconToShow={getIconByType(selectedDocument.type).options.iconUrl}
+          setSelectedDocument={setSelectedDocument}
         />
       )}
+      <div
+        onClick={toggleSatelliteView}
+        className="map-toggle-btn"
+        style={{
+          position: "absolute",
+          bottom: selectionMode ? "30px" : "20px",
+          left: selectionMode ? "25px" : "10px",
+          zIndex: 1000,
+        }}
+      >
+        {isSatelliteView ? <BsMapFill size={20} /> : <BsMap size={20} />}
+        <span className="tooltip">
+          {isSatelliteView
+            ? "Switch to Default View"
+            : "Switch to Satellite View"}
+        </span>
+      </div>
+      <div
+        onClick={toggleZonesView}
+        className="map-toggle-btn"
+        style={{
+          position: "absolute",
+          bottom: selectionMode ? "30px" : "20px",
+          left: selectionMode ? "75px" : "60px",
+          zIndex: 1000,
+        }}
+      >
+        {showZones ? <BsEye size={20} /> : <BsEyeSlash size={20} />}
+        <span className="tooltip">
+          {showZones ? "Hide Zones" : "Show Zones"}
+        </span>
+      </div>
     </div>
   );
 };

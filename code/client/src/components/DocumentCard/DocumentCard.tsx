@@ -1,26 +1,19 @@
 import { Col, Container, Row } from "react-bootstrap";
-import API from "../../API/API";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
+import { IoClose } from "react-icons/io5";
+import { Document } from "../Map/MapComponent";
 
 interface DocumentCardProps {
   cardInfo: any;
   iconToShow: string | undefined;
+  setSelectedDocument: Dispatch<SetStateAction<Document | null>>;
 }
 
-export const DocumentCard = ({ cardInfo, iconToShow }: DocumentCardProps) => {
-  const [zones, setZones] = useState<any>([]);
-  const fetchZones = () => {
-    API.getZones().then((res) => {
-      setZones(res);
-    });
-  };
-
-  useEffect(() => {
-    fetchZones();
-  }, []);
-
-  console.log(cardInfo);
-
+export const DocumentCard = ({
+  cardInfo,
+  iconToShow,
+  setSelectedDocument,
+}: DocumentCardProps) => {
   return (
     <>
       <div style={{ position: "relative", zIndex: "100" }}>
@@ -29,6 +22,7 @@ export const DocumentCard = ({ cardInfo, iconToShow }: DocumentCardProps) => {
             backgroundColor: "#fffffff2",
             borderRadius: "12px",
             padding: "20px",
+            position: "relative",
           }}
         >
           <Row>
@@ -47,19 +41,20 @@ export const DocumentCard = ({ cardInfo, iconToShow }: DocumentCardProps) => {
               <div>Connections: {cardInfo.connections}</div>
               <div>Language: {cardInfo.language ? cardInfo.language : "-"}</div>
               <div>Pages: {cardInfo.pages ? cardInfo.pages : "-"}</div>
-              {/*Removed zone since no requirement about it(actually they told us they dont't want it somehow) */}
-              {/*cardInfo.zoneID ? (
-                <div>Zone: {cardInfo.zoneID}</div>
-              ) : (
-                <div>
-                  <div>Latitude: {cardInfo.latitude}</div>
-                  <div>Longitude: {cardInfo.longitude} </div>
-                </div>
-              )*/}
             </Col>
             <Col md={5} style={{ borderLeft: "1px solid gray" }}>
               Description:
               <div>{cardInfo.description}</div>
+              <IoClose
+                size={30}
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  top: "7px",
+                  cursor: "pointer",
+                }}
+                onClick={() => setSelectedDocument(null)}
+              />
             </Col>
           </Row>
         </Container>

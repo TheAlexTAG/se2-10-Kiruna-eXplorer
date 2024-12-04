@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
 import API from "../../API/API";
 import "./NewDocument.css";
-import MapComponent from "../Map/MapComponent";
 import Select, { MultiValue } from "react-select";
-import { Feature, Polygon as GeoJSONPolygon, MultiPolygon } from "geojson";
+import { Feature, MultiPolygon } from "geojson";
 import { CoordinatesOutOfBoundsError } from "../../errors/general";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, parse } from "date-fns";
+import GeoReferenceComponent from "../GeoreferenceComponent/GeoreferenceComponent";
 
 interface NewDocumentProps {
   userInfo: { username: string; role: string };
@@ -174,6 +174,8 @@ const NewDocument: React.FC<NewDocumentProps> = ({
         pages,
         coordinates,
       };
+
+      console.log("Document data is ", documentData);
 
       try {
         await API.createDocumentNode(documentData);
@@ -551,18 +553,18 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       <Modal
         show={showMapModal}
         onHide={() => setShowMapModal(false)}
-        size="lg"
         centered
+        size="lg"
+        style={{ left: "-8px" }} //find a real fix
       >
         <Modal.Header closeButton>
           <Modal.Title>Select Location</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <MapComponent
+          <GeoReferenceComponent
             tempCoordinates={tempCoordinates}
             setTempCoordinates={setTempCoordinates}
             onZoneSelect={handleZoneSelect}
-            setTempZoneId={setTempZoneId}
             selectionMode={selectionMode}
             setSelectionMode={setSelectionMode}
             highlightedZoneId={highlightedZoneId}
