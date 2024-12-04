@@ -15,7 +15,7 @@ class LinkDocumentDAO {
 
     try {
       conn= await db.getConnection();
-      const sql = "SELECT * FROM link WHERE (firstDoc=? AND secondDoc=?) OR (firstDoc=? AND secondDoc=?) AND relationship=?";
+      const sql = "SELECT * FROM link WHERE ((firstDoc=? AND secondDoc=?) OR (firstDoc=? AND secondDoc=?)) AND relationship=?";
 
       const row= await conn.query(sql, [firstDoc, secondDoc, secondDoc, firstDoc, relationship]);
       if(!row || row.length=== 0){

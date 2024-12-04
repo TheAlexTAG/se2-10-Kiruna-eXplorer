@@ -1,7 +1,9 @@
 import Select, { MultiValue } from "react-select";
 import { Col, Container, Form, Row } from "react-bootstrap";
+import { useEffect } from "react";
 
 interface LinkingDocumentDropdownProps {
+  mainDoc: any;
   doc: any;
   setRelationship: any;
 }
@@ -11,6 +13,7 @@ type OptionType = {
 };
 
 export const LinkingDocumentDropdown = ({
+  mainDoc,
   doc,
   setRelationship,
 }: LinkingDocumentDropdownProps) => {
@@ -20,6 +23,9 @@ export const LinkingDocumentDropdown = ({
     { value: "Projection", label: "Projection" },
     { value: "Update", label: "Update" },
   ];
+  const relationshipsFilter = mainDoc.links
+    .filter((item) => item.documentID === doc.id)
+    .map((item) => item.relationship);
   const handleSelectedRelationShips = (
     selectedRelationShips: MultiValue<OptionType>
   ) => {
@@ -41,7 +47,13 @@ export const LinkingDocumentDropdown = ({
               <Form>
                 <Form.Group>
                   <Select
-                    options={relationshipList}
+                    options={
+                      relationshipsFilter.length > 0
+                        ? relationshipList.filter(
+                            (item) => !relationshipsFilter.includes(item.value)
+                          )
+                        : relationshipList
+                    }
                     isMulti={true}
                     placeholder="Select Relationships"
                     className="custom-input"
