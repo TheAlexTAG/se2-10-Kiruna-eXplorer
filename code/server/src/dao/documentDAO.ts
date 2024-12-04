@@ -87,23 +87,44 @@ class DocumentDAO {
                 d.type,
                 d.language,
                 d.pages,
-                COUNT(l.firstDoc) AS connections,
+                conn.connections,
                 CASE 
                     WHEN COUNT(a.attachmentID) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('name', a.name, 'path', a.path))
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', a.name, 'path', a.path))
                 END AS attachment,
                 CASE 
                     WHEN COUNT(r.resourceID) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('name', r.name, 'path', r.path))
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', r.name, 'path', r.path))
                 END AS resource,
                 CASE 
-                    WHEN COUNT(l.secondDoc) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('documentID', l.secondDoc, 'relationship', l.relationship))
+                    WHEN COUNT(l1.secondDoc) + COUNT(l2.firstDoc) = 0 THEN NULL
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT(
+                        'documentID', 
+                        CASE 
+                            WHEN l1.secondDoc IS NOT NULL THEN l1.secondDoc 
+                            ELSE l2.firstDoc 
+                        END, 
+                        'relationship', 
+                        CASE 
+                            WHEN l1.relationship IS NOT NULL THEN l1.relationship 
+                            ELSE l2.relationship 
+                        END
+                    ))
                 END AS links
             FROM document d
+            LEFT JOIN (
+                SELECT docID, COUNT(*) AS connections
+                FROM (
+                    SELECT firstDoc AS docID FROM link
+                    UNION ALL
+                    SELECT secondDoc AS docID FROM link
+                ) sub
+                GROUP BY docID
+            ) conn ON d.documentID = conn.docID
             LEFT JOIN attachment a ON d.documentID = a.documentID
             LEFT JOIN resource r ON d.documentID = r.documentID
-            LEFT JOIN link l ON d.documentID = l.firstDoc
+            LEFT JOIN link l1 ON d.documentID = l1.firstDoc
+            LEFT JOIN link l2 ON d.documentID = l2.secondDoc
             WHERE d.documentID = ?
             GROUP BY d.documentID`
             const result = await conn.query(sql, [documentID]);
@@ -151,23 +172,44 @@ class DocumentDAO {
                 d.type,
                 d.language,
                 d.pages,
-                COUNT(l.firstDoc) AS connections,
+                conn.connections,
                 CASE 
                     WHEN COUNT(a.attachmentID) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('name', a.name, 'path', a.path))
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', a.name, 'path', a.path))
                 END AS attachment,
                 CASE 
                     WHEN COUNT(r.resourceID) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('name', r.name, 'path', r.path))
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', r.name, 'path', r.path))
                 END AS resource,
                 CASE 
-                    WHEN COUNT(l.secondDoc) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('documentID', l.secondDoc, 'relationship', l.relationship))
+                    WHEN COUNT(l1.secondDoc) + COUNT(l2.firstDoc) = 0 THEN NULL
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT(
+                        'documentID', 
+                        CASE 
+                            WHEN l1.secondDoc IS NOT NULL THEN l1.secondDoc 
+                            ELSE l2.firstDoc 
+                        END, 
+                        'relationship', 
+                        CASE 
+                            WHEN l1.relationship IS NOT NULL THEN l1.relationship 
+                            ELSE l2.relationship 
+                        END
+                    ))
                 END AS links
             FROM document d
+            LEFT JOIN (
+                SELECT docID, COUNT(*) AS connections
+                FROM (
+                    SELECT firstDoc AS docID FROM link
+                    UNION ALL
+                    SELECT secondDoc AS docID FROM link
+                ) sub
+                GROUP BY docID
+            ) conn ON d.documentID = conn.docID
             LEFT JOIN attachment a ON d.documentID = a.documentID
             LEFT JOIN resource r ON d.documentID = r.documentID
-            LEFT JOIN link l ON d.documentID = l.firstDoc
+            LEFT JOIN link l1 ON d.documentID = l1.firstDoc
+            LEFT JOIN link l2 ON d.documentID = l2.secondDoc
             `
             const conditions: string[] = [];
             const params: any[] = [];

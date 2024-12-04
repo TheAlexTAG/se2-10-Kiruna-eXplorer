@@ -3,7 +3,6 @@ import { LinkDocumentController } from '../../../src/controllers/link_docControl
 import { LinkDocumentDAO } from '../../../src/dao/link_docDAO';
 import { LinkDocument, Relationship } from '../../../src/components/link_doc';
 import { DocumentsError, InternalServerError, LinkError } from '../../../src/errors/link_docError';
-import { release } from "os";
 
 jest.mock('../../../src/dao/link_docDAO');
 
