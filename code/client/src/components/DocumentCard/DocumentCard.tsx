@@ -2,10 +2,16 @@ import { Document, KirunaDocument } from "../Map/MapComponent";
 import { Button, Container } from "react-bootstrap";
 import API from "../../API/API";
 import { Dispatch, SetStateAction } from "react";
+import AgreementIcon from "../../assets/icons/agreement-icon";
+import ConflictIcon from "../../assets/icons/conflict-icon";
+import ConsultationIcon from "../../assets/icons/consultation-icon";
+import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
+import TechnicalIcon from "../../assets/icons/technical-icon";
+import DesignIcon from "../../assets/icons/design-icon";
+import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
 
 interface DocumentCardProps {
   cardInfo: any;
-  iconToShow: string | undefined;
   setSelectedDocument: Dispatch<
     SetStateAction<Document | KirunaDocument | null>
   >;
@@ -13,9 +19,21 @@ interface DocumentCardProps {
 
 export const DocumentCard = ({
   cardInfo,
-  iconToShow,
   setSelectedDocument,
 }: DocumentCardProps) => {
+  const getIconByType = (type: string) => {
+    const iconComponents: { [key: string]: JSX.Element } = {
+      Agreement: <AgreementIcon width={60} height={60} />,
+      Conflict: <ConflictIcon width={60} height={60} />,
+      Consultation: <ConsultationIcon width={60} height={60} />,
+      "Material effect": <MaterialEffectIcon width={60} height={60} />,
+      "Technical doc.": <TechnicalIcon width={60} height={60} />,
+      "Design doc.": <DesignIcon width={60} height={60} />,
+      "Prescriptive doc.": <PrescriptiveIcon width={60} height={60} />,
+      default: <PrescriptiveIcon width={60} height={60} />,
+    };
+    return iconComponents[type] || iconComponents.default;
+  };
   return (
     <>
       <div
@@ -39,17 +57,7 @@ export const DocumentCard = ({
           }}
         >
           <div className="d-flex justify-content-between">
-            <img
-              src={iconToShow ? iconToShow : "/img/doc.png"}
-              style={{
-                width: "60px",
-                height: "60px",
-                background: "#80808075",
-                borderRadius: "12px",
-                padding: "5px",
-              }}
-            ></img>
-
+            {getIconByType(cardInfo.type)}
             <Button variant="link" onClick={() => setSelectedDocument(null)}>
               <i className="bi bi-x-lg" style={{ color: "#dc3545" }}></i>
             </Button>

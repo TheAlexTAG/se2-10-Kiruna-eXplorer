@@ -391,7 +391,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
       {selectedDocument && (
         <DocumentCard
           cardInfo={selectedDocument}
-          iconToShow={getIconByType(selectedDocument.type).options.iconUrl}
           setSelectedDocument={setSelectedDocument}
         />
       )}
