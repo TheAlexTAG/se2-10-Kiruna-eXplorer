@@ -57,7 +57,12 @@ const KirunaDocs: React.FC<KirunaDocsProps> = ({
               >
                 <h5>{doc.title}</h5>
                 <p className="mb-0 text-muted">Type: {doc.type}</p>
-                <Badge bg="info" pill onClick={() => handleIconClick(doc)}>
+                <Badge
+                  bg="info"
+                  pill
+                  onClick={() => handleIconClick(doc)}
+                  style={{ cursor: "pointer" }}
+                >
                   {getIconByType(doc.type)}
                 </Badge>
               </ListGroup.Item>
