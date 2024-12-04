@@ -84,7 +84,7 @@ export const LinkingDocumentsModal = ({
         <i className="bi bi-link-45deg" style={{ fontSize: "20px" }}></i> Link
         to Documents
       </div>
-      <Modal show={show} onHide={handleClose}>
+      <Modal show={show} onHide={handleClose} data-bs-theme="dark">
         <Modal.Header closeButton>
           <Modal.Title className="d-flex">
             <div style={{ height: "45px", width: "45px" }} className="mx-2">
@@ -109,7 +109,9 @@ export const LinkingDocumentsModal = ({
               <div>
                 <Container>
                   <Row>
-                    <Col md={2}>{currentDocument.title}</Col>
+                    <Col md={2} className="main-text">
+                      {currentDocument.title}
+                    </Col>
                     {/* <Col md={{ span: 2, offset: 8 }}>
                       <InputGroup className="mb-3">
                         <Form.Control
@@ -170,7 +172,7 @@ export const LinkingDocumentsModal = ({
                                       selectedItems.some(
                                         (item: any) => item.id === option.id
                                       )
-                                        ? "bi bi-check2-square mx-2"
+                                        ? "bi bi-check2-square  mx-2"
                                         : "bi bi-square mx-2"
                                     }
                                     style={
@@ -178,7 +180,7 @@ export const LinkingDocumentsModal = ({
                                         (item: any) => item.id === option.id
                                       )
                                         ? { color: "#085fb2" }
-                                        : { color: "#000" }
+                                        : { color: "whitesmoke" }
                                     }
                                     onClick={() => handleSelect(option)}
                                   ></i>{" "}
@@ -205,7 +207,7 @@ export const LinkingDocumentsModal = ({
                   padding: "20px",
                 }}
               >
-                <div>{currentDocument.title}</div>
+                <div className="main-text">{currentDocument.title}</div>
                 <svg
                   width="200"
                   height={selectedItems.length * 60}

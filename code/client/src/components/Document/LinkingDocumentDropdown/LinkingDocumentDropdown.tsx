@@ -21,7 +21,7 @@ export const LinkingDocumentDropdown = ({
         <Container>
           <Row>
             <Col md={6}>
-              <span>{doc.title}</span>
+              <span className="main-text">{doc.title}</span>
             </Col>
             <Col md={5} className="d-flex align-items-center">
               <Dropdown>

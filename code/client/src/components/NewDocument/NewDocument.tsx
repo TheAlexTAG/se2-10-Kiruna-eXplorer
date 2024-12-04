@@ -1,5 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Form,
+  Row,
+  Col,
+  Button,
+  Alert,
+  Modal,
+  InputGroup,
+} from "react-bootstrap";
 import API from "../../API/API";
 import "./NewDocument.css";
 import Select, { MultiValue } from "react-select";
@@ -39,6 +47,24 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [show, setShow] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
+
+  const [showCalendar, setShowCalendar] = useState(false);
+  const datePickerRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(event.target)
+      ) {
+        setShowCalendar(false); // Close calendar if click is outside
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside); // Cleanup listener on unmount
+    };
+  }, []);
 
   const options = [
     { label: "Design doc.", value: "../../../public/img/design-icon.png" },
@@ -285,17 +311,20 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   };
 
   return (
-    <div className="document-container">
-      <Button variant="primary" onClick={handleShow}>
-        <i className="bi bi-plus-lg"></i> Insert Document
+    <div
+      className="document-container"
+      style={{ backgroundColor: "transparent" }}
+    >
+      <Button variant="primary" onClick={handleShow} className="fab">
+        <i className="bi bi-plus-lg fs-2"></i>
       </Button>
 
-      <Modal show={show} onHide={handleClose}>
+      <Modal show={show} onHide={handleClose} data-bs-theme="dark">
         <Modal.Header closeButton>
-          <Modal.Title className="title">Insert Document</Modal.Title>
+          <Modal.Title className="title main-text">Insert Document</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form className="document-form">
+          <Form data-bs-theme="dark">
             {errorMessage && (
               <Alert
                 variant="danger"
@@ -307,9 +336,10 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             )}
 
             <Row className="mb-3">
-              <Form.Group as={Col} controlId="formTitle">
-                <Form.Label>Title*</Form.Label>
+              <Form.Group as={Col} controlId="formTitle" data-bs-theme="dark">
+                <Form.Label className="main-text">Title*</Form.Label>
                 <Form.Control
+                  className="custom-input"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -323,12 +353,13 @@ const NewDocument: React.FC<NewDocumentProps> = ({
               </Form.Group>
 
               <Form.Group as={Col} controlId="formStakeholders">
-                <Form.Label>Stakeholders*</Form.Label>
+                <Form.Label className="main-text">Stakeholders*</Form.Label>
                 <Select
                   options={stakeholderOptions}
                   isMulti={true}
                   onChange={handleStakeholderSelect}
                   placeholder="Select Stakeholders"
+                  className="custom-input"
                 />
                 <input type="hidden" name="stakeholders" value={stakeholders} />
                 {fieldErrors.stakeholders && (
@@ -341,7 +372,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             </Row>
 
             <Form.Group className="mb-3" controlId="formDescription">
-              <Form.Label>Description*</Form.Label>
+              <Form.Label className="main-text">Description*</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
@@ -356,10 +387,12 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                 </div>
               )}
             </Form.Group>
-
+            <Row className="main-text mb-2">
+              <strong>Location Details*</strong>
+            </Row>
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formLatitude">
-                <Form.Label>Latitude*</Form.Label>
+                <Form.Label className="main-text">Latitude</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.0001"
@@ -376,7 +409,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
               </Form.Group>
 
               <Form.Group as={Col} controlId="formLongitude">
-                <Form.Label>Longitude*</Form.Label>
+                <Form.Label className="main-text">Longitude</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.0001"
@@ -391,12 +424,17 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   </div>
                 )}
               </Form.Group>
-              <Form.Group as={Col} controlId="formLongitude">
+              <Form.Group
+                as={Col}
+                controlId="formLongitude"
+                style={{ marginTop: "28px" }}
+              >
                 <Button
                   variant="secondary"
                   onClick={() => setShowMapModal(true)}
                   size="lg"
                 >
+                  <i className="bi bi-geo-alt mx-2"></i>
                   Choose Location on Map
                 </Button>
               </Form.Group>
@@ -404,6 +442,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             <Row className="mb-3">
               <Form.Group controlId="formAssignToKiruna">
                 <Form.Switch
+                  className="main-text"
                   label="Assign document to entire Kiruna area"
                   checked={zoneID === 0}
                   onChange={(e) => {
@@ -418,7 +457,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             </Row>
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formScale">
-                <Form.Label>Scale*</Form.Label>
+                <Form.Label className="main-text">Scale*</Form.Label>
                 <Form.Select
                   value={scale ?? ""}
                   onChange={(e) => setScale(e.target.value)}
@@ -443,24 +482,48 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formIssuanceDate">
-                <Form.Label style={{ display: "block" }}>
+                <Form.Label style={{ display: "block" }} className="main-text">
                   Date of Issue*
                 </Form.Label>
-                <DatePicker
-                  selected={parsedDate()}
-                  onChange={handleDateChange}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="DD/MM/YYYY"
-                  className="form-control"
-                  required
-                />
-                <Form.Control
-                  type="text"
-                  className="mt-2"
-                  placeholder="Optional manual input (dd/mm/yyyy, mm/yyyy, yyyy)"
-                  value={issuanceDate}
-                  onChange={handleManualDateChange}
-                />
+                <div className="d-flex">
+                  <div
+                    className="custom-date-picker"
+                    ref={datePickerRef}
+                    style={{ width: "0" }}
+                  >
+                    <DatePicker
+                      selected={parsedDate()}
+                      onChange={handleDateChange}
+                      dateFormat="dd/MM/yyyy"
+                      placeholderText="DD/MM/YYYY"
+                      className="form-control "
+                      required
+                      open={showCalendar}
+                    />
+                  </div>
+
+                  <InputGroup className="search-bar" data-bs-theme="dark">
+                    <InputGroup.Text
+                      style={{
+                        background: "none",
+                        borderRight: "none",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => setShowCalendar(!showCalendar)}
+                    >
+                      <i
+                        className="bi bi-calendar3"
+                        style={{ color: "#085FB2" }}
+                      ></i>
+                    </InputGroup.Text>
+                    <Form.Control
+                      type="text"
+                      placeholder="Optional manual input (dd/mm/yyyy, mm/yyyy, yyyy)"
+                      value={issuanceDate}
+                      onChange={handleManualDateChange}
+                    />
+                  </InputGroup>
+                </div>
                 {fieldErrors.issuanceDate && (
                   <div className="text-danger">
                     <i className="bi bi-x-circle-fill text-danger"></i> This
@@ -470,7 +533,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
               </Form.Group>
 
               <Form.Group as={Col} controlId="formType">
-                <Form.Label>Type*</Form.Label>
+                <Form.Label className="main-text">Type*</Form.Label>
                 <Form.Select
                   value={type}
                   onChange={(e) => {
@@ -502,7 +565,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formLanguage">
-                <Form.Label>Language</Form.Label>
+                <Form.Label className="main-text">Language</Form.Label>
                 <Form.Select
                   value={language ?? ""}
                   onChange={(e) => setLanguage(e.target.value || null)}
@@ -523,7 +586,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
               </Form.Group>
 
               <Form.Group as={Col} controlId="formPages">
-                <Form.Label>Pages</Form.Label>
+                <Form.Label className="main-text">Pages</Form.Label>
                 <Form.Control
                   type="text"
                   className="light-placeholder"
@@ -556,9 +619,10 @@ const NewDocument: React.FC<NewDocumentProps> = ({
         centered
         size="lg"
         style={{ left: "-8px" }} //find a real fix
+        data-bs-theme="dark"
       >
         <Modal.Header closeButton>
-          <Modal.Title>Select Location</Modal.Title>
+          <Modal.Title className="main-text">Select Location</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <GeoReferenceComponent

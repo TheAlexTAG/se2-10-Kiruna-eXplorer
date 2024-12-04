@@ -7,6 +7,10 @@
 .navbar-list-icon {
   display: none;
 }
+.navbar-component a {
+  color: whitesmoke;
+}
+
 @media (max-width: 768px) {
   .navbar-mobile {
     display: block;

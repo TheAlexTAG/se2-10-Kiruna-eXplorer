@@ -3,7 +3,7 @@
   font-size: 3rem;
   font-weight: bold;
   text-align: center;
-  color: black;
+  color: whitesmoke;
   text-transform: uppercase;
 }
 .document-form {
@@ -19,6 +19,17 @@
   padding-bottom: 0;
   margin-bottom: 0;
   background-color: white;
+  position: fixed;
+  bottom: 15px;
+  right: 15px;
+}
+.document-container .fab {
+  border-radius: 100%;
+  height: 45px;
+  width: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .document-form .form-label {
@@ -36,4 +47,23 @@
 */ .light-placeholder::placeholder {
   color: #d3d3d3;
   opacity: 1;
+}
+
+.custom-input > div:first-of-type {
+  background-color: #212529;
+  border: 1px solid #495057;
+}
+.custom-input > div:nth-of-type(2) {
+  background-color: #495057;
+  border: 1px solid #495057;
+  color: whitesmoke;
+}
+.custom-input > div:nth-of-type(2) > div > div:active,
+.custom-input > div:nth-of-type(2) > div > div:hover {
+  /* background-color: #495057 !important; */
+  color: black;
+}
+
+.custom-date-picker .react-datepicker-wrapper {
+  opacity: 0;
 }
