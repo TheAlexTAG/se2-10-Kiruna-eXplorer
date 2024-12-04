@@ -30,6 +30,8 @@ import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
 import TechnicalIcon from "../../assets/icons/technical-icon";
 import DesignIcon from "../../assets/icons/design-icon";
 import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
+import { GrDocumentText } from "react-icons/gr";
+import KirunaDocs from "./KirunaDocs/KirunaDocs";
 
 export type Document = {
   id: number;
@@ -37,6 +39,15 @@ export type Document = {
   type: string;
   latitude: number;
   longitude: number;
+  zoneID: number;
+};
+export type KirunaDocument = {
+  id: number;
+  title: string;
+  type: string;
+  latitude: null;
+  longitude: null;
+  zoneID: number;
 };
 
 interface MapComponentProps {
@@ -83,6 +94,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
   setErrorMessage,
   editControlKey,
 }) => {
+  const [kirunaDocuments, setKirunaDocuments] = useState<
+    KirunaDocument[] | null
+  >(null);
+  const [showKirunaDocuments, setShowKirunaDocuments] = useState(false);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(
     null
@@ -105,6 +120,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const fetchDocuments = async () => {
       try {
         const data = await API.getDocuments();
+        console.log("data is ", data);
+        const kirunaDocs = data.filter(
+          (doc: KirunaDocument) => doc.zoneID === 0
+        );
+        setKirunaDocuments(kirunaDocs);
         setDocuments(
           data.filter((doc: Document) => doc.latitude && doc.longitude)
         );
@@ -170,6 +190,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     }
   };
 
+  console.log("selection mode is ", selectionMode);
   const PointClickHandler: React.FC = () => {
     useMapEvent("click", (e) => {
       if (selectedDocument) {
@@ -401,6 +422,28 @@ const MapComponent: React.FC<MapComponentProps> = ({
           {showZones ? "Hide Zones" : "Show Zones"}
         </span>
       </div>
+      {!selectionMode && (
+        <>
+          <div
+            onClick={() => setShowKirunaDocuments(true)}
+            className="kiruna-doc-btn"
+            style={{
+              position: "absolute",
+              top: "160px",
+              left: "10px",
+              zIndex: 1000,
+            }}
+          >
+            <GrDocumentText />
+            <span className="tooltip">Show Kiruna Municipality Documents</span>
+          </div>
+          <KirunaDocs
+            show={showKirunaDocuments}
+            onClose={() => setShowKirunaDocuments(false)}
+            kirunaDocuments={kirunaDocuments}
+          />
+        </>
+      )}
     </div>
   );
 };
