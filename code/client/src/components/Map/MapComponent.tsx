@@ -490,6 +490,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         <DocumentCard
           cardInfo={selectedDocument}
           setSelectedDocument={setSelectedDocument}
+          inDiagram={false}
         />
       )}
       <div

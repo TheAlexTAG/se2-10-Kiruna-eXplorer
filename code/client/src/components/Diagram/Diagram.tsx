@@ -35,7 +35,7 @@ type Node = {
   attachment: [];
   resource: [];
   parsedScale: number;
-  parsedDate: Date
+  parsedDate: Date;
 };
 
 // Legend Data
@@ -183,7 +183,7 @@ const fetchDocuments = async (): Promise<Node[]> => {
     attachment: doc.attachment,
     resource: doc.resource,
     parsedScale: parseScale(doc.scale),
-    parsedDate: parseDate(doc.issuanceDate)
+    parsedDate: parseDate(doc.issuanceDate),
   }));
 };
 
@@ -230,7 +230,9 @@ export const Diagram: React.FC = () => {
     const newYDomain = [
       "Concept",
       "Text",
-      ...nodes.map((node: Node) => node.parsedScale).sort((a: any, b: any) => b - a),
+      ...nodes
+        .map((node: Node) => node.parsedScale)
+        .sort((a: any, b: any) => b - a),
       "Blueprints/effects",
       "",
     ];
@@ -434,7 +436,7 @@ export const Diagram: React.FC = () => {
             typeof d != "number"
           ) {
             return d;
-          } else return `1:${d.toLocaleString('en-US')}`;
+          } else return `1:${d.toLocaleString("en-US")}`;
         })
       )
       .attr("font-size", "12px");
@@ -451,7 +453,10 @@ export const Diagram: React.FC = () => {
       .attr("class", "node")
       .attr(
         "transform",
-        (d) => `translate(${xScale(d.parsedDate)}, ${yScale(d.parsedScale as unknown as string)})`
+        (d) =>
+          `translate(${xScale(d.parsedDate)}, ${yScale(
+            d.parsedScale as unknown as string
+          )})`
       )
       .each(function (d) {
         const node = d3.select(this);
@@ -549,8 +554,8 @@ export const Diagram: React.FC = () => {
       .attr("fill", "none")
       .attr("stroke-dasharray", ({ relationship }) =>
         getLineStyle(relationship)
-      );  
-/*
+      );
+    /*
           // Clustering logic
     const clusterThreshold = 25;
     const clusteredNodes: {
@@ -657,6 +662,7 @@ export const Diagram: React.FC = () => {
           cardInfo={selectedDocument}
           iconToShow={getIconByType(selectedDocument.type).options.iconUrl}
           setSelectedDocument={setSelectedDocument}
+          inDiagram={true}
         />
       )}
     </>
