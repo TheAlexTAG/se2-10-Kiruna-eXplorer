@@ -1,14 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Form,
+  Row,
+  Col,
+  Button,
+  Alert,
+  Modal,
+  InputGroup,
+} from "react-bootstrap";
 import API from "../../API/API";
 import "./NewDocument.css";
-import MapComponent from "../Map/MapComponent";
 import Select, { MultiValue } from "react-select";
-import { Feature, Polygon as GeoJSONPolygon } from "geojson";
+import { Feature, MultiPolygon } from "geojson";
 import { CoordinatesOutOfBoundsError } from "../../errors/general";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, parse } from "date-fns";
+import GeoReferenceComponent from "../GeoreferenceComponent/GeoreferenceComponent";
 
 interface NewDocumentProps {
   userInfo: { username: string; role: string };
@@ -34,10 +42,30 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   const [pages, setPages] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [coordinates, setCoordinates] = useState(null);
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [show, setShow] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [showZones, setShowZones] = useState<boolean>(false);
+
+  const [showCalendar, setShowCalendar] = useState(false);
+  const datePickerRef = useRef(null);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(event.target)
+      ) {
+        setShowCalendar(false); // Close calendar if click is outside
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside); // Cleanup listener on unmount
+    };
+  }, []);
 
   const options = [
     { label: "Design doc.", value: "../../../public/img/design-icon.png" },
@@ -72,7 +100,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
   const stakeholderOptions: OptionType[] = [
     { value: "LKAB", label: "LKAB" },
-    { value: "Municipalty", label: "Municipalty" },
+    { value: "Municipality", label: "Municipalty" },
     { value: "Regional authority", label: "Regional authority" },
     { value: "Architecture firms", label: "Architecture firms" },
     { value: "Citizens", label: "Citizens" },
@@ -90,15 +118,21 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
   const [tempZoneId, setTempZoneId] = useState<number | null>(null);
   const [selectionMode, setSelectionMode] = useState<
-    "point" | "zone" | "custom"
+    "point" | "zone" | "custom" | "newPoint" | null
   >("point");
   const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
     null
   );
+  const [highlightedDocumentId, setHighlightedDocumentId] = useState<
+    number | null
+  >(null);
+  const [tempHighlightedDocumentId, setTempHighlightedDocumentId] = useState<
+    number | null
+  >(null);
   const [tempCustom, setTempCustom] = useState<any>(null);
+  const [customArea, setCustomArea] = useState<any>(null);
   const [kirunaBoundary, setKirunaBoundary] =
-    useState<Feature<GeoJSONPolygon> | null>(null);
-
+    useState<Feature<MultiPolygon> | null>(null);
   const handleClose = () => {
     setTitle("");
     setIcon("");
@@ -128,8 +162,8 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       scale: !scale,
       issuanceDate: !issuanceDate,
       type: !type,
-      latitude: latitude === null && zoneID === null,
-      longitude: longitude === null && zoneID === null,
+      latitude: latitude === null && zoneID === null && customArea === null,
+      longitude: longitude === null && zoneID === null && customArea === null,
     };
 
     setFieldErrors(errors);
@@ -139,18 +173,18 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       return;
     }
 
-    if (zoneID === null && tempCustom === null) {
-      if (latitude === null || longitude === null) {
-        setErrorMessage(
-          "Please provide valid coordinates if no zone is selected."
-        );
-        return;
-      }
-    } else if (zoneID === null && tempCustom !== null) {
-      const newZone = await API.createZone(tempCustom);
-      setZoneID(newZone);
+    if (
+      zoneID === null &&
+      customArea === null &&
+      latitude === null &&
+      longitude === null
+    ) {
+      setErrorMessage(
+        "Please provide valid coordinates if no zone is selected."
+      );
+      return;
     }
-
+    setCoordinates(customArea);
     setErrorMessage(null);
     setIsReady(true);
   };
@@ -171,6 +205,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
         type,
         language,
         pages,
+        coordinates,
       };
 
       try {
@@ -215,11 +250,14 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   const handleLocationSelect = () => {
     setLatitude(tempCoordinates.lat);
     setLongitude(tempCoordinates.lng);
-
+    setHighlightedDocumentId(tempHighlightedDocumentId);
     setZoneID(tempZoneId);
-
+    setCustomArea(tempCustom);
     setShowMapModal(false);
   };
+
+  console.log("in newdoc tempcustom is", tempCustom);
+  console.log("in newdoc custom is", customArea);
 
   const handleStakeholderSelect = (
     selectedStakeholders: MultiValue<OptionType>
@@ -279,20 +317,77 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       return null;
     }
   };
-  
 
+  const [demoVar, setDemoVar] = useState<string>("");
+  console.log("Test - tempCustom is ", tempCustom);
+  const handleMockFill = (i: string) => {
+    setTitle(`Demo title ${i}`);
+    setDescription(`Demo description ${i}`);
+    setScale(`1:1,000`);
+    setIssuanceDate(`1${i}/0${i}/201${i}`);
+    setType("Informative doc.");
+  };
+
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    function globalKeyboardWatcher(event: KeyboardEvent) {
+      const allowedKeys = [
+        "Backspace",
+        "Tab",
+        "ArrowLeft",
+        "ArrowRight",
+        "-",
+        ".",
+      ];
+
+      const isNumber = event.key >= "0" && event.key <= "9";
+      const isAllowed = allowedKeys.includes(event.key);
+
+      if (!isNumber && !isAllowed) {
+        event.preventDefault();
+        alert("Please enter only numeric values.");
+      }
+    }
+
+    if (isFocused) {
+      window.addEventListener("keydown", globalKeyboardWatcher);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", globalKeyboardWatcher);
+    };
+  }, [isFocused]);
   return (
-    <div className="document-container">
-      <Button variant="primary" onClick={handleShow}>
-        <i className="bi bi-plus-lg"></i> Insert Document
+    <div
+      className="document-container"
+      style={{ backgroundColor: "transparent" }}
+    >
+      <Button variant="primary" onClick={handleShow} className="fab">
+        <i className="bi bi-plus-lg fs-2"></i>
       </Button>
 
-      <Modal show={show} onHide={handleClose}>
+      <Modal
+        className="new-doc"
+        show={show}
+        onHide={handleClose}
+        data-bs-theme="dark"
+      >
         <Modal.Header closeButton>
-          <Modal.Title className="title">Insert Document</Modal.Title>
+          <Modal.Title className="title main-text">Insert Document</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form className="document-form">
+          <Form className="d-flex mb-2">
+            <Form.Control
+              type="text"
+              value={demoVar}
+              onChange={(e) => setDemoVar(e.target.value)}
+              placeholder="Demo variable"
+              style={{ marginRight: "10px" }}
+            />
+            <Button onClick={() => handleMockFill(demoVar)}>Autofill</Button>
+          </Form>
+          <Form data-bs-theme="dark">
             {errorMessage && (
               <Alert
                 variant="danger"
@@ -304,9 +399,10 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             )}
 
             <Row className="mb-3">
-              <Form.Group as={Col} controlId="formTitle">
-                <Form.Label>Title*</Form.Label>
+              <Form.Group as={Col} controlId="formTitle" data-bs-theme="dark">
+                <Form.Label className="main-text">Title*</Form.Label>
                 <Form.Control
+                  className="custom-input"
                   type="text"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -320,12 +416,13 @@ const NewDocument: React.FC<NewDocumentProps> = ({
               </Form.Group>
 
               <Form.Group as={Col} controlId="formStakeholders">
-                <Form.Label>Stakeholders*</Form.Label>
+                <Form.Label className="main-text">Stakeholders*</Form.Label>
                 <Select
                   options={stakeholderOptions}
                   isMulti={true}
                   onChange={handleStakeholderSelect}
                   placeholder="Select Stakeholders"
+                  className="custom-input"
                 />
                 <input type="hidden" name="stakeholders" value={stakeholders} />
                 {fieldErrors.stakeholders && (
@@ -338,7 +435,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             </Row>
 
             <Form.Group className="mb-3" controlId="formDescription">
-              <Form.Label>Description*</Form.Label>
+              <Form.Label className="main-text">Description*</Form.Label>
               <Form.Control
                 as="textarea"
                 rows={3}
@@ -347,53 +444,58 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                 required
               />
               {fieldErrors.description && (
-                  <div className="text-danger">
-                    <i className="bi bi-x-circle-fill text-danger"></i> This
-                    field is required
-                  </div>
-                )}
+                <div className="text-danger">
+                  <i className="bi bi-x-circle-fill text-danger"></i> This field
+                  is required
+                </div>
+              )}
             </Form.Group>
-
+            <Row className="main-text mb-2">
+              <strong>Location Details*</strong>
+              {(fieldErrors.latitude || fieldErrors.longitude) && (
+                <div className="text-danger">
+                  <i className="bi bi-x-circle-fill text-danger"></i> This field
+                  is required
+                </div>
+              )}
+            </Row>
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formLatitude">
-                <Form.Label>Latitude*</Form.Label>
+                <Form.Label className="main-text">Latitude</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.0001"
                   value={latitude ?? ""}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
                   onChange={handleLatitudeChange}
-                  disabled={zoneID !== null || tempCustom !== null}
+                  disabled={zoneID !== null || customArea !== null}
                 />
-                {fieldErrors.latitude && (
-                  <div className="text-danger">
-                    <i className="bi bi-x-circle-fill text-danger"></i> This
-                    field is required
-                  </div>
-                )}
               </Form.Group>
 
               <Form.Group as={Col} controlId="formLongitude">
-                <Form.Label>Longitude*</Form.Label>
+                <Form.Label className="main-text">Longitude</Form.Label>
                 <Form.Control
                   type="number"
                   step="0.0001"
                   value={longitude ?? ""}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
                   onChange={handleLongitudeChange}
-                  disabled={zoneID !== null || tempCustom !== null}
+                  disabled={zoneID !== null || customArea !== null}
                 />
-                {fieldErrors.longitude && (
-                  <div className="text-danger">
-                    <i className="bi bi-x-circle-fill text-danger"></i> This
-                    field is required
-                  </div>
-                )}
               </Form.Group>
-              <Form.Group as={Col} controlId="formLongitude">
+              <Form.Group
+                as={Col}
+                controlId="formLongitude"
+                style={{ marginTop: "28px" }}
+              >
                 <Button
                   variant="secondary"
                   onClick={() => setShowMapModal(true)}
                   size="lg"
                 >
+                  <i className="bi bi-geo-alt mx-2"></i>
                   Choose Location on Map
                 </Button>
               </Form.Group>
@@ -401,6 +503,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             <Row className="mb-3">
               <Form.Group controlId="formAssignToKiruna">
                 <Form.Switch
+                  className="main-text"
                   label="Assign document to entire Kiruna area"
                   checked={zoneID === 0}
                   onChange={(e) => {
@@ -415,19 +518,19 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             </Row>
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formScale">
-                <Form.Label>Scale*</Form.Label>
+                <Form.Label className="main-text">Scale*</Form.Label>
                 <Form.Select
                   value={scale ?? ""}
                   onChange={(e) => setScale(e.target.value)}
                 >
                   <option value="">Select Scale</option>
+                  <option value="Blueprints/effects">Blueprints/effects</option>
                   <option value="1:1,000">1:1,000</option>
                   <option value="1:5,000">1:5,000</option>
                   <option value="1:10,000">1:10,000</option>
                   <option value="1:100,000">1:100,000</option>
-                  <option value="Blueprints/effects">Blueprints/effects</option>
-                  <option value="Text">Text</option>
                   <option value="Concept">Concept</option>
+                  <option value="Text">Text</option>
                 </Form.Select>
                 {fieldErrors.scale && (
                   <div className="text-danger">
@@ -440,24 +543,48 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formIssuanceDate">
-                <Form.Label style={{ display: "block" }}>
+                <Form.Label style={{ display: "block" }} className="main-text">
                   Date of Issue*
                 </Form.Label>
-                <DatePicker
-                  selected={parsedDate()}
-                  onChange={handleDateChange}
-                  dateFormat="dd/MM/yyyy"
-                  placeholderText="DD/MM/YYYY"
-                  className="form-control"
-                  required
-                />
-                <Form.Control
-                  type="text"
-                  className="mt-2"
-                  placeholder="Optional manual input (dd/mm/yyyy, mm/yyyy, yyyy)"
-                  value={issuanceDate}
-                  onChange={handleManualDateChange}
-                />
+                <div className="d-flex">
+                  <div
+                    className="custom-date-picker"
+                    ref={datePickerRef}
+                    style={{ width: "0" }}
+                  >
+                    <DatePicker
+                      selected={parsedDate()}
+                      onChange={handleDateChange}
+                      dateFormat="dd/MM/yyyy"
+                      placeholderText="DD/MM/YYYY"
+                      className="form-control "
+                      required
+                      open={showCalendar}
+                    />
+                  </div>
+
+                  <InputGroup className="search-bar" data-bs-theme="dark">
+                    <InputGroup.Text
+                      style={{
+                        background: "none",
+                        borderRight: "none",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => setShowCalendar(!showCalendar)}
+                    >
+                      <i
+                        className="bi bi-calendar3"
+                        style={{ color: "#085FB2" }}
+                      ></i>
+                    </InputGroup.Text>
+                    <Form.Control
+                      type="text"
+                      placeholder="Optional manual input (dd/mm/yyyy, mm/yyyy, yyyy)"
+                      value={issuanceDate}
+                      onChange={handleManualDateChange}
+                    />
+                  </InputGroup>
+                </div>
                 {fieldErrors.issuanceDate && (
                   <div className="text-danger">
                     <i className="bi bi-x-circle-fill text-danger"></i> This
@@ -467,7 +594,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
               </Form.Group>
 
               <Form.Group as={Col} controlId="formType">
-                <Form.Label>Type*</Form.Label>
+                <Form.Label className="main-text">Type*</Form.Label>
                 <Form.Select
                   value={type}
                   onChange={(e) => {
@@ -499,28 +626,28 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formLanguage">
-                <Form.Label>Language</Form.Label>
+                <Form.Label className="main-text">Language</Form.Label>
                 <Form.Select
                   value={language ?? ""}
                   onChange={(e) => setLanguage(e.target.value || null)}
                 >
                   <option value="">Select Language</option>
                   <option value="English">English</option>
-                  <option value="Spanish">Spanish</option>
+                  {/* <option value="Spanish">Spanish</option> */}
                   <option value="Swedish">Swedish</option>
-                  <option value="French">French</option>
+                  {/* <option value="French">French</option>
                   <option value="German">German</option>
                   <option value="Italian">Italian</option>
                   <option value="Chinese">Chinese</option>
                   <option value="Japanese">Japanese</option>
                   <option value="Korean">Korean</option>
                   <option value="Russian">Russian</option>
-                  <option value="Arabic">Arabic</option>
+                  <option value="Arabic">Arabic</option> */}
                 </Form.Select>
               </Form.Group>
 
               <Form.Group as={Col} controlId="formPages">
-                <Form.Label>Pages</Form.Label>
+                <Form.Label className="main-text">Pages</Form.Label>
                 <Form.Control
                   type="text"
                   className="light-placeholder"
@@ -550,18 +677,19 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       <Modal
         show={showMapModal}
         onHide={() => setShowMapModal(false)}
-        size="lg"
         centered
+        size="lg"
+        style={{ left: "-8px" }} //find a real fix
+        data-bs-theme="dark"
       >
         <Modal.Header closeButton>
-          <Modal.Title>Select Location</Modal.Title>
+          <Modal.Title className="main-text">Select Location</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <MapComponent
+          <GeoReferenceComponent
             tempCoordinates={tempCoordinates}
             setTempCoordinates={setTempCoordinates}
             onZoneSelect={handleZoneSelect}
-            setTempZoneId={setTempZoneId}
             selectionMode={selectionMode}
             setSelectionMode={setSelectionMode}
             highlightedZoneId={highlightedZoneId}
@@ -569,6 +697,13 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             setTempCustom={setTempCustom}
             kirunaBoundary={kirunaBoundary}
             setKirunaBoundary={setKirunaBoundary}
+            highlightedDocumentId={highlightedDocumentId}
+            setHighlightedDocumentId={setHighlightedDocumentId}
+            tempHighlightedDocumentId={tempHighlightedDocumentId}
+            setTempHighlightedDocumentId={setTempHighlightedDocumentId}
+            customArea={customArea}
+            showZones={showZones}
+            setShowZones={setShowZones}
           />
         </Modal.Body>
         <Modal.Footer>

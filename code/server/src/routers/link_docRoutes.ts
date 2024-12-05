@@ -2,10 +2,10 @@ import express from 'express';
 import { Utilities } from '../utilities';
 import { LinkDocumentController } from '../controllers/link_docController';
 
-const {body, validationResult} = require('express-validator'); // validation middleware
+import {body, validationResult} from 'express-validator'; // validation middleware
 /* Sanitize input */
-const createDOMPurify = require("dompurify");
-const { JSDOM } = require("jsdom");
+import createDOMPurify from "dompurify";
+import { JSDOM } from "jsdom";
 const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
@@ -18,10 +18,9 @@ class LinkDocumentRoutes {
         this.app = app;
         this.controller= new LinkDocumentController();
         this.utility= new Utilities();
-        this.initRoutes();
     }
 
-    initRoutes(): void{
+    initRoutes= () => {
         
         // POST api/link
         this.app.post('/api/link',this.utility.isUrbanPlanner,[
@@ -29,7 +28,14 @@ class LinkDocumentRoutes {
             body("secondDoc").isArray({ min: 1 }),
             body("secondDoc.*").isObject(),
             body("secondDoc.*.id").isInt({ gt: 0 }),
-            body("secondDoc.*.relationship").isIn(['Direct consequence', 'Collateral consequence', 'Projection', 'Update'])
+            body("secondDoc.*.relationship").isArray({min: 1}),
+            body("secondDoc.*.relationship").custom((value) => {
+                if (new Set(value).size!== value.length){
+                    throw new Error(); 
+                };
+                return true;
+            }),
+            body("secondDoc.*.relationship.*").isIn(['Direct consequence', 'Collateral consequence', 'Projection', 'Update'])
             ], async(req: any, res: any) => {
                 const errors= validationResult(req);
                 if (!errors.isEmpty()) {

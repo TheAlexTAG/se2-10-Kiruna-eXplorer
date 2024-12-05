@@ -1,97 +1,101 @@
-import { Col, Container, Row } from "react-bootstrap";
+import { Button, Col, Row } from "react-bootstrap";
+import "./Home.css";
+import { useNavigate } from "react-router-dom";
 
 export const Home = () => {
+  const navigate = useNavigate();
+  const handleScroll = (event: React.WheelEvent) => {
+    if (event.deltaY > 0) {
+      // Scroll Down
+      window.scrollTo({
+        top: document.body.scrollHeight, // Scroll to the bottom of the page
+        behavior: "smooth",
+      });
+    } else {
+      // Scroll Up
+      window.scrollTo({
+        top: 0, // Scroll to the top of the page
+        behavior: "smooth",
+      });
+    }
+  };
   return (
     <>
-      <div>
-        <Container>
-          <Row className="w-100" style={{ marginBottom: "2rem" }}>
-            <Col className="d-flex align-items-center">
-              <div>
-                <img
-                  src="./src/assets/kiruna1.jpg"
-                  style={{ width: "100%", borderRadius: "12px" }}
-                />
-              </div>
-            </Col>
-            <Col className="d-flex align-items-center">
-              <div>
-                <h3>A City on the Move:</h3>
-                <p>
-                  Kiruna's Extraordinary Journey Nestled in the Arctic
-                  wilderness of Sweden, Kiruna is writing history as the first
-                  entire city to pack up and move. This isn't science fiction
-                  it's the remarkable story of 20,000 people whose hometown sits
-                  atop Europe's largest iron ore mine. Here, where the sun never
-                  sets for 45 days each summer and disappears entirely for 21
-                  winter days, an unprecedented urban migration is taking place.
-                  The ground beneath the city is slowly cracking, and rather
-                  than abandon their home, the people of Kiruna chose to take
-                  their city with them buildings and all.
-                </p>
-              </div>
-            </Col>
-          </Row>
-          <hr className="mx-2" />
-          <Row className="w-100" style={{ marginBottom: "2rem" }}>
-            <Col className="d-flex align-items-center">
-              <div>
-                <h3>Engineering Marvel Meets Cultural Preservation:</h3>
-                <p>
-                  Imagine moving an entire church that weighs as much as 40
-                  adult whales, or relocating historic buildings that have
-                  weathered a century of Arctic storms. That's exactly what's
-                  happening in Kiruna. The relocation project isn't just about
-                  building new structures it's a delicate dance of preserving
-                  the city's soul while embracing its future. The ambitious plan
-                  includes not only constructing a brand new city center but
-                  also carefully transplanting 21 historic buildings to their
-                  new home. The crown jewel of this preservation effort is the
-                  beloved Kiruna Church, voted Sweden's most beautiful pre-1950s
-                  building, which will make its historic journey in summer 2025.
-                </p>
-              </div>
-            </Col>
-
-            <Col className="d-flex align-items-center">
-              <div>
-                <img
-                  src="./src/assets/kiruna2.jpg"
-                  style={{ width: "100%", borderRadius: "12px" }}
-                />
-              </div>
-            </Col>
-          </Row>
-          <hr className="mx-2" />
-          <Row className="w-100" style={{ paddingBottom: "12px" }}>
-            <Col className="d-flex align-items-center">
-              <div>
-                <img
-                  src="./src/assets/kiruna3.jpg"
-                  style={{ width: "100%", borderRadius: "12px" }}
-                />
-              </div>
-            </Col>
-            <Col className="d-flex align-items-center">
-              <div>
-                <h3>A New Chapter in Arctic Urban Design</h3>
-                <p>
-                  Kiruna's transformation is more than a response to necessity
-                  it's becoming a blueprint for innovative urban planning in the
-                  21st century. The new city center, unveiled in September 2022,
-                  showcases modern Scandinavian architecture while honoring the
-                  region's mining heritage and indigenous Sami culture. With the
-                  completion of the striking Scandic Hotel, Aurora Congress
-                  Center, and sustainable residential blocks, Kiruna is emerging
-                  as a model of how cities can reinvent themselves while keeping
-                  their community spirit alive. This isn't just a relocation
-                  it's a renaissance, proving that sometimes the biggest
-                  challenges lead to the most inspiring solutions.
-                </p>
-              </div>
-            </Col>
-          </Row>
-        </Container>
+      <div className="main-home" onWheel={handleScroll}>
+        {/* <div className="custom-background"></div> */}
+        <div>
+          <div className="home-details d-grid align-items-center justify-contents-center text-center">
+            <div className="main-body">
+              <h1 className="main-title">Kiruna Explorer</h1>
+              In the heart of Sweden's Arctic wilderness, Kiruna is making
+              history by moving an entire city. Perched atop Europe’s largest
+              iron ore mine, the ground beneath it is cracking. But instead of
+              abandoning their home, 20,000 residents are taking a bold
+              step—relocating their city, buildings and all, in a one-of-a-kind
+              urban migration.
+            </div>
+          </div>
+          <div className="main-func">
+            <div className="w-100" onClick={() => navigate("/map")}>
+              <Button className="w-100" variant="link">
+                <Row className="m-0 p-0">
+                  <Col md={9} className="m-0 p-0">
+                    <div className="function-title first-background">
+                      <span>Explore The Map</span>
+                    </div>
+                  </Col>
+                  <Col
+                    md={3}
+                    className="function-image d-flex justify-content-center align-items-center m-0 p-0 "
+                  >
+                    <div className="function-image">
+                      <img src="./src/assets/map.png" />
+                    </div>
+                  </Col>
+                </Row>
+              </Button>
+            </div>
+            <div onClick={() => navigate("/document")}>
+              <Button className="w-100" variant="link">
+                <Row className="m-0 p-0">
+                  <Col
+                    md={3}
+                    className="function-image d-flex justify-content-center align-items-center m-0 p-0 "
+                  >
+                    <div className="function-image">
+                      <img src="./src/assets/documents.png" />
+                    </div>
+                  </Col>
+                  <Col md={9} className="m-0 p-0">
+                    <div className="function-title second-background">
+                      <span>Explore Documents</span>
+                    </div>
+                  </Col>
+                </Row>
+              </Button>
+            </div>
+            <div onClick={() => navigate("/diagram")}>
+              {" "}
+              <Button className="w-100" variant="link">
+                <Row className="m-0 p-0">
+                  <Col md={9} className="m-0 p-0">
+                    <div className="function-title first-background">
+                      <span>Explore The Diagram</span>
+                    </div>
+                  </Col>
+                  <Col
+                    md={3}
+                    className="function-image d-flex justify-content-center align-items-center m-0 p-0 "
+                  >
+                    <div className="function-image">
+                      <img src="./src/assets/diagram.png" />
+                    </div>
+                  </Col>
+                </Row>
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );

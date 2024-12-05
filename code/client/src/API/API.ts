@@ -28,7 +28,7 @@ const logout = async () => {
     },
     credentials: "include",
   });
-  return await response;
+  return response;
 };
 
 const currentUser = async () => {
@@ -98,7 +98,7 @@ const getZones = async () => {
 };
 
 const getDocuments = async () => {
-  const response = await fetch(`${SERVER_URL}/documents/links`, {
+  const response = await fetch(`${SERVER_URL}/documents`, {
     method: "GET",
     credentials: "include",
     headers: {
@@ -144,19 +144,17 @@ const updateGeoreference = async (
   latitude: number | null
 ) => {
   console.log(documentID, zoneID, longitude, latitude);
-  const response = await fetch(
-    `${SERVER_URL}/document/georef/update/${documentID}`,
-    {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ zoneID, longitude, latitude }),
-    }
-  );
+  const response = await fetch(`${SERVER_URL}/document/${documentID}`, {
+    method: "PUT",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ zoneID, longitude, latitude }),
+  });
 
   if (!response.ok) {
+    console.log("response is ", response);
     const errorData = await response.json();
     console.error("Error updating georeference:", errorData);
     throw new Error(errorData.error || "Failed to update georeference");
@@ -188,7 +186,7 @@ const filterDocuments = async (
 
     // Fai la richiesta con i parametri dinamici
     const response = await fetch(
-      `${SERVER_URL}/documents/links?${params.toString()}`,
+      `${SERVER_URL}/documents?${params.toString()}`,
       {
         method: "GET",
         credentials: "include",
@@ -274,8 +272,8 @@ const addOriginalResource = async (documentID: number, myFiles: File[]) => {
   }
 };
 
-const handleDownloadResource = async (fileName: string) => {
-  const fileUrl = `http://localhost:3001/resources/${fileName}`;
+const handleDownloadResource = async (id: number, fileName: string) => {
+  const fileUrl = `http://localhost:3001/api/resource/download/${id}/${fileName}`;
 
   try {
     const response = await fetch(fileUrl, {

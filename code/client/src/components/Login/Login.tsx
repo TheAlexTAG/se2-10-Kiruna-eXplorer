@@ -1,7 +1,6 @@
-import { Alert, Button, Col, Form, Row } from "react-bootstrap";
+import { Alert, Button, Form } from "react-bootstrap";
 import "./Login.css";
 import { useEffect, useState } from "react";
-import API from "../../API/API";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/GlobalStateProvider";
 export const Login = () => {
@@ -45,7 +44,11 @@ export const Login = () => {
           <div className="image-cover"></div>
           <div className="d-flex justify-content-center align-items-center login-form">
             <div className="w-100 m-4">
-              <i className="bi bi-house" onClick={() => navigate("/")}></i>
+              <i
+                className="bi bi-house"
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate("/")}
+              ></i>
               <div className="text-center mb-4">
                 <h1>Login</h1>
               </div>

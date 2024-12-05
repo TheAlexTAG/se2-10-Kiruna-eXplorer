@@ -1,4 +1,11 @@
 import {User, Role} from "./components/user";
+import { DocumentDAO } from "./dao/documentDAO";
+import { DocumentNotFoundError } from "./errors/documentErrors";
+import { InternalServerError } from "./errors/link_docError";
+
+import kiruna from "./kiruna.json"
+import { booleanContains } from "@turf/boolean-contains";
+import { Geometry } from "geojson";
 
 class Utilities{    
     static checkUrbanDeveloper(user: User): boolean{
@@ -58,6 +65,34 @@ class Utilities{
         return res.status(401).json({ error: "User is not authorized"});
     }
 
+    async documentExists(req: any, res: any, next: any) {
+        try {
+            let exists = await DocumentDAO.documentExists(req.params.id); 
+            if(!exists) {  
+                return res.status(404).json({ error: 'Document not found' });
+            }
+            return next();
+        } catch(err: any) {
+            res.status(err.code? err.code : 500).json({error: err.message});
+        }
+    }
+
+    async paginationCheck(req: any, res: any, next: any) {
+        if((req.query.pageSize && req.query.pageNumber) || (!req.query.pageSize && !req.query.pageNumber)) 
+            return next();
+        else res.status(422).json({error: "Pagination error: page size or page number missing"});
+    }
+    
 }
 
-export {Utilities};
+class Kiruna {
+    static async getKirunaGeometry(): Promise<Geometry>{
+        return kiruna.features[0].geometry as Geometry;
+    }
+    
+    static async verifyContainedInKiruna(other: Geometry): Promise<boolean>{
+        return booleanContains(await Kiruna.getKirunaGeometry(),other);
+    }
+}
+
+export {Utilities, Kiruna};

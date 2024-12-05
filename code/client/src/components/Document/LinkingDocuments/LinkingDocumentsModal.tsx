@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Accordion,
   Alert,
@@ -7,7 +7,7 @@ import {
   Col,
   Container,
   Form,
-  // InputGroup,
+  InputGroup,
   Modal,
   Row,
 } from "react-bootstrap";
@@ -19,17 +19,20 @@ interface documentsProps {
   documents: any;
   currentDocument: any;
   updateTable: any;
+  setSuccessMessage: any;
 }
 
 export const LinkingDocumentsModal = ({
   documents,
   currentDocument,
   updateTable,
+  setSuccessMessage,
 }: documentsProps) => {
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [tab, setTab] = useState(0);
   const [selectedItems, setSelectedItems] = useState<any>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleClose = () => {
     setShow(false);
@@ -47,7 +50,7 @@ export const LinkingDocumentsModal = ({
       setSelectedItems([...selectedItems, value]);
     }
   };
-  const handleRelationship = (relationship: string, docId: number) => {
+  const handleRelationship = (relationship: string[], docId: number) => {
     setSelectedItems((prev: any) =>
       prev.map((item: any) =>
         item.id === docId ? { ...item, relationship } : item
@@ -58,7 +61,6 @@ export const LinkingDocumentsModal = ({
     const items = selectedItems.map((item: any) => {
       return { id: item.id, relationship: item.relationship };
     });
-
     if (
       items.length === 0 ||
       items.some(
@@ -70,6 +72,7 @@ export const LinkingDocumentsModal = ({
       API.connectDocuments(currentDocument.id, items)
         .then(() => {
           updateTable();
+          setSuccessMessage("Documents linked successfully");
           handleClose();
         })
         .catch((err) => {
@@ -78,13 +81,17 @@ export const LinkingDocumentsModal = ({
     }
   };
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value.toLowerCase());
+  };
+
   return (
     <div className="linking-documents">
       <div onClick={handleShow} className=" p-2">
         <i className="bi bi-link-45deg" style={{ fontSize: "20px" }}></i> Link
         to Documents
       </div>
-      <Modal show={show} onHide={handleClose}>
+      <Modal show={show} onHide={handleClose} data-bs-theme="dark" fullscreen>
         <Modal.Header closeButton>
           <Modal.Title className="d-flex">
             <div style={{ height: "45px", width: "45px" }} className="mx-2">
@@ -95,12 +102,12 @@ export const LinkingDocumentsModal = ({
                 />
               </svg>
             </div>
-            <div className="d-flex alig-items-center pt-2">
+            <div className="d-flex alig-items-center pt-2 main-text">
               Link to a Document
             </div>
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ maxWidth: "1000px" }}>
+        <Modal.Body>
           <Alert variant="danger" show={error !== ""}>
             {error}
           </Alert>
@@ -109,13 +116,16 @@ export const LinkingDocumentsModal = ({
               <div>
                 <Container>
                   <Row>
-                    <Col md={2}>{currentDocument.title}</Col>
-                    {/* <Col md={{ span: 2, offset: 8 }}>
+                    <Col md={2} className="main-text">
+                      {currentDocument.title}
+                    </Col>
+                    <Col md={{ span: 2, offset: 8 }}>
                       <InputGroup className="mb-3">
                         <Form.Control
                           className="form-control"
                           style={{ borderRight: "none" }}
                           placeholder="Search..."
+                          onChange={handleSearch}
                         />
                         <InputGroup.Text
                           style={{ background: "none", borderLeft: "none" }}
@@ -126,7 +136,7 @@ export const LinkingDocumentsModal = ({
                           ></i>
                         </InputGroup.Text>
                       </InputGroup>
-                    </Col> */}
+                    </Col>
                   </Row>
                   <Row>
                     <Col md={2}>
@@ -155,9 +165,20 @@ export const LinkingDocumentsModal = ({
                         <Accordion defaultActiveKey="0">
                           {documents
                             .filter(
-                              (item: any) =>
-                                item.id !== currentDocument.id &&
-                                !currentDocument.links.includes(item.id)
+                              (item: any) => item.id !== currentDocument.id
+                            )
+                            .filter((item: any) => {
+                              const hasRelationshipCountEqualTo4 =
+                                currentDocument.links
+                                  .filter(
+                                    (link: any) => link.documentID === item.id
+                                  )
+                                  .map((link: any) => link.relationship)
+                                  .length !== 4;
+                              return hasRelationshipCountEqualTo4;
+                            })
+                            .filter((item: any) =>
+                              item.title.toLowerCase().includes(searchQuery)
                             )
                             .map((option: any) => (
                               <Accordion.Item
@@ -170,7 +191,7 @@ export const LinkingDocumentsModal = ({
                                       selectedItems.some(
                                         (item: any) => item.id === option.id
                                       )
-                                        ? "bi bi-check2-square mx-2"
+                                        ? "bi bi-check2-square  mx-2"
                                         : "bi bi-square mx-2"
                                     }
                                     style={
@@ -178,7 +199,7 @@ export const LinkingDocumentsModal = ({
                                         (item: any) => item.id === option.id
                                       )
                                         ? { color: "#085fb2" }
-                                        : { color: "#000" }
+                                        : { color: "whitesmoke" }
                                     }
                                     onClick={() => handleSelect(option)}
                                   ></i>{" "}
@@ -197,7 +218,7 @@ export const LinkingDocumentsModal = ({
               </div>
             </div>
           ) : (
-            <div>
+            <div className="h-100 d-flex">
               <div
                 style={{
                   display: "flex",
@@ -205,35 +226,36 @@ export const LinkingDocumentsModal = ({
                   padding: "20px",
                 }}
               >
-                <div>{currentDocument.title}</div>
+                <div className="main-text">{currentDocument.title}</div>
                 <svg
                   width="200"
-                  height={selectedItems.length * 60}
+                  height={selectedItems.length * 100}
                   style={{ overflow: "visible" }}
                 >
                   {selectedItems.map((_: unknown, index: any) => {
-                    const yPosition = 30 + index * 60;
-                    const halfHeight = (selectedItems.length * 60) / 2;
+                    const yPosition = 50 + index * 100;
+                    const halfHeight = (selectedItems.length * 100) / 2;
                     return (
                       <path
                         key={index}
                         d={`M 10 ${halfHeight} Q 50 ${yPosition}, 100 ${yPosition} T 200 ${yPosition}`}
-                        stroke="blue"
+                        stroke="#085fb2"
                         strokeWidth="1"
                         fill="none"
                       />
                     );
                   })}
                 </svg>
-                <div style={{ paddingLeft: "20px", marginTop: "35px" }}>
+                <div style={{ paddingLeft: "20px", marginTop: "75px" }}>
                   {selectedItems.map((doc: any, index: number) => (
                     <div
                       key={index}
                       style={{
-                        height: "60px",
+                        height: "100px",
                       }}
                     >
                       <LinkingDocumentDropdown
+                        mainDoc={currentDocument}
                         doc={doc}
                         setRelationship={handleRelationship}
                       />

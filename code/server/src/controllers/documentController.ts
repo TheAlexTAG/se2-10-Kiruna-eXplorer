@@ -1,279 +1,130 @@
-import { rejects } from "assert";
-import { Document } from "../components/document";
 import { DocumentDAO } from "../dao/documentDAO";
-import {
-  CoordinatesOutOfBoundsError,
-  InvalidDocumentZoneError,
-  WrongGeoreferenceError,
-  WrongGeoreferenceUpdateError
-} from "../errors/documentErrors";
-import * as turf from "@turf/turf";
+import { CoordinatesOutOfBoundsError, WrongGeoreferenceError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
+import * as turf from "@turf/turf"
+import kiruna from "../kiruna.json"
 import { ZoneDAO } from "../dao/zoneDAO";
-import { MissingKirunaZoneError } from "../errors/zoneError";
+import { Geometry } from "geojson";
+import { InsertZoneError } from "../errors/zoneError";
+import wellknown from "wellknown"
+import { Document } from "../components/document";
+import { Kiruna } from "../utilities";
 
-const wellknown = require("wellknown");
-
-/**
- * Controller for handling document operations
- */
 class DocumentController {
-  private dao: DocumentDAO;
-  constructor() {
-    this.dao = new DocumentDAO();
-  }
+    private dao: DocumentDAO
+    private zoneDAO: ZoneDAO
+    constructor() {
+        this.dao = new DocumentDAO();
+        this.zoneDAO = new ZoneDAO();
+    }
 
-  /**
-   * Hadles the comunication between the route and the dao of the document node creation
-   * @param title the title of the document
-   * @param icon url for the icon
-   * @param description description of the document
-   * @param zoneID the id of the zone georeferenced
-   * @param latitude latitude of the node
-   * @param longitude longitude of the node
-   * @param stakeholders people participating on the document
-   * @param scale It is the relationship between the dimensions drawn on a plan or architectural drawing and the actual dimensions of the building
-   * @param issuanceDate the date in which the document has been issued
-   * @param type document type
-   * @param language document language
-   * @param pages number of pages. Can also be an interval of pages
-   * @returns the documentID of the lastly inserted document
-   * @throws generic error if the database query fails
-   * @throws DocumentZoneNotFoundError if the zone specified is not in the database
-   * @throws WrongGeoreferenceError if the georeference format is not valid
-   * @throws InvalidDocumentZoneError if the specified zone is not a polygon
-   */
-  async createNode(title: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
-    try {
-      if (zoneID == null && latitude != null && longitude != null) {
-        const checkCoordinates = await this.checkCoordinatesValidity(longitude, latitude);
-        if (!checkCoordinates) throw new CoordinatesOutOfBoundsError();
-        else {
-          let lastID = await this.dao.createDocumentNode(title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages);
-          return lastID;
+    private async checkCoordinatesValidity(lon: number, lat: number): Promise<boolean> {
+        const point = turf.point([lon, lat]);
+        const checkInside = turf.booleanPointInPolygon(point, kiruna.features[0].geometry as GeoJSON.MultiPolygon)
+        return Promise.resolve(checkInside);
+    }
+
+    async createNode(title: string, description: string, zoneID: number | null, coordinates: any | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
+        try {
+            if(coordinates == null && zoneID == 0 && latitude == null && longitude == null) {
+                zoneID = null;
+                let lastID = await this.dao.createDocumentNode(title, description, zoneID, coordinates, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages);
+                    return lastID;
+            }
+            else if(coordinates && zoneID == null && latitude == null && longitude == null) {
+                const geo: Geometry= turf.geometry("Polygon", [coordinates])
+                const zoneExists = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geo as wellknown.GeoJSONGeometry));
+                if(zoneExists) throw new InsertZoneError();
+                const checkCoordinates = await Kiruna.verifyContainedInKiruna(geo);
+                if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
+                let centroid = turf.centroid(geo);
+                let lastID = await this.dao.createDocumentNode(title, description, zoneID, wellknown.stringify(geo as wellknown.GeoJSONGeometry), centroid.geometry.coordinates[1], centroid.geometry.coordinates[0], stakeholders, scale, issuanceDate, type, language, pages);
+                    return lastID;
+            }
+            else if(coordinates ==  null && zoneID == null && latitude != null && longitude != null) {
+                const checkCoordinates = await this.checkCoordinatesValidity(longitude, latitude);
+                if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
+                let lastID = await this.dao.createDocumentNode(title, description, zoneID, coordinates? wellknown.stringify(coordinates) : null, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages);
+                return lastID;
+            }
+            else if(coordinates ==  null && zoneID != null && zoneID != 0 && latitude == null && longitude == null) {
+                let zone = await this.zoneDAO.getZone(zoneID);
+                console.log(zone)
+                let centroid = turf.centroid(zone.coordinates);
+                console.log(centroid)
+                let lastID = await this.dao.createDocumentNode(title, description, zoneID, coordinates, centroid.geometry.coordinates[1], centroid.geometry.coordinates[0], stakeholders, scale, issuanceDate, type, language, pages);
+                return lastID;
+              } 
+            else throw new WrongGeoreferenceError();
+        } catch (err) {
+            throw err;
         }
-      } 
-      else if (zoneID != null && latitude == null && longitude == null) {
-        let zone = await ZoneDAO.prototype.getZone(zoneID);
-        let randCoordinates: {latitude: number, longitude: number};
-        if (zoneID == 0) randCoordinates = {latitude: 67.84905775407694, longitude: 20.302734375000004} 
-        else randCoordinates = await this.getRandCoordinates(zone.coordinates);
-        let lastID = await this.dao.createDocumentNode(title, description, zoneID, randCoordinates.latitude, randCoordinates.longitude, stakeholders, scale, issuanceDate, type, language, pages); 
-        return lastID;
-      } else throw new WrongGeoreferenceError();
-    } catch (err) {
-      throw err;
     }
-  }
-  /**
-   * Returns a full document given its id
-   * @param documentID the id of the document to return
-   * @returns the full document with links number and resources and attachments
-   * @throws generic error if the database query fails
-   * @throws DocumentNotFoundError if the documentID is not presend into the database
-   */
-  async getDocumentByID(documentID: number): Promise<Document> {
-    try {
-      let document = await this.dao.getDocumentByID(documentID);
-      return document;
-    } catch (err) {
-      throw err;
-    }
-  }
-  /**
-   * Returns all the documents titles and the id for retrieving the full document
-   * @returns a list of couples id-title for all the documents
-   * @throws generic error if the database query fails
-   */
-  async getDocumentsTitles(): Promise<{ documentID: number; title: string }[]> {
-    try {
-      let titles = await this.dao.getDocumentsTitles();
-      return titles;
-    } catch (err) {
-      throw err;
-    }
-  }
-  /**
-   * Returns all the documents in the database
-   * @returns a list of documents
-   * @throws generic error if the database query fails
-   */
-  async getAllDocuments(filters: any): Promise<Document[]> {
-    try {
-      let documents = await this.dao.getDocumentsFull(filters);
-      return documents;
-    } catch (err) {
-      throw err;
-    }
-  }
 
-  async getAllDocumentsCoordinates(): Promise<turf.AllGeoJSON> {
-    try {
-      let data = await this.dao.getAllDocumentsCoordinates();
-      let features = data.map((coord) =>
-        turf.point([coord.lon, coord.lat], {
-          documentID: coord.documentID,
-          title: coord.title,
-        })
-      );
-
-      return turf.featureCollection(features);
-    } catch (err) {
-      throw err;
-    }
-  }
-  /**
-   * Deletes all document entries
-   * @returns a void promise
-   * @throws generic error if the database query fails
-   */
-  async deleteAllDocuments(): Promise<void> {
-    try {
-      await this.dao.deleteAllDocuments();
-      return;
-    } catch (err) {
-      throw err;
-    }
-  }
-  /**
-   * 
-   * @param documentID the id of the document to modify
-   * @param zoneID the id of the zone, can be null
-   * @param longitude the longitude of the point, can be null
-   * @param latitude the latitude of the point, can be null
-   */
-  async updateGeoreference(documentID: number, zoneID: number | null, longitude: number, latitude: number): Promise<void> {
-    try {
-      if(zoneID == null && latitude != null && longitude != null) {
-        const checkCoordinates = await this.checkCoordinatesValidity(longitude, latitude);
-        if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
-        else {
-          let changes = await this.dao.setDocumentLonLat(documentID, longitude, latitude);
-          if(!changes) throw new WrongGeoreferenceUpdateError();
-          else return;
-        }  
-      }
-      else if(zoneID != null && latitude == null && longitude == null) {
-        let docZone = await this.dao.getDocumentZone(documentID);
-        if(docZone === zoneID) throw new WrongGeoreferenceUpdateError();
-        let zone = await ZoneDAO.prototype.getZone(zoneID);
-        let randCoordinates: {latitude: number, longitude: number};
-        if (zoneID == 0) randCoordinates = {latitude: 67.84905775407694, longitude: 20.302734375000004}
-        else randCoordinates = await this.getRandCoordinates(zone.coordinates);
-        let changes = await this.dao.setDocumentZoneID(documentID, zoneID, randCoordinates.longitude, randCoordinates.latitude);
-        if(!changes) throw new WrongGeoreferenceUpdateError();
-        else return;
-      }
-      else throw new WrongGeoreferenceError();
-    } catch(err) {
-      throw err;
-    }
-  }
-
-  async shuffleCoordinates(zoneID: number): Promise<boolean> {
-    try{
-      if(zoneID === 0) return false;
-      let documents = await this.dao.getDocumentsFull({zoneID: zoneID});
-      let zone = await ZoneDAO.prototype.getZone(zoneID);
-      if(documents.length === 0) return false;
-      let updatedDocs = await Promise.all(documents.map(async (doc: Document) => {
-        if(await this.checkCoordinatesInsideZone(zone.coordinates, {longitude: doc.longitude, latitude: doc.latitude})) {
-          return {
-            documentID: doc.id,
-            coordinates: {latitude: doc.latitude, longitude: doc.longitude},
-          }
+    async updateDocumentGeoref(documentID: number, zoneID: number | null, coordinates: any | null, latitude: number | null, longitude: number | null): Promise<boolean> {
+        try {
+            if(coordinates == null && zoneID == 0 && latitude == null && longitude == null) {
+                zoneID = null;
+                let response = await this.dao.updateDocumentGeoref(documentID, zoneID, coordinates, latitude, longitude);
+                return response;
+            }
+            else if(coordinates && zoneID == null && latitude == null && longitude == null) {
+                const geo: Geometry= turf.geometry("Polygon", [coordinates]);
+                const zoneExists = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geo as wellknown.GeoJSONGeometry));
+                if(zoneExists) throw new InsertZoneError();
+                const checkCoordinates = await Kiruna.verifyContainedInKiruna(geo);
+                if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
+                let centroid = turf.centroid(geo);
+                let response = await this.dao.updateDocumentGeoref(documentID, zoneID, wellknown.stringify(geo as wellknown.GeoJSONGeometry), centroid.geometry.coordinates[0], centroid.geometry.coordinates[1]);
+                return response;
+            }
+            else if(coordinates ==  null && zoneID == null && latitude != null && longitude != null) {
+                const checkCoordinates = await this.checkCoordinatesValidity(longitude, latitude);
+                if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
+                let response = await this.dao.updateDocumentGeoref(documentID, zoneID, coordinates, latitude, longitude);
+                return response;
+            }
+            else if(coordinates ==  null && zoneID != null && zoneID != 0 && latitude == null && longitude == null) {
+                let zone = await this.zoneDAO.getZone(zoneID);
+                let centroid = turf.centroid(zone.coordinates);
+                let response = await this.dao.updateDocumentGeoref(documentID, zoneID, coordinates, centroid.geometry.coordinates[1], centroid.geometry.coordinates[0]);
+                return response;
+            }
+            else throw new WrongGeoreferenceError();
+        } catch(err) {
+            throw err;
         }
-        else {
-          return {
-            documentID: doc.id,
-            coordinates: await this.getRandCoordinates(zone.coordinates)
-          }
+    }
+
+    async getDocument(documentID: number): Promise<Document> {
+        try {
+            const document = await this.dao.getDocumentByID(documentID);
+            return document;
+        } catch (err) {
+            throw err;
         }
-      }))
-      await this.dao.shuffleCoordInsert(updatedDocs);
-      return true;
-    } catch(err) {
-      throw err;
     }
-  }
 
-  /**
-   * 
-   * @param documentID the id of the document to which belong the resource
-   * @param filesname the list of all the links to add
-   * @returns true if link resources have been added
-   * @throws generic error if the database query fails
-   */
-  async addResource(documentID: number, filesname: string[]): Promise<boolean>{
-    return await this.dao.addResource(documentID, filesname);
-  }
+    async getDocuments(filters: any): Promise<Document[]> {
+        try {
+            const documents = await this.dao.getDocsWithFilters(filters);
+            return documents;
+        } catch(err) {
+            throw err;
+        }
+    }
 
-  /**
-   *
-   * @param polygon a geojson polygon
-   * @returns random coordinates in the poygon in {lat, lon} format
-   * @throws InvalidDocumentZoneError if the specified zone is not a polygon
-   *
-   */
-  private async getRandCoordinates(
-    polygon: any
-  ): Promise<{ latitude: number; longitude: number }> {
-    return new Promise((resolve, reject) => {
-      const bbox = turf.bbox(polygon);
-      const gridPoints = turf.pointGrid(bbox, 0.001, {
-        units: "degrees",
-        mask: polygon,
-      });
-      if (gridPoints.features.length === 0) {
-        reject(new InvalidDocumentZoneError());
-      } else {
-        const randomIndex = Math.floor(
-          Math.random() * gridPoints.features.length
-        );
-        const randomPoint =
-          gridPoints.features[randomIndex].geometry.coordinates;
-        resolve({
-          latitude: randomPoint[1],
-          longitude: randomPoint[0],
-        });
+    async deleteAllDocuments(): Promise<boolean> {
+        try {
+            const response = await this.dao.deleteAllDocuments();
+            return response;
+        } catch(err) {
+            throw err;
+        }
+    }
+
+    async addResource(documentID: number, names: string[], paths: string[]): Promise<boolean>{
+        return await this.dao.addResource(documentID, names, paths);
       }
-    });
-  }
-  /**
-   * Checks the validity of the coordinates by looking if they are in the Kiruna square
-   * @param lon longitude of the point
-   * @param lat latitude of the point
-   * @returns true if the coordinates are in the Kiruna area, false otherwise
-   * @throws generic error if the database query fails
-   */
-  private async checkCoordinatesValidity(
-    lon: number,
-    lat: number
-  ): Promise<boolean> {
-    try {
-      let kirunaPolygon = await ZoneDAO.prototype.getKirunaPolygon();
-      if (!kirunaPolygon) throw new MissingKirunaZoneError();
-      const kirunaPolygonGeoJSON = wellknown.parse(kirunaPolygon);
-      const point = turf.point([lon, lat]);
-      const checkInside = turf.booleanPointInPolygon(
-        point,
-        kirunaPolygonGeoJSON
-      );
-      return checkInside;
-    } catch (err) {
-      throw err;
-    }
-  }
-
-  private async checkCoordinatesInsideZone(polygon: any, coordinates: {longitude: number, latitude: number}): Promise<boolean> {
-    try {
-      const point = turf.point([coordinates.longitude, coordinates.latitude]);
-      const checkInside = turf.booleanPointInPolygon(point, polygon);
-      return checkInside;
-    }catch(err) {
-      console.error(err);
-      throw err;
-    }
-  }
 }
 
-export { DocumentController };
+export {DocumentController}

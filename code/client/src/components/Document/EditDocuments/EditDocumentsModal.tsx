@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
-import MapComponent from "../../Map/MapComponent";
 import Select from "react-select";
 import API from "../../../API/API";
 import "./EditDocumentsModal.css";
-import { Feature, Polygon as GeoJSONPolygon } from "geojson";
+import { Feature, MultiPolygon } from "geojson";
+import GeoReferenceComponent from "../../GeoreferenceComponent/GeoreferenceComponent";
 
 interface EditDocumentProps {
   document: any;
@@ -26,12 +26,20 @@ export default function EditDocumentModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [tempZoneId, setTempZoneId] = useState<number | null>(null);
   const [selectionMode, setSelectionMode] = useState<
-    "point" | "zone" | "custom"
+    "point" | "zone" | "custom" | "newPoint" | null
   >("point");
   const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
     null
   );
+  const [highlightedDocumentId, setHighlightedDocumentId] = useState<
+    number | null
+  >(null);
+  const [tempHighlightedDocumentId, setTempHighlightedDocumentId] = useState<
+    number | null
+  >(null);
   const [tempCustom, setTempCustom] = useState<any>(null);
+  const [customArea, setCustomArea] = useState<any>(null);
+  const [showZones, setShowZones] = useState<boolean>(false);
 
   const [tempCoordinates, setTempCoordinates] = useState<{
     lat: number | null;
@@ -42,7 +50,7 @@ export default function EditDocumentModal({
   });
   const [isReady, setIsReady] = useState(false);
   const [kirunaBoundary, setKirunaBoundary] =
-    useState<Feature<GeoJSONPolygon> | null>(null);
+    useState<Feature<MultiPolygon> | null>(null);
 
   const stakeholderOptions = [
     { value: "LKAB", label: "LKAB" },
@@ -56,9 +64,9 @@ export default function EditDocumentModal({
   const handleLocationSelect = () => {
     setLatitude(tempCoordinates.lat);
     setLongitude(tempCoordinates.lng);
-
+    setHighlightedDocumentId(tempHighlightedDocumentId);
     setZoneID(tempZoneId);
-
+    setCustomArea(tempCustom);
     setShowMapModal(false);
   };
 
@@ -81,16 +89,12 @@ export default function EditDocumentModal({
       latitude === null &&
       longitude === null &&
       zoneID === null &&
-      tempCustom === null
+      customArea === null
     ) {
       setErrorMessage("Please provide valid coordinates or select a zone.");
       return;
     }
 
-    if (tempCustom) {
-      const newZone = await API.createZone(tempCustom);
-      setZoneID(newZone);
-    }
     setIsReady(true);
 
     console.log(document.id, zoneID, longitude, latitude);
@@ -104,6 +108,7 @@ export default function EditDocumentModal({
         updateTable();
         onHide();
       } catch (error: any) {
+        console.log("aaa");
         setErrorMessage(
           error.message || "An error occurred while updating the document."
         );
@@ -122,9 +127,9 @@ export default function EditDocumentModal({
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered>
+    <Modal show={show} onHide={onHide} centered data-bs-theme="dark">
       <Modal.Header closeButton>
-        <Modal.Title>Edit Document</Modal.Title>
+        <Modal.Title className="main-text">Edit Document</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         {errorMessage && (
@@ -139,12 +144,12 @@ export default function EditDocumentModal({
         <Form onSubmit={handleSubmit}>
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formTitle">
-              <Form.Label>Title</Form.Label>
+              <Form.Label className="main-text">Title</Form.Label>
               <Form.Control type="text" value={document.title} disabled />
             </Form.Group>
 
             <Form.Group as={Col} controlId="formStakeholders">
-              <Form.Label>Stakeholders</Form.Label>
+              <Form.Label className="main-text">Stakeholders</Form.Label>
               <Select
                 options={stakeholderOptions}
                 isMulti
@@ -152,12 +157,13 @@ export default function EditDocumentModal({
                   document.stakeholders.split(", ").includes(opt.value)
                 )}
                 isDisabled
+                className="custom-input"
               />
             </Form.Group>
           </Row>
 
           <Form.Group className="mb-3" controlId="formDescription">
-            <Form.Label>Description</Form.Label>
+            <Form.Label className="main-text">Description</Form.Label>
             <Form.Control
               as="textarea"
               rows={3}
@@ -168,24 +174,24 @@ export default function EditDocumentModal({
 
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formLatitude">
-              <Form.Label>Latitude</Form.Label>
+              <Form.Label className="main-text">Latitude</Form.Label>
               <Form.Control
                 type="number"
                 step="0.0001"
                 value={latitude ?? ""}
                 onChange={handleLatitudeChange}
-                disabled={zoneID !== null || tempCustom !== null}
+                disabled={zoneID !== null || customArea !== null}
               />
             </Form.Group>
 
             <Form.Group as={Col} controlId="formLongitude">
-              <Form.Label>Longitude</Form.Label>
+              <Form.Label className="main-text">Longitude</Form.Label>
               <Form.Control
                 type="number"
                 step="0.0001"
                 value={longitude ?? ""}
                 onChange={handleLongitudeChange}
-                disabled={zoneID !== null || tempCustom !== null}
+                disabled={zoneID !== null || customArea !== null}
               />
             </Form.Group>
             <Form.Group
@@ -198,15 +204,31 @@ export default function EditDocumentModal({
               </Button>
             </Form.Group>
           </Row>
+          <Row>
+            <Form.Group controlId="formAssignToKiruna">
+              <Form.Switch
+                className="main-text"
+                label="Assign document to entire Kiruna area"
+                checked={zoneID === 0}
+                onChange={(e) => {
+                  setZoneID(e.target.checked ? 0 : null);
+                  if (e.target.checked) {
+                    setLatitude(null);
+                    setLongitude(null);
+                  }
+                }}
+              />
+            </Form.Group>
+          </Row>
 
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formScale">
-              <Form.Label>Scale</Form.Label>
+              <Form.Label className="main-text">Scale</Form.Label>
               <Form.Control type="text" value={document.scale} disabled />
             </Form.Group>
 
             <Form.Group as={Col} controlId="formIssuanceDate">
-              <Form.Label>Date of Issue</Form.Label>
+              <Form.Label className="main-text">Date of Issue</Form.Label>
               <Form.Control
                 type="text"
                 value={document.issuanceDate}
@@ -215,14 +237,14 @@ export default function EditDocumentModal({
             </Form.Group>
 
             <Form.Group as={Col} controlId="formType">
-              <Form.Label>Type</Form.Label>
+              <Form.Label className="main-text">Type</Form.Label>
               <Form.Control type="text" value={document.type} disabled />
             </Form.Group>
           </Row>
 
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formLanguage">
-              <Form.Label>Language</Form.Label>
+              <Form.Label className="main-text">Language</Form.Label>
               <Form.Control
                 type="text"
                 value={document.language || ""}
@@ -231,25 +253,15 @@ export default function EditDocumentModal({
             </Form.Group>
 
             <Form.Group as={Col} controlId="formPages">
-              <Form.Label>Pages</Form.Label>
+              <Form.Label className="main-text">Pages</Form.Label>
               <Form.Control type="text" value={document.pages || ""} disabled />
             </Form.Group>
           </Row>
-
-          <Form.Group controlId="formAssignToKiruna">
-            <Form.Check
-              type="checkbox"
-              label="Assign document to entire Kiruna area"
-              checked={zoneID === 0}
-              onChange={(e) => {
-                setZoneID(e.target.checked ? 0 : null);
-                if (e.target.checked) {
-                  setLatitude(null);
-                  setLongitude(null);
-                }
-              }}
-            />
-          </Form.Group>
+          {/* <Row>
+            <div className="required-fields-note" style={{ color: "gray" }}>
+              *Required fields
+            </div>
+          </Row> */}
 
           <Modal.Footer>
             <Button variant="secondary" onClick={onHide}>
@@ -273,11 +285,10 @@ export default function EditDocumentModal({
           <Modal.Title>Select Location</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <MapComponent
+          <GeoReferenceComponent
             tempCoordinates={tempCoordinates}
             setTempCoordinates={setTempCoordinates}
             onZoneSelect={handleZoneSelect}
-            setTempZoneId={setTempZoneId}
             selectionMode={selectionMode}
             setSelectionMode={setSelectionMode}
             highlightedZoneId={highlightedZoneId}
@@ -285,6 +296,13 @@ export default function EditDocumentModal({
             setTempCustom={setTempCustom}
             kirunaBoundary={kirunaBoundary}
             setKirunaBoundary={setKirunaBoundary}
+            highlightedDocumentId={highlightedDocumentId}
+            setHighlightedDocumentId={setHighlightedDocumentId}
+            tempHighlightedDocumentId={tempHighlightedDocumentId}
+            setTempHighlightedDocumentId={setTempHighlightedDocumentId}
+            customArea={customArea}
+            showZones={showZones}
+            setShowZones={setShowZones}
           />
         </Modal.Body>
         <Modal.Footer>

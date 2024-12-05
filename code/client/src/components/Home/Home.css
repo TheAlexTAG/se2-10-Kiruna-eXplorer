@@ -1,0 +1,100 @@
+.main-home {
+  background-image: url("./src/assets/backgroundImage.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  width: 100%;
+}
+
+.main-home .home-details {
+  height: 100vh;
+  width: 100%;
+  padding-inline: 100px;
+}
+.main-home .main-title {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 400;
+  font-size: 96px;
+  line-height: 128px;
+  color: #fbfffd;
+}
+.main-home .main-body {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 400;
+  font-size: 36px;
+  line-height: 48px;
+
+  background: linear-gradient(180deg, #c4ffef 24%, #e1fff7 48.5%, #ffffff 66%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.main-home .custom-background {
+  width: 100%;
+  height: 100vh;
+  position: fixed;
+  background: #0000004d;
+  z-index: 0;
+}
+.main-home .main-func {
+  width: 100%;
+}
+.main-home .main-func button {
+  text-decoration: none;
+  width: 100%;
+  /* display: flex;
+  align-items: center; */
+  padding: 0;
+  margin-bottom: -2px;
+}
+.main-home .main-func .function-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100vh / 3);
+  /* height: 342px; */
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 400;
+  font-size: 64px;
+  line-height: 85px;
+}
+
+.main-home .main-func .function-title span {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 400;
+  font-size: 64px;
+  line-height: 85px;
+
+  background: linear-gradient(90deg, #569b7e 38%, #87d9a9 86%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.main-home .main-func .function-image {
+  /* width: 100%; */
+  background: #29494c;
+  /* padding: 12px; */
+}
+.main-home .main-func .first-background {
+  background: linear-gradient(90deg, #315a55 6%, #2f5653 27%, #29484b 50.5%);
+}
+.main-home .main-func .second-background {
+  background: linear-gradient(90deg, #29484b 6%, #2f5653 27%, #315a55 50.5%);
+}
+.main-home .main-func .function-image img {
+  width: 100%;
+  max-width: 256px;
+  height: auto;
+  max-height: calc(100vh / 3);
+  object-fit: none;
+  border-radius: 8px;
+}

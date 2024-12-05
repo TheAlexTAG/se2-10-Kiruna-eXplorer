@@ -1,67 +1,154 @@
-import { Col, Container, Row } from "react-bootstrap";
+import { Document, KirunaDocument } from "../Map/MapComponent";
+import { Button, Container } from "react-bootstrap";
 import API from "../../API/API";
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction } from "react";
+import AgreementIcon from "../../assets/icons/agreement-icon";
+import ConflictIcon from "../../assets/icons/conflict-icon";
+import ConsultationIcon from "../../assets/icons/consultation-icon";
+import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
+import TechnicalIcon from "../../assets/icons/technical-icon";
+import DesignIcon from "../../assets/icons/design-icon";
+import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
 
 interface DocumentCardProps {
   cardInfo: any;
-  iconToShow: string | undefined;
+  setSelectedDocument: Dispatch<
+    SetStateAction<Document | KirunaDocument | null>
+  >;
+  inDiagram: boolean;
 }
 
-export const DocumentCard = ({ cardInfo, iconToShow }: DocumentCardProps) => {
-  const [zones, setZones] = useState<any>([]);
-  const fetchZones = () => {
-    API.getZones().then((res) => {
-      setZones(res);
-    });
+export const DocumentCard = ({
+  cardInfo,
+  setSelectedDocument,
+  inDiagram,
+}: DocumentCardProps) => {
+  const getIconByType = (type: string) => {
+    const iconComponents: { [key: string]: JSX.Element } = {
+      Agreement: <AgreementIcon width={60} height={60} />,
+      Conflict: <ConflictIcon width={60} height={60} />,
+      Consultation: <ConsultationIcon width={60} height={60} />,
+      "Material effect": <MaterialEffectIcon width={60} height={60} />,
+      "Technical doc.": <TechnicalIcon width={60} height={60} />,
+      "Design doc.": <DesignIcon width={60} height={60} />,
+      "Prescriptive doc.": <PrescriptiveIcon width={60} height={60} />,
+      default: <PrescriptiveIcon width={60} height={60} />,
+    };
+    return iconComponents[type] || iconComponents.default;
   };
-
-  useEffect(() => {
-    fetchZones();
-  }, []);
-
-  console.log(cardInfo);
-
   return (
     <>
-      <div style={{ position: "relative", zIndex: "100" }}>
+      <div
+        style={{
+          position: "absolute",
+          zIndex: "1400",
+          width: "400px",
+          left: inDiagram ? "20px" : "60px",
+          top: "100px",
+        }}
+      >
         <Container
+          className="main-text"
           style={{
-            backgroundColor: "#fffffff2",
+            backgroundColor: "#212428f5",
             borderRadius: "12px",
             padding: "20px",
+            position: "relative",
+            overflowY: "auto",
+            height: "80vh",
           }}
         >
-          <Row>
-            <Col md={2} className="d-flex justify-content-center">
-              <img
-                src={iconToShow ? iconToShow : "/img/doc.png"}
-                style={{ width: "60px", height: "60px" }}
-              ></img>
-            </Col>
-            <Col md={5} style={{ borderLeft: "1px solid gray" }}>
-              <div>Title: {cardInfo.title} </div>
-              <div>Stakeholders: {cardInfo.stakeholders}</div>
-              <div>Scale: {cardInfo.scale}</div>
-              <div>Issuance date: {cardInfo.issuanceDate}</div>
-              <div>Type: {cardInfo.type}</div>
-              <div>Connections: {cardInfo.connections}</div>
-              <div>Language: {cardInfo.language ? cardInfo.language : "-"}</div>
-              <div>Pages: {cardInfo.pages ? cardInfo.pages : "-"}</div>
-              {/*Removed zone since no requirement about it(actually they told us they dont't want it somehow) */}
-              {/*cardInfo.zoneID ? (
-                <div>Zone: {cardInfo.zoneID}</div>
-              ) : (
+          <div className="d-flex justify-content-between">
+            {getIconByType(cardInfo.type)}
+            <Button variant="link" onClick={() => setSelectedDocument(null)}>
+              <i className="bi bi-x-lg" style={{ color: "#dc3545" }}></i>
+            </Button>
+          </div>
+          <div className="my-1">
+            <h4>Title: {cardInfo.title} </h4>
+          </div>
+          <div style={{}}>
+            <div className="my-1">
+              <strong>Stakeholders:</strong> {cardInfo.stakeholders}
+            </div>
+            <div className="my-1">
+              <strong>Scale:</strong> {cardInfo.scale}
+            </div>
+            <div className="my-1">
+              <strong>Issuance date: </strong>
+              {cardInfo.issuanceDate.toString()}
+            </div>
+            <div className="my-1">
+              <strong>Type: </strong>
+              {cardInfo.type}
+            </div>
+            <div className="my-1">
+              <strong>Connections:</strong> {cardInfo.connections}
+            </div>
+            <div className="my-1">
+              <strong>Language:</strong>{" "}
+              {cardInfo.language ? cardInfo.language : "-"}
+            </div>
+            <div className="my-1">
+              <strong>Pages:</strong> {cardInfo.pages ? cardInfo.pages : "-"}
+            </div>
+
+            <div className="my-1">
+              {" "}
+              <strong>Description:</strong> {cardInfo.description}
+            </div>
+            {((cardInfo.attachment && cardInfo.attachment.length > 0) ||
+              (cardInfo.resource && cardInfo.resource.length > 0)) && (
+              <div>
+                <strong>Material:</strong>
+              </div>
+            )}
+            <div>
+              {cardInfo.attachment && cardInfo.attachment.length > 0 && (
                 <div>
-                  <div>Latitude: {cardInfo.latitude}</div>
-                  <div>Longitude: {cardInfo.longitude} </div>
+                  {cardInfo.attachments &&
+                    cardInfo.attachments.map(
+                      (attachment: any, index: number) => (
+                        <div key={index}>
+                          <a target="_blank">{attachment.name}</a>
+                        </div>
+                      )
+                    )}
                 </div>
-              )*/}
-            </Col>
-            <Col md={5} style={{ borderLeft: "1px solid gray" }}>
-              Description:
-              <div>{cardInfo.description}</div>
-            </Col>
-          </Row>
+              )}
+              {cardInfo.resource.length > 0 && (
+                <>
+                  <div>Resources:</div>
+                  {cardInfo.resource.length > 0 &&
+                    cardInfo.resource.map((resource: any, index: number) => (
+                      <div key={index}>
+                        <div key={index}>
+                          <Button
+                            variant="link"
+                            style={{
+                              display: "inline-block",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              width: "100%",
+                              textAlign: "left",
+                            }}
+                            onClick={() =>
+                              API.handleDownloadResource(
+                                cardInfo.id,
+                                resource.name
+                              )
+                            }
+                          >
+                            {resource.name}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                </>
+              )}
+            </div>
+          </div>
         </Container>
       </div>
     </>

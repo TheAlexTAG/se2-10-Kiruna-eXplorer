@@ -1,11 +1,10 @@
 import { Zone } from "../components/zone";
 import { ZoneDAO } from "../dao/zoneDAO";
-import { Geometry } from 'geojson';
-import { DatabaseConnectionError } from "../errors/zoneError";
-import { WrongGeoreferenceError } from "../errors/documentErrors";
-
-import { booleanContains } from "@turf/boolean-contains";
-const wellknown= require('wellknown');
+import { Geometry, Position } from 'geojson';
+import { centroid } from "@turf/centroid";
+import { InvalidDocumentZoneError } from "../errors/documentErrors";
+import { Kiruna } from "../utilities";
+import wellknown from 'wellknown';
 
 class ZoneController{
     private dao: ZoneDAO;
@@ -15,43 +14,29 @@ class ZoneController{
     }
 
     async getZone(id: number): Promise<Zone>{
+        if(id=== 0){
+            return new Zone(id,await Kiruna.getKirunaGeometry());
+        }
         return await this.dao.getZone(id);
     }
 
     async getAllZone(): Promise<Zone[]>{
-        return await this.dao.getAllZone();
-    }
-
-    // Function to verify if a zone is completely contained by Kiruna
-    async verifyContainedInKiruna(other: Geometry){
-        const kiruna: Geometry= (await this.dao.getZone(0)).coordinates;
-        return booleanContains(kiruna,other);
-    }
-
-    async insertZone(coordinates: Geometry): Promise<number>{
-        if(!await this.verifyContainedInKiruna(coordinates)){
-            throw new WrongGeoreferenceError();
-        }  
-
-        return await this.dao.insertZone(wellknown.stringify(coordinates));
-    }
-
-    /**
-     * Returns the total number of documents linked to a zone
-     * @param zoneID 
-     * @returns 
-    */
-    async countDocumentsInZone(zoneID: number): Promise<number> {
-        return await this.dao.countDocumentsInZone(zoneID);
+        const res: Zone[]= await this.dao.getAllZone();
+        res.push(new Zone(0,await Kiruna.getKirunaGeometry()));
+        return res;
     }
 
     async modifyZone(zoneID: number, coordinates: Geometry): Promise<boolean>{
-        if(!await this.verifyContainedInKiruna(coordinates)){
-            throw new WrongGeoreferenceError();
+        const strCoord: string=  wellknown.stringify(coordinates as wellknown.GeoJSONGeometry); 
+        if(!await Kiruna.verifyContainedInKiruna(coordinates) || await ZoneDAO.zoneExistsCoord(strCoord)){
+            throw new InvalidDocumentZoneError();
         }
-        
-        return await this.dao.modifyZone(zoneID, wellknown.stringify(coordinates));
+
+        const center: Position= centroid(coordinates).geometry.coordinates;
+
+        return await this.dao.modifyZone(zoneID, strCoord, center[1], center[0]);
     }
+
 }
 
 export {ZoneController};
