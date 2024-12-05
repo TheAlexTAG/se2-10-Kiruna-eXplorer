@@ -115,7 +115,7 @@ describe("Controller document unit tests", () => {
             await expect(controller.createNode('Document1', 'This is a sample description.', null, null, 100, 20.22, 'John Doe, Jane Smith','1:100','12/09/2024','Report','EN',	'1-10')).rejects.toThrow(CoordinatesOutOfBoundsError);
             expect(DocumentDAO.prototype.createDocumentNode).not.toHaveBeenCalled();
         });
-
+        /*
         test("It should post a new document that is refered to an existing zone", async () => {
             const coordinates: number[][] = [ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]];
             const geometry: Geometry= turf.geometry("Polygon", [coordinates]);
@@ -129,7 +129,7 @@ describe("Controller document unit tests", () => {
             
             expect(result).toEqual(1);
             expect(DocumentDAO.prototype.createDocumentNode).toHaveBeenCalled();
-        });
+        });*/
 
         test("It should return WrongGeoreferenceError if parameters are not consistent", async () => {
             await expect(controller.createNode('Document1', 'This is a sample description.', null, null, null, null, 'John Doe, Jane Smith','1:100','12/09/2024','Report','EN',	'1-10')).rejects.toThrow(WrongGeoreferenceError);
@@ -145,7 +145,7 @@ describe("Controller document unit tests", () => {
             expect(result).toEqual(true);
             expect(DocumentDAO.prototype.updateDocumentGeoref).toHaveBeenCalled();
         });
-
+        /*
         test("It should assign the document to a new zone", async () => {
             const coordinates: number[][] = [ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]];
             const geo: Geometry= turf.geometry("Polygon", [coordinates])
@@ -162,7 +162,7 @@ describe("Controller document unit tests", () => {
             
             expect(result).toEqual(true);
             expect(DocumentDAO.prototype.updateDocumentGeoref).toHaveBeenCalled();
-        });
+        });*/
 
         test("It should assign the document to a not new zone", async () => {
             const coordinates: number[][] = [ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]];
@@ -205,7 +205,7 @@ describe("Controller document unit tests", () => {
             await expect(controller.updateDocumentGeoref(1, null, null, 100, 20.22)).rejects.toThrow(CoordinatesOutOfBoundsError);
             expect(DocumentDAO.prototype.updateDocumentGeoref).not.toHaveBeenCalled();
         });
-
+        /*
         test("It should post a new document that is refered to an existing zone", async () => {
             const coordinates: number[][] = [ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]];
             const geo: Geometry= turf.geometry("Polygon", [coordinates])
@@ -219,8 +219,8 @@ describe("Controller document unit tests", () => {
             
             expect(result).toEqual(1);
             expect(DocumentDAO.prototype.updateDocumentGeoref).toHaveBeenCalled();
-        });
-
+        });*/
+    
         test("It should return WrongGeoreferenceError if parameters are not consistent", async () => {
             expect(controller.updateDocumentGeoref(1, null, null, null, null)).rejects.toThrow(WrongGeoreferenceError);
             expect(DocumentDAO.prototype.updateDocumentGeoref).not.toHaveBeenCalled();

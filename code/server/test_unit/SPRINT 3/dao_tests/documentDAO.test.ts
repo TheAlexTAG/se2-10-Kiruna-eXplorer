@@ -1,12 +1,13 @@
 import { DocumentDAO } from '../../../src/dao/documentDAO';
 import db from '../../../src/db/db';
-import { DocumentNotFoundError, WrongGeoreferenceError } from '../../../src/errors/documentErrors';
+import { DocumentNotFoundError, WrongGeoreferenceUpdateError } from '../../../src/errors/documentErrors';
 import { Document } from '../../../src/components/document';
 import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
 import { InternalServerError } from '../../../src/errors/link_docError';
 import { ZoneError } from '../../../src/errors/zoneError';
 
 const wellknown = require('wellknown');
+
 
 jest.mock('../../../src/db/db.ts');
 
@@ -75,7 +76,7 @@ describe('DocumentDAO', () => {
     test("It should register a new document with coordinates or related to an existing zone", async () => { 
         jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
         jest.spyOn(connMock, 'beginTransaction');
-        jest.spyOn(connMock, 'query').mockResolvedValue([{insertId: 2}]);
+        jest.spyOn(connMock, 'query').mockResolvedValue({insertId: 2});
         jest.spyOn(connMock, 'commit');
         jest.spyOn(connMock, 'release');
 
@@ -84,12 +85,12 @@ describe('DocumentDAO', () => {
         expect(result).toEqual(2);
     });
 
-    test("It should register a new document related to an new zone", async () => { 
-        const coordinates: string = wellknown.stringify([ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]]);
+    test("It should register a new document related to a new zone", async () => { 
+        const coordinates = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');   
         jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
         jest.spyOn(connMock, 'beginTransaction');
-        jest.spyOn(connMock, 'query').mockResolvedValue([{insertId: 1}]);
-        jest.spyOn(connMock, 'query').mockResolvedValue([{insertId: 2}]);
+        jest.spyOn(connMock, 'query').mockResolvedValue({insertId: 1});
+        jest.spyOn(connMock, 'query').mockResolvedValue({insertId: 2});
         jest.spyOn(connMock, 'commit');
         jest.spyOn(connMock, 'release');
 
@@ -99,10 +100,10 @@ describe('DocumentDAO', () => {
     });
 
     test("It should return ZoneError if the document is related to an new zone not saved", async () => { 
-        const coordinates: string = wellknown.stringify([ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]]);
+        const coordinates = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');   
         jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
         jest.spyOn(connMock, 'beginTransaction');
-        jest.spyOn(connMock, 'query').mockResolvedValue([{insertId: 0}]);
+        jest.spyOn(connMock, 'query').mockResolvedValue({insertId: 0});
         jest.spyOn(connMock, 'rollback');
         jest.spyOn(connMock, 'release');
 
@@ -142,11 +143,11 @@ describe('DocumentDAO', () => {
     test("It should update a document with coordinates or related to an existing zone", async () => { 
         jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
         jest.spyOn(connMock, 'beginTransaction');
-        jest.spyOn(connMock, 'query').mockResolvedValue([{affectedRows: 1}]);
+        jest.spyOn(connMock, 'query').mockResolvedValue({affectedRows: 1});
         jest.spyOn(connMock, 'commit');
         jest.spyOn(connMock, 'release');
 
-        const result = await dao.updateDocumentGeoref('Document1', 'This is a sample description.', null, null, 67.8525800000002, 20.3148144551419,	'John Doe, Jane Smith',	'1:100','12/09/2024','Report','EN',	'1-10');
+        const result = await dao.updateDocumentGeoref(1, null, null, 67.8525800000002, 20.3148144551419);
 
         expect(result).toEqual(true);
     });
@@ -154,21 +155,21 @@ describe('DocumentDAO', () => {
     test("It should update a document not found", async () => { 
         jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
         jest.spyOn(connMock, 'beginTransaction');
-        jest.spyOn(connMock, 'query').mockResolvedValue([{affectedRows: 0}]);
+        jest.spyOn(connMock, 'query').mockResolvedValue({affectedRows: 0});
         jest.spyOn(connMock, 'commit');
         jest.spyOn(connMock, 'release');
 
-        await expect(dao.updateDocumentGeoref(1, null, null, 67.8525800000002, 20.3148144551419)).rejects.toThrow(WrongGeoreferenceError);
+        await expect(dao.updateDocumentGeoref(1, null, null, 67.8525800000002, 20.3148144551419)).rejects.toThrow(WrongGeoreferenceUpdateError);
 
         expect(connMock.rollback).toHaveBeenCalled();
     });
 
-    test("It should update a document related to an new zone", async () => { 
-        const coordinates: string = wellknown.stringify([ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]]);
+    test("It should update a document related to a new zone", async () => { 
+        const coordinates = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');   
         jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
         jest.spyOn(connMock, 'beginTransaction');
-        jest.spyOn(connMock, 'query').mockResolvedValue([{insertId: 1}]);
-        jest.spyOn(connMock, 'query').mockResolvedValue([{affectedRows: 1}]);
+        jest.spyOn(connMock, 'query').mockResolvedValueOnce({insertId: 1});
+        jest.spyOn(connMock, 'query').mockResolvedValueOnce({affectedRows: 1});
         jest.spyOn(connMock, 'commit');
         jest.spyOn(connMock, 'release');
 
@@ -178,10 +179,10 @@ describe('DocumentDAO', () => {
     });
 
     test("It should return ZoneError if the document is related to an new zone not saved", async () => { 
-        const coordinates: string = wellknown.stringify([ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]]);
+        const coordinates = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');   
         jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
         jest.spyOn(connMock, 'beginTransaction');
-        jest.spyOn(connMock, 'query').mockResolvedValue([{insertId: 0}]);
+        jest.spyOn(connMock, 'query').mockResolvedValue({insertId: 0});
         jest.spyOn(connMock, 'rollback');
         jest.spyOn(connMock, 'release');
 
@@ -218,9 +219,9 @@ describe('DocumentDAO', () => {
 
   describe('getDocumentByID', () => {
     test('It should return a document when it exists', async () => {
-        const document = new Document(1, 'Title','Description', null, 68.33, 67.21, 'Stakeholders', 'Scale', '2024-11-06', 'Type', 'en', 10, 0, [], []);
+        const document = new Document(1, 'Title','Description', null, 68.33, 67.21, 'Stakeholders', 'Scale', '2024-11-06', 'Type', 'en', '10', 0, [], []);
         jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
-        jest.spyOn(connMock, 'query').mockResolvedValue([document]);
+        jest.spyOn(connMock, 'query').mockResolvedValue([{documentID:1, title:'Title', description: 'Description',zoneID: null,latitude: 68.33, longitude:67.21, stakeholders:'Stakeholders', scale:'Scale', issuanceDate:'2024-11-06',type: 'Type',language: 'en', pages:'10',connections: 0, attachments:[], resources:[], link:[]}]);
         jest.spyOn(connMock, 'release');
 
         const result = await dao.getDocumentByID(1);
@@ -260,7 +261,9 @@ describe('DocumentDAO', () => {
             const document2: Document = new Document(2, "Documento 2", "Descrizione 2", 1, null, null,"Stakeholders 1", 
                 "1:100","01/01/2023", "Report", "it", "5", 0, [], [], []);
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
-            jest.spyOn(connMock, 'query').mockResolvedValue([document1, document2]);
+            jest.spyOn(connMock, 'query').mockResolvedValue([
+                {documentID:1, title:'Documento 1', description: 'Descrizione 1',zoneID: 1,latitude:null, longitude:null, stakeholders:'Stakeholders 1', scale:'1:100', issuanceDate:'01/01/2023',type: 'Report',language: 'it', pages:'5',connections: 0, attachment:[], resource:[], link:[]},
+                {documentID:2, title:'Documento 2', description: 'Descrizione 2',zoneID: 1,latitude:null, longitude:null, stakeholders:'Stakeholders 1', scale:'1:100', issuanceDate:'01/01/2023',type: 'Report',language: 'it', pages:'5',connections: 0, attachment:[], resource:[], link:[]}]);
             jest.spyOn(connMock, 'release');
 
             const result = await dao.getDocsWithFilters({
@@ -270,23 +273,23 @@ describe('DocumentDAO', () => {
                 issuanceDate: '01/01/2023',
                 type: 'Report',
                 language: 'it',
-                pagesize: 2,
-                pagenumber: 3
+                pageSize: 2,
+                pageNumber: 3
             });
 
-            expect(result).toBe([document1, document2]);
+            expect(result).toEqual([document1, document2]);
         })
 
         test('It should return all the document related to the whole Kiruna Area', async () => {
-            const document1: Document = new Document(1, "Documento 1", "Descrizione 1", null, null, null,"Stakeholders 1", 
+            const document1: Document = new Document(1, "Documento 1", "Descrizione 1", 0, null, null,"Stakeholders 1", 
                 "1:100","01/01/2023", "Report", "it", "5", 0, [], [], []);
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
-            jest.spyOn(connMock, 'query').mockResolvedValue([document1]);
+            jest.spyOn(connMock, 'query').mockResolvedValue([{documentID:1, title:'Documento 1', description: 'Descrizione 1',zoneID: null,latitude:null, longitude:null, stakeholders:'Stakeholders 1', scale:'1:100', issuanceDate:'01/01/2023',type: 'Report',language: 'it', pages:'5',connections: 0, attachment:[], resource:[], link:[]}]);
             jest.spyOn(connMock, 'release');
 
             const result = await dao.getDocsWithFilters({zoneID: '0'});
 
-            expect(result).toBe([document1]);
+            expect(result).toEqual([document1]);
         })
 
         test('It should return InternalServerError if db call returns a generic error', async () => {

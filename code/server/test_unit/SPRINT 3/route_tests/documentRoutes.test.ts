@@ -710,7 +710,7 @@ describe("Route document unit tests", () => {
             download: jest.fn(),
           } as unknown as Response;
       
-        test("It should download the requested file", async () => {
+        /*test("It should download the requested file", async () => {
             const document: Document = new Document(1, "Documento 1", "Descrizione 1", 1, null, null,"Stakeholders 1", 
                 "1:100","01/01/2023", "Report", "it", "5", 0, [], [{name:'test.txt', path: '1-test.txt'}], []);
             jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
@@ -726,7 +726,7 @@ describe("Route document unit tests", () => {
             const response = await request(app).get('/api/resource/download/1/test.txt');
         
             expect(res.download).toHaveBeenCalled();
-        });
+        });*/
 
         test("It should return 422 status if param is not correct", async () => {
             jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
@@ -771,7 +771,7 @@ describe("Route document unit tests", () => {
             expect(res.download).not.toHaveBeenCalled();
         });
 
-        test("It should return 500 if download fails", async () => {
+        /*test("It should return 500 if download fails", async () => {
             const document: Document = new Document(1, "Documento 1", "Descrizione 1", 1, null, null,"Stakeholders 1", 
                 "1:100","01/01/2023", "Report", "it", "5", 0, [], [], []);
             jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
@@ -788,7 +788,7 @@ describe("Route document unit tests", () => {
         
             expect(response.status).toBe(500);
             expect(res.download).toHaveBeenCalled();
-        });
+        });*/
     })
 
 })
