@@ -28,7 +28,7 @@ const logout = async () => {
     },
     credentials: "include",
   });
-  return await response;
+  return response;
 };
 
 const currentUser = async () => {
