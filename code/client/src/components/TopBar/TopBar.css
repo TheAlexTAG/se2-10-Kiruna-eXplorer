@@ -13,6 +13,9 @@
 .navbar-component a {
   color: whitesmoke;
 }
+.navbar-component .nav-link:hover {
+  color: #085fb2;
+}
 
 @media (max-width: 768px) {
   .navbar-mobile {
