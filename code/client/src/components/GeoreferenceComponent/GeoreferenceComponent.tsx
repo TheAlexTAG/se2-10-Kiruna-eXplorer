@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { Dispatch, SetStateAction, useRef, useState } from "react";
 import MapComponent from "../Map/MapComponent";
 import { Feature, MultiPolygon } from "geojson";
 import { Alert } from "react-bootstrap";
@@ -11,12 +11,21 @@ interface GeoReferenceComponentProps {
   }) => void;
   onZoneSelect: (zoneId: number | null) => void;
   selectionMode: string | null;
-  setSelectionMode: (selectionMode: "point" | "zone" | "custom" | null) => void;
+  setSelectionMode: (
+    selectionMode: "point" | "newPoint" | "zone" | "custom" | null
+  ) => void;
   highlightedZoneId: number | null;
   setHighlightedZoneId: (zoneId: number | null) => void;
   setTempCustom: (tempCustom: any) => void;
+  customArea: any;
   kirunaBoundary: Feature<MultiPolygon> | null;
   setKirunaBoundary: (kirunaBoundary: Feature<MultiPolygon> | null) => void;
+  highlightedDocumentId: number | null;
+  setHighlightedDocumentId: Dispatch<SetStateAction<number | null>>;
+  tempHighlightedDocumentId: number | null;
+  setTempHighlightedDocumentId: Dispatch<SetStateAction<number | null>>;
+  showZones: boolean;
+  setShowZones: Dispatch<SetStateAction<boolean>>;
 }
 
 const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
@@ -28,17 +37,20 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
   highlightedZoneId,
   setHighlightedZoneId,
   setTempCustom,
+  customArea,
   kirunaBoundary,
   setKirunaBoundary,
+  highlightedDocumentId,
+  setHighlightedDocumentId,
+  tempHighlightedDocumentId,
+  setTempHighlightedDocumentId,
+  showZones,
+  setShowZones,
 }) => {
-  const [showZones, setShowZones] = useState<boolean>(false);
   const [polygonExists, setPolygonExists] = useState(false);
   const [editControlKey, setEditControlKey] = useState(0);
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [highlightedDocumentId, setHighlightedDocumentId] = useState<
-    number | null
-  >(null);
 
   const clearCustomPolygon = () => {
     if (featureGroupRef.current) {
@@ -53,13 +65,25 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
     clearCustomPolygon();
     setHighlightedZoneId(null);
     onZoneSelect(null);
+    setShowZones(false);
+    setTempCustom(null);
     setSelectionMode("point");
+  };
+  const handleNewPointMode = () => {
+    setHighlightedDocumentId(null);
+    clearCustomPolygon();
+    setHighlightedZoneId(null);
+    onZoneSelect(null);
+    setShowZones(false);
+    setTempCustom(null);
+    setSelectionMode("newPoint");
   };
   const handleZoneMode = () => {
     setHighlightedDocumentId(null);
     clearCustomPolygon();
     setTempCoordinates({ lat: null, lng: null });
     setShowZones(true);
+    setTempCustom(null);
     setSelectionMode("zone");
   };
 
@@ -85,7 +109,19 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
               color: "white",
             }}
           >
-            Select Point
+            Select Existing Point
+          </button>
+          <button
+            onClick={handleNewPointMode}
+            style={{
+              margin: "10px",
+              padding: "10px",
+              cursor: "pointer",
+              backgroundColor: selectionMode === "newPoint" ? "blue" : "gray",
+              color: "white",
+            }}
+          >
+            Add New Point
           </button>
           <button
             onClick={handleZoneMode}
@@ -97,7 +133,7 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
               color: "white",
             }}
           >
-            Select Zone
+            Select Existing Zone
           </button>
           <button
             onClick={handleCustomDrawMode}
@@ -133,6 +169,7 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
         highlightedZoneId={highlightedZoneId}
         setHighlightedZoneId={setHighlightedZoneId}
         setTempCustom={setTempCustom}
+        customArea={customArea}
         kirunaBoundary={kirunaBoundary}
         setKirunaBoundary={setKirunaBoundary}
         clearCustomPolygon={clearCustomPolygon}
@@ -140,6 +177,8 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
         editControlKey={editControlKey}
         highlightedDocumentId={highlightedDocumentId}
         setHighlightedDocumentId={setHighlightedDocumentId}
+        tempHighlightedDocumentId={tempHighlightedDocumentId}
+        setTempHighlightedDocumentId={setTempHighlightedDocumentId}
       />
     </div>
   );

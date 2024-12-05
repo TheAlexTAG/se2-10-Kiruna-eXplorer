@@ -47,6 +47,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
   const [show, setShow] = useState(false);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [showZones, setShowZones] = useState<boolean>(false);
 
   const [showCalendar, setShowCalendar] = useState(false);
   const datePickerRef = useRef(null);
@@ -117,12 +118,19 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
   const [tempZoneId, setTempZoneId] = useState<number | null>(null);
   const [selectionMode, setSelectionMode] = useState<
-    "point" | "zone" | "custom" | null
+    "point" | "zone" | "custom" | "newPoint" | null
   >("point");
   const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
     null
   );
+  const [highlightedDocumentId, setHighlightedDocumentId] = useState<
+    number | null
+  >(null);
+  const [tempHighlightedDocumentId, setTempHighlightedDocumentId] = useState<
+    number | null
+  >(null);
   const [tempCustom, setTempCustom] = useState<any>(null);
+  const [customArea, setCustomArea] = useState<any>(null);
   const [kirunaBoundary, setKirunaBoundary] =
     useState<Feature<MultiPolygon> | null>(null);
   const handleClose = () => {
@@ -154,8 +162,8 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       scale: !scale,
       issuanceDate: !issuanceDate,
       type: !type,
-      latitude: latitude === null && zoneID === null && tempCustom === null,
-      longitude: longitude === null && zoneID === null && tempCustom === null,
+      latitude: latitude === null && zoneID === null && customArea === null,
+      longitude: longitude === null && zoneID === null && customArea === null,
     };
 
     setFieldErrors(errors);
@@ -167,7 +175,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
     if (
       zoneID === null &&
-      tempCustom === null &&
+      customArea === null &&
       latitude === null &&
       longitude === null
     ) {
@@ -176,7 +184,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       );
       return;
     }
-    setCoordinates(tempCustom);
+    setCoordinates(customArea);
     setErrorMessage(null);
     setIsReady(true);
   };
@@ -242,11 +250,14 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   const handleLocationSelect = () => {
     setLatitude(tempCoordinates.lat);
     setLongitude(tempCoordinates.lng);
-
+    setHighlightedDocumentId(tempHighlightedDocumentId);
     setZoneID(tempZoneId);
-
+    setCustomArea(tempCustom);
     setShowMapModal(false);
   };
+
+  console.log("in newdoc tempcustom is", tempCustom);
+  console.log("in newdoc custom is", customArea);
 
   const handleStakeholderSelect = (
     selectedStakeholders: MultiValue<OptionType>
@@ -307,6 +318,15 @@ const NewDocument: React.FC<NewDocumentProps> = ({
     }
   };
 
+  const [demoVar, setDemoVar] = useState<string>("");
+  console.log("Test - tempCustom is ", tempCustom);
+  const handleMockFill = (i: string) => {
+    setTitle(`Demo title ${i}`);
+    setDescription(`Demo description ${i}`);
+    setScale(`1:1,000`);
+    setIssuanceDate(`1${i}/0${i}/201${i}`);
+    setType("Informative doc.");
+  };
   return (
     <div
       className="document-container"
@@ -326,6 +346,16 @@ const NewDocument: React.FC<NewDocumentProps> = ({
           <Modal.Title className="title main-text">Insert Document</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          <Form>
+            <Form.Control
+              type="text"
+              value={demoVar}
+              onChange={(e) => setDemoVar(e.target.value)}
+            />
+            <Button onClick={() => handleMockFill(demoVar)}>
+              Press for demo fill
+            </Button>
+          </Form>
           <Form data-bs-theme="dark">
             {errorMessage && (
               <Alert
@@ -406,7 +436,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   step="0.0001"
                   value={latitude ?? ""}
                   onChange={handleLatitudeChange}
-                  disabled={zoneID !== null || tempCustom !== null}
+                  disabled={zoneID !== null || customArea !== null}
                 />
               </Form.Group>
 
@@ -417,7 +447,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   step="0.0001"
                   value={longitude ?? ""}
                   onChange={handleLongitudeChange}
-                  disabled={zoneID !== null || tempCustom !== null}
+                  disabled={zoneID !== null || customArea !== null}
                 />
               </Form.Group>
               <Form.Group
@@ -632,6 +662,13 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             setTempCustom={setTempCustom}
             kirunaBoundary={kirunaBoundary}
             setKirunaBoundary={setKirunaBoundary}
+            highlightedDocumentId={highlightedDocumentId}
+            setHighlightedDocumentId={setHighlightedDocumentId}
+            tempHighlightedDocumentId={tempHighlightedDocumentId}
+            setTempHighlightedDocumentId={setTempHighlightedDocumentId}
+            customArea={customArea}
+            showZones={showZones}
+            setShowZones={setShowZones}
           />
         </Modal.Body>
         <Modal.Footer>

@@ -41,7 +41,7 @@ export const DocumentCard = ({
           position: "absolute",
           zIndex: "1400",
           width: "400px",
-          left: "20px",
+          left: "60px",
           top: "100px",
         }}
       >
@@ -52,8 +52,8 @@ export const DocumentCard = ({
             borderRadius: "12px",
             padding: "20px",
             position: "relative",
-            // overflowY: "scroll",
-            height: "85vh",
+            overflowY: "auto",
+            height: "80vh",
           }}
         >
           <div className="d-flex justify-content-between">
@@ -65,7 +65,7 @@ export const DocumentCard = ({
           <div className="my-1">
             <h4>Title: {cardInfo.title} </h4>
           </div>
-          <div style={{ overflowY: "scroll", height: "85%" }}>
+          <div style={{}}>
             <div className="my-1">
               <strong>Stakeholders:</strong> {cardInfo.stakeholders}
             </div>

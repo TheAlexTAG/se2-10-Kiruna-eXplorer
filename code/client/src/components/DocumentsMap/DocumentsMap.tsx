@@ -24,6 +24,9 @@ const DocumentsMap: React.FC = () => {
   const [highlightedDocumentId, setHighlightedDocumentId] = useState<
     number | null
   >(null);
+  const [tempHighlightedDocumentId, setTempHighlightedDocumentId] = useState<
+    number | null
+  >(null);
 
   /*const reactIconHTML = ReactDOMServer.renderToString(
     <div /*className="custom-icon"*/ /*>
@@ -126,6 +129,8 @@ const DocumentsMap: React.FC = () => {
         setKirunaBoundary={setKirunaBoundary}
         highlightedDocumentId={highlightedDocumentId}
         setHighlightedDocumentId={setHighlightedDocumentId}
+        tempHighlightedDocumentId={tempHighlightedDocumentId}
+        setTempHighlightedDocumentId={setTempHighlightedDocumentId}
       />
     </>
   );

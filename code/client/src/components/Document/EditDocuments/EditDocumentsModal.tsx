@@ -26,12 +26,20 @@ export default function EditDocumentModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [tempZoneId, setTempZoneId] = useState<number | null>(null);
   const [selectionMode, setSelectionMode] = useState<
-    "point" | "zone" | "custom" | null
+    "point" | "zone" | "custom" | "newPoint" | null
   >("point");
   const [highlightedZoneId, setHighlightedZoneId] = useState<number | null>(
     null
   );
+  const [highlightedDocumentId, setHighlightedDocumentId] = useState<
+    number | null
+  >(null);
+  const [tempHighlightedDocumentId, setTempHighlightedDocumentId] = useState<
+    number | null
+  >(null);
   const [tempCustom, setTempCustom] = useState<any>(null);
+  const [customArea, setCustomArea] = useState<any>(null);
+  const [showZones, setShowZones] = useState<boolean>(false);
 
   const [tempCoordinates, setTempCoordinates] = useState<{
     lat: number | null;
@@ -56,9 +64,9 @@ export default function EditDocumentModal({
   const handleLocationSelect = () => {
     setLatitude(tempCoordinates.lat);
     setLongitude(tempCoordinates.lng);
-
+    setHighlightedDocumentId(tempHighlightedDocumentId);
     setZoneID(tempZoneId);
-
+    setCustomArea(tempCustom);
     setShowMapModal(false);
   };
 
@@ -81,16 +89,12 @@ export default function EditDocumentModal({
       latitude === null &&
       longitude === null &&
       zoneID === null &&
-      tempCustom === null
+      customArea === null
     ) {
       setErrorMessage("Please provide valid coordinates or select a zone.");
       return;
     }
 
-    /*if (tempCustom) {
-      const newZone = await API.createZone(tempCustom);
-      setZoneID(newZone);
-    }*/
     setIsReady(true);
 
     console.log(document.id, zoneID, longitude, latitude);
@@ -176,7 +180,7 @@ export default function EditDocumentModal({
                 step="0.0001"
                 value={latitude ?? ""}
                 onChange={handleLatitudeChange}
-                disabled={zoneID !== null || tempCustom !== null}
+                disabled={zoneID !== null || customArea !== null}
               />
             </Form.Group>
 
@@ -187,7 +191,7 @@ export default function EditDocumentModal({
                 step="0.0001"
                 value={longitude ?? ""}
                 onChange={handleLongitudeChange}
-                disabled={zoneID !== null || tempCustom !== null}
+                disabled={zoneID !== null || customArea !== null}
               />
             </Form.Group>
             <Form.Group
@@ -292,6 +296,13 @@ export default function EditDocumentModal({
             setTempCustom={setTempCustom}
             kirunaBoundary={kirunaBoundary}
             setKirunaBoundary={setKirunaBoundary}
+            highlightedDocumentId={highlightedDocumentId}
+            setHighlightedDocumentId={setHighlightedDocumentId}
+            tempHighlightedDocumentId={tempHighlightedDocumentId}
+            setTempHighlightedDocumentId={setTempHighlightedDocumentId}
+            customArea={customArea}
+            showZones={showZones}
+            setShowZones={setShowZones}
           />
         </Modal.Body>
         <Modal.Footer>
