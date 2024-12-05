@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef, SetStateAction } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  SetStateAction,
+  Dispatch,
+} from "react";
 import {
   MapContainer,
   TileLayer,
@@ -30,8 +36,9 @@ import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
 import TechnicalIcon from "../../assets/icons/technical-icon";
 import DesignIcon from "../../assets/icons/design-icon";
 import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
-import { GrDocumentText } from "react-icons/gr";
 import KirunaDocs from "./KirunaDocs/KirunaDocs";
+import { PiBird } from "react-icons/pi";
+import { IoDocumentOutline, IoDocumentSharp } from "react-icons/io5";
 
 export type Document = {
   id: number;
@@ -61,6 +68,7 @@ interface MapComponentProps {
   highlightedZoneId?: number | null;
   setHighlightedZoneId?: (zoneId: number | null) => void;
   setTempCustom?: (tempCustom: any) => void;
+  customArea?: any;
   kirunaBoundary: Feature<MultiPolygon> | null;
   setKirunaBoundary: (kirunaBoundary: Feature<MultiPolygon> | null) => void;
   clearCustomPolygon?: () => void;
@@ -68,6 +76,10 @@ interface MapComponentProps {
   setShowZones: React.Dispatch<SetStateAction<boolean>>;
   setErrorMessage?: React.Dispatch<SetStateAction<string | null>>;
   editControlKey?: number;
+  highlightedDocumentId: number | null;
+  setHighlightedDocumentId: Dispatch<SetStateAction<number | null>>;
+  tempHighlightedDocumentId: number | null;
+  setTempHighlightedDocumentId: Dispatch<SetStateAction<number | null>>;
 }
 
 type ZoneProps = {
@@ -86,6 +98,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   highlightedZoneId,
   setHighlightedZoneId,
   setTempCustom,
+  customArea,
   kirunaBoundary,
   setKirunaBoundary,
   clearCustomPolygon,
@@ -93,6 +106,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
   setShowZones,
   setErrorMessage,
   editControlKey,
+  highlightedDocumentId,
+  setHighlightedDocumentId,
+  tempHighlightedDocumentId,
+  setTempHighlightedDocumentId,
 }) => {
   const [kirunaDocuments, setKirunaDocuments] = useState<
     KirunaDocument[] | null
@@ -106,6 +123,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
   const [polygonExists, setPolygonExists] = useState(false);
   const [isSatelliteView, setIsSatelliteView] = useState(true);
+  const [showDocs, setShowDocs] = useState(true);
 
   const defaultTileLayer = [
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -150,6 +168,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     };
     fetchDocuments();
     fetchZones();
+    setTempHighlightedDocumentId(highlightedDocumentId);
   }, []);
 
   const handleCreated = (e: any) => {
@@ -193,11 +212,15 @@ const MapComponent: React.FC<MapComponentProps> = ({
   console.log("selection mode is ", selectionMode);
   const PointClickHandler: React.FC = () => {
     useMapEvent("click", (e) => {
-      if (selectedDocument) {
-        setSelectedDocument(null);
-      }
-      if (setTempCoordinates && selectionMode === "point") {
-        setTempCoordinates({ lat: e.latlng.lat, lng: e.latlng.lng });
+      setSelectedDocument(null);
+      //setHighlightedDocumentId(null);
+      setTempHighlightedDocumentId(null);
+      if (setTempCoordinates) {
+        if (selectionMode === "point") {
+          setTempCoordinates({ lat: null, lng: null });
+        } else if (selectionMode === "newPoint") {
+          setTempCoordinates({ lat: e.latlng.lat, lng: e.latlng.lng });
+        }
       }
     });
     return null;
@@ -237,7 +260,41 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const toggleZonesView = () => {
     if (selectionMode !== "zone") setShowZones((prev) => !prev);
   };
+  const toggleDocsView = () => {
+    setShowDocs((prev) => !prev);
+  };
 
+  const renderCustomPolygon = () => {
+    console.log("helli", customArea);
+    if (selectionMode !== "custom" || !selectionMode) {
+      return null;
+    }
+
+    if (customArea) {
+      console.log("hell");
+      return (
+        <FeatureGroup>
+          {zones
+            .filter((zone) => zone.id === 1)
+            .map((zone) => (
+              <Polygon
+                key={zone.id}
+                positions={customArea.map(([lng, lat]: [number, number]) => [
+                  lat,
+                  lng,
+                ])}
+                pathOptions={{
+                  color: "blue",
+                  fillOpacity: 0.2,
+                }}
+              />
+            ))}
+        </FeatureGroup>
+      );
+    }
+  };
+  console.log("zones is ", zones);
+  console.log("custom area is ", customArea);
   const renderZones = () => {
     if (!showZones) return null;
 
@@ -267,7 +324,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     );
   };
 
-  const getIconByType = (type: string) => {
+  const getIconByType = (type: string, isHighlighted: boolean) => {
     const iconComponents: { [key: string]: JSX.Element } = {
       Agreement: <AgreementIcon width={30} height={30} />,
       Conflict: <ConflictIcon width={30} height={30} />,
@@ -281,20 +338,31 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const selectedIcon = iconComponents[type] || iconComponents.default;
     return L.divIcon({
       html: ReactDOMServer.renderToString(selectedIcon),
-      className: "custom-icon",
-      iconSize: [40, 40],
+      className: isHighlighted ? "custom-icon highlighted" : "custom-icon",
+      iconSize: isHighlighted ? [42, 42] : [40, 40],
       iconAnchor: [15, 15],
       popupAnchor: [0, -15],
     });
   };
   const handleMoreClick = (doc: Document | KirunaDocument) => {
     setSelectedDocument(doc);
+    setHighlightedDocumentId(doc.id);
+    setTempHighlightedDocumentId(doc.id);
   };
 
   const handleOpenKirunaModal = () => {
     setSelectedDocument(null);
+    setHighlightedDocumentId(null);
+    setTempHighlightedDocumentId(null);
     setShowKirunaDocuments(true);
   };
+
+  console.log("Test - tempCoords are ", tempCoordinates);
+  console.log("Test - zone id is ", highlightedZoneId);
+  console.log("Test - highlighted documetn id ", highlightedDocumentId);
+  console.log("Test - selectedDocument is ", selectedDocument);
+  console.log("Test - selectionMode is ", selectionMode);
+
   return (
     <div>
       <MapContainer
@@ -330,38 +398,67 @@ const MapComponent: React.FC<MapComponentProps> = ({
           />
         )}
         {/*@ts-ignore*/}
-        <MarkerClusterGroup>
+        <MarkerClusterGroup
+          spiderfyOnMaxZoom={true} // Keep spiderfying behavior
+          zoomToBoundsOnClick={true} // Allow zoom on cluster click
+          showCoverageOnHover={false} // Disable coverage hover
+        >
           {/*for now we ignore MarkerClusterGroup type error, since everything works*/}
-          {documents.map((doc) => (
-            <Marker
-              key={doc.id}
-              position={[doc.latitude, doc.longitude]}
-              icon={getIconByType(doc.type)}
-            >
-              <Popup>
-                <b>{doc.title}</b>
-                <br />
-                Type: {doc.type}
-                <br />
-                {selectionMode ? (
-                  ""
-                ) : (
-                  <div className="moreBtn" onClick={() => handleMoreClick(doc)}>
-                    More
-                  </div>
+          {showDocs &&
+            documents.map((doc) => (
+              <Marker
+                key={doc.id}
+                position={[doc.latitude, doc.longitude]}
+                icon={getIconByType(
+                  doc.type,
+                  doc.id === tempHighlightedDocumentId
                 )}
-              </Popup>
-            </Marker>
-          ))}
+                eventHandlers={
+                  selectionMode === "point" && setTempCoordinates
+                    ? {
+                        click: () => {
+                          //setHighlightedDocumentId(doc.id);
+                          setTempHighlightedDocumentId(doc.id);
+                          setTempCoordinates({
+                            lat: doc.latitude,
+                            lng: doc.longitude,
+                          });
+                          /*handleMoreClick(doc);*/
+                        },
+                      }
+                    : {}
+                }
+              >
+                <Popup>
+                  <b>{doc.title}</b>
+                  <br />
+                  Type: {doc.type}
+                  <br />
+                  {selectionMode ? (
+                    ""
+                  ) : (
+                    <div
+                      className="moreBtn"
+                      onClick={() => handleMoreClick(doc)}
+                    >
+                      More
+                    </div>
+                  )}
+                </Popup>
+              </Marker>
+            ))}
         </MarkerClusterGroup>
 
         <PointClickHandler />
         {renderKirunaBoundary()}
-        {tempCoordinates && tempCoordinates.lat && tempCoordinates.lng && (
-          <Marker position={[tempCoordinates.lat, tempCoordinates.lng]}>
-            <Popup>You selected this point.</Popup>
-          </Marker>
-        )}
+        {tempCoordinates &&
+          tempCoordinates.lat &&
+          tempCoordinates.lng &&
+          selectionMode === "newPoint" && (
+            <Marker position={[tempCoordinates.lat, tempCoordinates.lng]}>
+              <Popup>You selected this point.</Popup>
+            </Marker>
+          )}
         {selectionMode === "custom" && (
           <FeatureGroup ref={featureGroupRef}>
             <EditControl
@@ -387,6 +484,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
           </FeatureGroup>
         )}
         {renderZones()}
+        {renderCustomPolygon()}
       </MapContainer>
       {selectedDocument && (
         <DocumentCard
@@ -426,6 +524,23 @@ const MapComponent: React.FC<MapComponentProps> = ({
           {showZones ? "Hide Zones" : "Show Zones"}
         </span>
       </div>
+      <div
+        onClick={toggleDocsView}
+        className="map-toggle-btn"
+        style={{
+          position: "absolute",
+          bottom: selectionMode ? "30px" : "20px",
+          left: selectionMode ? "125px" : "110px",
+          zIndex: 1000,
+        }}
+      >
+        {showDocs ? (
+          <IoDocumentSharp size={20} />
+        ) : (
+          <IoDocumentOutline size={20} />
+        )}
+        <span className="tooltip">{showDocs ? "Hide Docs" : "Show Docs"}</span>
+      </div>
       {!selectionMode && (
         <>
           <div
@@ -438,7 +553,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
               zIndex: 1000,
             }}
           >
-            <GrDocumentText />
+            <PiBird />
             <span className="tooltip">Show Kiruna Municipality Documents</span>
           </div>
           <KirunaDocs

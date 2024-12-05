@@ -143,6 +143,12 @@
   transition: transform 0.2s ease;
 }
 
+.custom-icon.highlighted {
+  background-color: rgb(184, 181, 28);
+  border: 1px solid gold;
+  box-shadow: 0px 10px 8px rgba(0, 0, 0, 0.5);
+}
+
 .custom-icon-border {
   background: none;
 }
