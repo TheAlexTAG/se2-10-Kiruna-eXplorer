@@ -327,6 +327,37 @@ const NewDocument: React.FC<NewDocumentProps> = ({
     setIssuanceDate(`1${i}/0${i}/201${i}`);
     setType("Informative doc.");
   };
+
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    function globalKeyboardWatcher(event: KeyboardEvent) {
+      const allowedKeys = [
+        "Backspace",
+        "Tab",
+        "ArrowLeft",
+        "ArrowRight",
+        "-",
+        ".",
+      ];
+
+      const isNumber = event.key >= "0" && event.key <= "9";
+      const isAllowed = allowedKeys.includes(event.key);
+
+      if (!isNumber && !isAllowed) {
+        event.preventDefault();
+        alert("Please enter only numeric values.");
+      }
+    }
+
+    if (isFocused) {
+      window.addEventListener("keydown", globalKeyboardWatcher);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", globalKeyboardWatcher);
+    };
+  }, [isFocused]);
   return (
     <div
       className="document-container"
@@ -435,6 +466,8 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   type="number"
                   step="0.0001"
                   value={latitude ?? ""}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
                   onChange={handleLatitudeChange}
                   disabled={zoneID !== null || customArea !== null}
                 />
@@ -446,6 +479,8 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   type="number"
                   step="0.0001"
                   value={longitude ?? ""}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
                   onChange={handleLongitudeChange}
                   disabled={zoneID !== null || customArea !== null}
                 />
