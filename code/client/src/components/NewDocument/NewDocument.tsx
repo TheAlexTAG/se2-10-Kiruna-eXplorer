@@ -384,7 +384,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
               onChange={(e) => setDemoVar(e.target.value)}
             />
             <Button onClick={() => handleMockFill(demoVar)}>
-              Press for demo fill
+              Autofill template
             </Button>
           </Form>
           <Form data-bs-theme="dark">

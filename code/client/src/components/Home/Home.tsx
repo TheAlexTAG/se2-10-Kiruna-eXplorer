@@ -48,7 +48,7 @@ export const Home = () => {
                     md={3}
                     className="function-image d-flex justify-content-center align-items-center m-0 p-0 "
                   >
-                    <div>
+                    <div className="function-image">
                       <img src="./src/assets/map.png" />
                     </div>
                   </Col>
