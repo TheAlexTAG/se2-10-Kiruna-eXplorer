@@ -222,7 +222,7 @@ describe("Controller document unit tests", () => {
         });
 
         test("It should return WrongGeoreferenceError if parameters are not consistent", async () => {
-            await expect(controller.updateDocumentGeoref(1, null, null, null, null)).rejects.toThrow(WrongGeoreferenceError);
+            expect(controller.updateDocumentGeoref(1, null, null, null, null)).rejects.toThrow(WrongGeoreferenceError);
             expect(DocumentDAO.prototype.updateDocumentGeoref).not.toHaveBeenCalled();
         });
 
@@ -243,7 +243,7 @@ describe("Controller document unit tests", () => {
         test("It should return an error if dao method returns it", async () => {
             jest.spyOn(DocumentDAO.prototype,"getDocumentByID").mockRejectedValue(new Error('Database error'));
 
-            await expect(await controller.getDocument(1)).rejects.toThrow(Error);
+            await expect(controller.getDocument(1)).rejects.toThrow(Error);
             expect(DocumentDAO.prototype.getDocumentByID).toHaveBeenCalled();
         });
     });
@@ -265,7 +265,7 @@ describe("Controller document unit tests", () => {
         test("It should return an error if dao method returns it", async () => {
             jest.spyOn(DocumentDAO.prototype,"getDocsWithFilters").mockRejectedValue(new Error('Database error'));
 
-            await expect(await controller.getDocuments(undefined)).rejects.toThrow(Error);
+            await expect(controller.getDocuments(undefined)).rejects.toThrow(Error);
             expect(DocumentDAO.prototype.getDocsWithFilters).toHaveBeenCalled();
         });
     });
@@ -283,7 +283,7 @@ describe("Controller document unit tests", () => {
         test("It should return an error if dao method returns it", async () => {
             jest.spyOn(DocumentDAO.prototype,"deleteAllDocuments").mockRejectedValue(new Error('Database error'));
 
-            await expect(await controller.deleteAllDocuments()).rejects.toThrow(Error);
+            await expect(controller.deleteAllDocuments()).rejects.toThrow(Error);
             expect(DocumentDAO.prototype.deleteAllDocuments).toHaveBeenCalled();
         });
     });
@@ -301,7 +301,7 @@ describe("Controller document unit tests", () => {
         test("It should return an error if dao method returns it", async () => {
             jest.spyOn(DocumentDAO.prototype,"addResource").mockRejectedValue(new Error('Database error'));
 
-            await expect(await controller.addResource(1, ['file.txt'], ['resources/1-fileURLToPath.txt'])).rejects.toThrow(Error);
+            await expect(controller.addResource(1, ['file.txt'], ['resources/1-fileURLToPath.txt'])).rejects.toThrow(Error);
             expect(DocumentDAO.prototype.addResource).toHaveBeenCalled();
         });
     });

@@ -727,6 +727,68 @@ describe("Route document unit tests", () => {
         
             expect(res.download).toHaveBeenCalled();
         });
+
+        test("It should return 422 status if param is not correct", async () => {
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return res.status(422);
+            })
+        
+            const response = await request(app).get('/api/resource/download/uno/test.txt');
+        
+            expect(response.status).toBe(422);
+            expect(res.download).not.toHaveBeenCalled();
+        });
+
+        test("It should return 404 if file is not in db", async () => {
+            const document: Document = new Document(1, "Documento 1", "Descrizione 1", 1, null, null,"Stakeholders 1", 
+                "1:100","01/01/2023", "Report", "it", "5", 0, [], [], []);
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
+            jest.spyOn(path, 'join').mockReturnValue('/code/server');
+            jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+        
+            const response = await request(app).get('/api/resource/download/1/test.txt');
+        
+            expect(response.status).toBe(404);
+            expect(res.download).not.toHaveBeenCalled();
+        });
+
+        test("It should return 404 if file is not in resource directory", async () => {
+            const document: Document = new Document(1, "Documento 1", "Descrizione 1", 1, null, null,"Stakeholders 1", 
+                "1:100","01/01/2023", "Report", "it", "5", 0, [], [], []);
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
+            jest.spyOn(path, 'join').mockReturnValue('/code/server/resources/1-test.txt');
+            jest.spyOn(fs, 'existsSync').mockReturnValue(false);
+        
+            const response = await request(app).get('/api/resource/download/1/test.txt');
+        
+            expect(response.status).toBe(404);
+            expect(res.download).not.toHaveBeenCalled();
+        });
+
+        test("It should return 500 if download fails", async () => {
+            const document: Document = new Document(1, "Documento 1", "Descrizione 1", 1, null, null,"Stakeholders 1", 
+                "1:100","01/01/2023", "Report", "it", "5", 0, [], [], []);
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
+            jest.spyOn(path, 'join').mockReturnValue('/code/server/resources/1-test.txt');
+            jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+            jest.spyOn(res, 'download').mockImplementation((path, filename, callback: any) => {
+                callback(new DatabaseConnectionError(''));
+            });
+        
+            const response = await request(app).get('/api/resource/download/1/test.txt');
+        
+            expect(response.status).toBe(500);
+            expect(res.download).toHaveBeenCalled();
+        });
     })
 
 })
