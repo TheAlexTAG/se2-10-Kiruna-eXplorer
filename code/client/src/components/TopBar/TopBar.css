@@ -4,6 +4,9 @@
 .navbar-component .btn {
   text-decoration: none;
 }
+.navbar-brand:hover {
+  color: whitesmoke;
+}
 .navbar-list-icon {
   display: none;
 }
