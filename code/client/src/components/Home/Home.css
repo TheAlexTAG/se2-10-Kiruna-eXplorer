@@ -95,7 +95,6 @@
   max-width: 256px;
   height: auto;
   max-height: calc(100vh / 3);
-  max-width: 281px;
   object-fit: none;
   border-radius: 8px;
 }
