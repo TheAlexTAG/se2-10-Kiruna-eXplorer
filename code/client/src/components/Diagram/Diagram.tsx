@@ -518,16 +518,15 @@ export const Diagram: React.FC = () => {
               relationship: link.relationship,
               index,
             }))
-            .filter(({ sourceNode, targetNode }) => {
+            .filter(({ sourceNode, targetNode, relationship }) => {
               if (targetNode) {
-                // Crea una chiave unica per la coppia di nodi (indipendentemente dall'ordine)
-                const linkKey = [sourceNode.id, targetNode.id].sort().join("-");
+                const linkKey = [sourceNode.id, targetNode.id, relationship].sort().join("-");
                 if (seenLinks.has(linkKey)) {
-                  return false; // Se il collegamento è già stato visto, escludilo
+                  return false; 
                 }
-                seenLinks.add(linkKey); // Aggiungi il collegamento al Set
+                seenLinks.add(linkKey); 
               }
-              return true; // Mantieni il collegamento se unico
+              return true; 
             })
         )
       )
