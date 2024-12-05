@@ -29,7 +29,7 @@ class Document {
     issuanceDate: string;
     type: string;
     language: string | null;
-    pages: number | null;
+    pages: string | null;
     connections: number;
     attachment: Attachment[];
     resource: Resource[];
@@ -57,7 +57,7 @@ class Document {
      * @param links the id of the documents linked to the actual document
     */
     constructor(id: number, title: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null,
-        stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: number | null, connections: number, 
+        stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null, connections: number, 
         attachment: Attachment[] = [], resource: Resource[] = [], links: link[] = []) {
         this.id = id;
         this.title = title;

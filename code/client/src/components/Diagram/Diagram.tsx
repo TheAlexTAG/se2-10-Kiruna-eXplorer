@@ -184,6 +184,8 @@ const fetchDocuments = async (): Promise<Node[]> => {
     resource: doc.resource,
     parsedScale: parseScale(doc.scale),
     parsedDate: parseDate(doc.issuanceDate),
+    pages: doc.pages,
+    language: doc.language
   }));
 };
 

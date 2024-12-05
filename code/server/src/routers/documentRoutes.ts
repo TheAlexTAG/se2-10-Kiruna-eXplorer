@@ -79,6 +79,7 @@ class DocumentRoutes {
             
         this.app.get("/api/document/:id",
             param("id").isInt(),
+            this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => this.controller.getDocument(req.params.id)
         .then(doc => res.status(200).json(doc))
         .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
