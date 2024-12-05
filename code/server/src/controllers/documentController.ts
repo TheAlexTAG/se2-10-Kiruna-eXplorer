@@ -48,7 +48,9 @@ class DocumentController {
             }
             else if(coordinates ==  null && zoneID != null && zoneID != 0 && latitude == null && longitude == null) {
                 let zone = await this.zoneDAO.getZone(zoneID);
+                console.log(zone)
                 let centroid = turf.centroid(zone.coordinates);
+                console.log(centroid)
                 let lastID = await this.dao.createDocumentNode(title, description, zoneID, coordinates, centroid.geometry.coordinates[1], centroid.geometry.coordinates[0], stakeholders, scale, issuanceDate, type, language, pages);
                 return lastID;
               } 

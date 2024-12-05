@@ -704,7 +704,11 @@ describe("Route document unit tests", () => {
 
     describe("GET /api/resource/download/:documentID/:fileName", () => {
 
-        const res = mockExpress.response();
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            download: jest.fn(),
+          } as unknown as Response;
       
         test("It should download the requested file", async () => {
             const document: Document = new Document(1, "Documento 1", "Descrizione 1", 1, null, null,"Stakeholders 1", 
