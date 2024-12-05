@@ -77,7 +77,7 @@ sections:
   - Mainly our mistakes were in story number 20 and story number 14 where we didn't consider that most of the work for these new stories had already been implemented with the previous one and with fixing the issues, because we thought it would take less effort.
 
 - What lessons did you learn (both positive and negative) in this sprint?
-  - The main lesson we learned in this sprint is that being organized from the beginning is a great help in managing the work during the sprint and helps to finish it sooner, so we have time to test it and look for bugs. Also, good communication in the team helps a lot in getting the work done faster.
+  - The main lesson we learned in this sprint is that being organized from the beginning is a great help in managing the work during the sprint and helps to finish it sooner, so we have time to test it and look for bugs. Also, good communication in the team helps a lot to get the work done faster.
 
 - Which improvement goals set in the previous retrospective were you able to achieve? 
   - We managed to improve team chemistry. 
