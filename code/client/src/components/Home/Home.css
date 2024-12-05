@@ -82,7 +82,7 @@
 .main-home .main-func .function-image {
   /* width: 100%; */
   background: #29494c;
-  padding: 12px;
+  /* padding: 12px; */
 }
 .main-home .main-func .first-background {
   background: linear-gradient(90deg, #315a55 6%, #2f5653 27%, #29484b 50.5%);
