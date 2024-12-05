@@ -15,11 +15,13 @@ interface DocumentCardProps {
   setSelectedDocument: Dispatch<
     SetStateAction<Document | KirunaDocument | null>
   >;
+  inDiagram: boolean;
 }
 
 export const DocumentCard = ({
   cardInfo,
   setSelectedDocument,
+  inDiagram,
 }: DocumentCardProps) => {
   const getIconByType = (type: string) => {
     const iconComponents: { [key: string]: JSX.Element } = {
@@ -41,7 +43,7 @@ export const DocumentCard = ({
           position: "absolute",
           zIndex: "1400",
           width: "400px",
-          left: "60px",
+          left: inDiagram ? "20px" : "60px",
           top: "100px",
         }}
       >

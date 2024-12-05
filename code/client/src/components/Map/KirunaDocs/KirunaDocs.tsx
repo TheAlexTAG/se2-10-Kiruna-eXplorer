@@ -1,5 +1,5 @@
 import React from "react";
-import { Badge, Button, ListGroup, Modal } from "react-bootstrap";
+import { Badge, Button, Col, Container, Modal, Row } from "react-bootstrap";
 import { Document, KirunaDocument } from "../MapComponent";
 import AgreementIcon from "../../../assets/icons/agreement-icon";
 import ConflictIcon from "../../../assets/icons/conflict-icon";
@@ -49,25 +49,32 @@ const KirunaDocs: React.FC<KirunaDocsProps> = ({
       </Modal.Header>
       <Modal.Body>
         {kirunaDocuments && kirunaDocuments.length > 0 ? (
-          <ListGroup>
+          <Container>
             {kirunaDocuments.map((doc) => (
-              <ListGroup.Item
+              <Row
                 key={doc.id}
                 className="d-flex justify-content-between align-items-center"
+                style={{ marginBottom: "20px" }}
               >
-                <h5>{doc.title}</h5>
-                <p className="mb-0 text-muted">Type: {doc.type}</p>
-                <Badge
-                  bg="info"
-                  pill
-                  onClick={() => handleIconClick(doc)}
-                  style={{ cursor: "pointer" }}
-                >
-                  {getIconByType(doc.type)}
-                </Badge>
-              </ListGroup.Item>
+                <Col md={5}>
+                  <h5>{doc.title}</h5>
+                </Col>
+                <Col md={5}>
+                  <p className="mb-0 text-muted">Type: {doc.type}</p>
+                </Col>
+                <Col md={2}>
+                  <Badge
+                    bg="info"
+                    pill
+                    onClick={() => handleIconClick(doc)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    {getIconByType(doc.type)}
+                  </Badge>
+                </Col>
+              </Row>
             ))}
-          </ListGroup>
+          </Container>
         ) : (
           <p className="text-muted">No documents available.</p>
         )}

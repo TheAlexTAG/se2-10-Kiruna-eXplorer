@@ -327,6 +327,37 @@ const NewDocument: React.FC<NewDocumentProps> = ({
     setIssuanceDate(`1${i}/0${i}/201${i}`);
     setType("Informative doc.");
   };
+
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    function globalKeyboardWatcher(event: KeyboardEvent) {
+      const allowedKeys = [
+        "Backspace",
+        "Tab",
+        "ArrowLeft",
+        "ArrowRight",
+        "-",
+        ".",
+      ];
+
+      const isNumber = event.key >= "0" && event.key <= "9";
+      const isAllowed = allowedKeys.includes(event.key);
+
+      if (!isNumber && !isAllowed) {
+        event.preventDefault();
+        alert("Please enter only numeric values.");
+      }
+    }
+
+    if (isFocused) {
+      window.addEventListener("keydown", globalKeyboardWatcher);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", globalKeyboardWatcher);
+    };
+  }, [isFocused]);
   return (
     <div
       className="document-container"
@@ -346,15 +377,15 @@ const NewDocument: React.FC<NewDocumentProps> = ({
           <Modal.Title className="title main-text">Insert Document</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
+          <Form className="d-flex mb-2">
             <Form.Control
               type="text"
               value={demoVar}
               onChange={(e) => setDemoVar(e.target.value)}
+              placeholder="Demo variable"
+              style={{ marginRight: "10px" }}
             />
-            <Button onClick={() => handleMockFill(demoVar)}>
-              Press for demo fill
-            </Button>
+            <Button onClick={() => handleMockFill(demoVar)}>Autofill</Button>
           </Form>
           <Form data-bs-theme="dark">
             {errorMessage && (
@@ -435,6 +466,8 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   type="number"
                   step="0.0001"
                   value={latitude ?? ""}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
                   onChange={handleLatitudeChange}
                   disabled={zoneID !== null || customArea !== null}
                 />
@@ -446,6 +479,8 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   type="number"
                   step="0.0001"
                   value={longitude ?? ""}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
                   onChange={handleLongitudeChange}
                   disabled={zoneID !== null || customArea !== null}
                 />
@@ -598,16 +633,16 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                 >
                   <option value="">Select Language</option>
                   <option value="English">English</option>
-                  <option value="Spanish">Spanish</option>
+                  {/* <option value="Spanish">Spanish</option> */}
                   <option value="Swedish">Swedish</option>
-                  <option value="French">French</option>
+                  {/* <option value="French">French</option>
                   <option value="German">German</option>
                   <option value="Italian">Italian</option>
                   <option value="Chinese">Chinese</option>
                   <option value="Japanese">Japanese</option>
                   <option value="Korean">Korean</option>
                   <option value="Russian">Russian</option>
-                  <option value="Arabic">Arabic</option>
+                  <option value="Arabic">Arabic</option> */}
                 </Form.Select>
               </Form.Group>
 
