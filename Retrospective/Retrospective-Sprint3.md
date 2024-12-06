@@ -39,7 +39,7 @@ sections:
   - estimate: `average: 1 hours 52 minutes` `standard deviation: 1 hours 48 minutes`
   - actual: `average: 1 hours 53 minutes` `standard deviation: 1 hours 48 minutes`
 - Total task estimation error ratio: sum of total hours estimation / sum of total hours spent -1
-    $$\frac{\sum_i estimation_{task_i}}{\sum_i spent_{task_i}} - 1 = 0.006741573
+    $$\frac{\sum_i estimation_{task_i}}{\sum_i spent_{task_i}} - 1 = - -0.004444444
      $$
 
   
