@@ -14,7 +14,7 @@ sections:
 
 - Number of stories committed vs done `4/4`
 - Total points committed vs done `10/10`
-- Nr of hours planned vs spent (as a team) `112h/111h15m`
+- Nr of hours planned vs spent (as a team) `112h/112h30m`
 
 **Remember**  a story is done ONLY if it fits the Definition of Done:
  
@@ -28,16 +28,16 @@ sections:
 
 | Story  | # Tasks | Points | Hours est. | Hours actual |
 |--------|---------|--------|------------|--------------|
-| _#0_   |39       |    -   |81h         |  81h30m      |
-| _#19_  | 5       |2       |6h30m       |6h30m         |
-| _#10_  | 8       |5       |13h         | 13h          |
+| _#0_   |39       |    -   |81h         |  82h15m      |
+| _#19_  | 5       |2       |6h30m       |7h30m         |
+| _#10_  | 8       |5       |13h         | 12h30m       |
 | _#20_  | 5       |2       | 7h30m      |  6h45m       |
 | _#14_  | 3       |1       |4h          |3h30m         |
 
 
 - Hours per task (average, standard deviation)
   - estimate: `average: 1 hours 52 minutes` `standard deviation: 1 hours 48 minutes`
-  - actual: `average: 1 hours 51 minutes` `standard deviation: 1 hours 50 minutes`
+  - actual: `average: 1 hours 53 minutes` `standard deviation: 1 hours 48 minutes`
 - Total task estimation error ratio: sum of total hours estimation / sum of total hours spent -1
     $$\frac{\sum_i estimation_{task_i}}{\sum_i spent_{task_i}} - 1 = 0.006741573
      $$
