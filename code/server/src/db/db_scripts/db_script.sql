@@ -71,4 +71,46 @@ BEGIN
 		DELETE FROM `zone` WHERE zoneID = OLD.zoneID;
 	END IF;
 END;$$
+
+CREATE OR REPLACE TRIGGER unique_links_insert
+BEFORE INSERT ON link
+FOR EACH ROW
+BEGIN
+	 DECLARE links_number INT;
+	IF NEW.firstDoc = NEW.secondDoc THEN
+		SIGNAL SQLSTATE '45000' 
+      SET MESSAGE_TEXT = 'Links must be between two different documents';
+   END IF;
+   SELECT COUNT(*) INTO links_number
+   FROM link
+   WHERE 
+      ((firstDoc = NEW.firstDoc AND secondDoc = NEW.secondDoc) 
+      OR (secondDoc = NEW.firstDoc AND firstDoc = NEW.secondDoc))
+      AND Relationship = NEW.Relationship;
+   IF links_number != 0 THEN
+      SIGNAL SQLSTATE '45000' 
+      SET MESSAGE_TEXT = 'Duplicate link with the same relationship is not allowed';
+   END IF;
+END$$
+
+CREATE OR REPLACE TRIGGER unique_links_upate
+BEFORE UPDATE ON link
+FOR EACH ROW
+BEGIN
+	DECLARE links_number INT;
+	IF NEW.firstDoc = NEW.secondDoc THEN
+		SIGNAL SQLSTATE '45000' 
+      SET MESSAGE_TEXT = 'Links must be between two different documents';
+   END IF;
+   SELECT COUNT(*) INTO links_number
+   FROM link
+   WHERE 
+      ((firstDoc = NEW.firstDoc AND secondDoc = NEW.secondDoc) 
+      OR (secondDoc = NEW.firstDoc AND firstDoc = NEW.secondDoc))
+      AND relationship = NEW.relationship;
+   IF links_number != 0 THEN
+      SIGNAL SQLSTATE '45000' 
+      SET MESSAGE_TEXT = 'Duplicate link with the same relationship is not allowed';
+   END IF;
+END$$
 DELIMITER ;
