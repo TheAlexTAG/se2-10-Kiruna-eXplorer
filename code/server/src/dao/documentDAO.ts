@@ -3,7 +3,6 @@ import { DocumentNotFoundError, WrongGeoreferenceUpdateError } from "../errors/d
 import { InternalServerError } from "../errors/link_docError";
 import { ZoneError } from "../errors/zoneError";
 import { Document, DocumentData, DocumentGeoData } from "../components/document";
-import { param } from "express-validator";
 
 
 class DocumentDAO {
@@ -14,7 +13,7 @@ class DocumentDAO {
             conn = await db.getConnection();
             const sql = `SELECT COUNT(*) AS count FROM document WHERE documentID = ?`
             const result = await conn.query(sql, [documentID]);
-            return Number(result[0].count)? true : false;
+            return !!Number(result[0].count);
         } catch(err: any) {
             throw new InternalServerError(err.message? err.message : "");
         } finally {
@@ -59,18 +58,18 @@ class DocumentDAO {
         }
     }
 
-    async updateDocumentGeoref(documentID: number, zoneID: number | null, coordinates: string | null, latitude: number | null, longitude: number | null): Promise<boolean> {
+    async updateDocument(documentData: DocumentData, documentGeoData: DocumentGeoData): Promise<boolean> {
         let conn;
         try {
             conn = await db.getConnection();
             await conn.beginTransaction();
-            if(coordinates) {
-                let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [coordinates]);
-                zoneID = insResult.insertId? insResult.insertId : null;
-                if(!zoneID) throw new ZoneError();
+            if(documentGeoData.coordinates) {
+                let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [documentGeoData.coordinates]);
+                documentGeoData.zoneID = insResult.insertId? insResult.insertId : null;
+                if(!documentGeoData.zoneID) throw new ZoneError();
             }
             const sql = `UPDATE document SET zoneID = ?, longitude = ?, latitude = ? WHERE documentID = ?`;
-            const result = await conn.query(sql, [zoneID, longitude, latitude, documentID]);
+            const result = await conn.query(sql, [documentGeoData.zoneID, documentGeoData.longitude, documentGeoData.latitude, documentData.documentID]);
             if(!result.affectedRows) throw new WrongGeoreferenceUpdateError();
             await conn.commit();
             return true;
