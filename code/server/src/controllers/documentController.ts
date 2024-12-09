@@ -8,8 +8,15 @@ import { InsertZoneError } from "../errors/zoneError";
 import wellknown from "wellknown"
 import { Document, DocumentData, DocumentGeoData } from "../components/document";
 import { Kiruna } from "../utilities";
+import { InternalServerError } from "../errors/link_docError";
+
+enum Modality {
+    CREATE = "Create",
+    UPDATE = "Update"
+}
 
 class DocumentControllerHelper {
+
     async checkCoordinatesValidity(lon: number, lat: number): Promise<boolean> {
         const point = turf.point([lon, lat]);
         const checkInside = turf.booleanPointInPolygon(point, kiruna.features[0].geometry as GeoJSON.MultiPolygon)
@@ -25,10 +32,19 @@ class DocumentControllerHelper {
         )
     }
 
-    async createNodeAssignedToKiruna(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO): Promise<number> {
+    async nodeAssignedToKiruna(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.CREATE): Promise<number>
+    async nodeAssignedToKiruna(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.UPDATE): Promise<boolean>
+    async nodeAssignedToKiruna(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality): Promise<number | boolean> {
         documentGeoData.zoneID = null;
-        let lastID = await dao.createDocumentNode(documentData, documentGeoData);
-        return lastID;
+        if(modality == Modality.CREATE) {
+            let lastID = await dao.createDocumentNode(documentData, documentGeoData);
+            return lastID;
+        }
+        if(modality == Modality.UPDATE) {
+            let response = await dao.updateDocument(documentData, documentGeoData);
+            return response;
+        }
+        throw new InternalServerError("Wrong Modality");
     }
 
     isAssignedToCustomZone(documentGeoData: DocumentGeoData): boolean {
@@ -40,7 +56,9 @@ class DocumentControllerHelper {
         )
     }
 
-    async createNodeAssignedToCustomZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO): Promise<number> {
+    async nodeAssignedToCustomZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.CREATE): Promise<number>
+    async nodeAssignedToCustomZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.UPDATE): Promise<boolean>
+    async nodeAssignedToCustomZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality): Promise<number | boolean> {
         const geo: Geometry= turf.geometry("Polygon", [documentGeoData.coordinates])
         const zoneExists = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geo as wellknown.GeoJSONGeometry));
         if(zoneExists) 
@@ -55,9 +73,17 @@ class DocumentControllerHelper {
         documentGeoData.latitude = centroid.geometry.coordinates[1];
         documentGeoData.longitude = centroid.geometry.coordinates[0];
 
-        let lastID = await dao.createDocumentNode(documentData, documentGeoData);
-        return lastID;
+        if(modality == Modality.CREATE) {
+            let lastID = await dao.createDocumentNode(documentData, documentGeoData);
+            return lastID;
+        }
+        if(modality == Modality.UPDATE) {
+            let response = await dao.updateDocument(documentData, documentGeoData);
+            return response;
+        }
+        throw new InternalServerError("Wrong modality");
     }
+
 
     isAssignedToPoint(documentGeoData: DocumentGeoData): boolean {
         return (
@@ -67,14 +93,22 @@ class DocumentControllerHelper {
             && documentGeoData.longitude != null
         )
     }
-
-    async createNodeAssignedToPoint(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO): Promise<number> {
+    async nodeAssignedToPoint(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.CREATE): Promise<number>
+    async nodeAssignedToPoint(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.UPDATE): Promise<boolean>
+    async nodeAssignedToPoint(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality): Promise<number | boolean> {
         const checkCoordinates = await this.checkCoordinatesValidity(documentGeoData.longitude as number, documentGeoData.latitude as number);
         if(!checkCoordinates) 
             throw new CoordinatesOutOfBoundsError();
         
-        let lastID = await dao.createDocumentNode(documentData, documentGeoData);
-        return lastID;
+        if(modality == Modality.CREATE) {
+            let lastID = await dao.createDocumentNode(documentData, documentGeoData);
+            return lastID;
+        }
+        if(modality == Modality.UPDATE) {
+            let response = await dao.updateDocument(documentData, documentGeoData);
+            return response;
+        }
+        throw new InternalServerError("Wrong modality");
     }
 
     isAssignedToExistingZone(documentGeoData: DocumentGeoData) {
@@ -87,15 +121,24 @@ class DocumentControllerHelper {
         )
     }
 
-    async createNodeAssignedToExistingZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, zoneDAO: ZoneDAO): Promise<number> {
+    async nodeAssignedToExistingZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, zoneDAO: ZoneDAO, modality: Modality.CREATE): Promise<number>
+    async nodeAssignedToExistingZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, zoneDAO: ZoneDAO, modality: Modality.UPDATE): Promise<boolean>
+    async nodeAssignedToExistingZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, zoneDAO: ZoneDAO, modality: Modality): Promise<number | boolean> {
         let zone = await zoneDAO.getZone(documentGeoData.zoneID as number);
 
         let centroid = turf.centroid(zone.coordinates);
         documentGeoData.latitude = centroid.geometry.coordinates[1];
         documentGeoData.longitude = centroid.geometry.coordinates[0];
 
-        let lastID = await dao.createDocumentNode(documentData, documentGeoData);
-        return lastID;
+        if(modality == Modality.CREATE) {
+            let lastID = await dao.createDocumentNode(documentData, documentGeoData);
+            return lastID;
+        }
+        if(modality == Modality.UPDATE) {
+            let response = await dao.updateDocument(documentData, documentGeoData);
+            return response;
+        }
+        throw new InternalServerError("Wrong modality");
     }
 }
 
@@ -113,80 +156,49 @@ class DocumentController {
 
     async createNode(documentData: DocumentData, documentGeoData: DocumentGeoData): Promise<number> {
         if(this.helper.isAssignedToKiruna(documentGeoData)) 
-            return await this.helper.createNodeAssignedToKiruna(documentData, documentGeoData, this.dao);
+            return await this.helper.nodeAssignedToKiruna(documentData, documentGeoData, this.dao, Modality.CREATE);
 
         if(this.helper.isAssignedToCustomZone(documentGeoData)) 
-            return await this.helper.createNodeAssignedToCustomZone(documentData, documentGeoData, this.dao);
+            return await this.helper.nodeAssignedToCustomZone(documentData, documentGeoData, this.dao, Modality.CREATE);
 
         if(this.helper.isAssignedToPoint(documentGeoData)) 
-            return await this.helper.createNodeAssignedToPoint(documentData, documentGeoData, this.dao);
+            return await this.helper.nodeAssignedToPoint(documentData, documentGeoData, this.dao, Modality.CREATE);
 
         if(this.helper.isAssignedToExistingZone(documentGeoData)) 
-            return await this.helper.createNodeAssignedToExistingZone(documentData, documentGeoData, this.dao, this.zoneDAO);
+            return await this.helper.nodeAssignedToExistingZone(documentData, documentGeoData, this.dao, this.zoneDAO, Modality.CREATE);
 
         throw new WrongGeoreferenceError();
     }
 
-    async updateDocumentGeoref(documentID: number, zoneID: number | null, coordinates: any | null, latitude: number | null, longitude: number | null): Promise<boolean> {
-        try {
-            if(coordinates == null && zoneID == 0 && latitude == null && longitude == null) {
-                zoneID = null;
-                let response = await this.dao.updateDocumentGeoref(documentID, zoneID, coordinates, latitude, longitude);
-                return response;
-            }
-            else if(coordinates && zoneID == null && latitude == null && longitude == null) {
-                const geo: Geometry= turf.geometry("Polygon", [coordinates]);
-                const zoneExists = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geo as wellknown.GeoJSONGeometry));
-                if(zoneExists) throw new InsertZoneError();
-                const checkCoordinates = await Kiruna.verifyContainedInKiruna(geo);
-                if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
-                let centroid = turf.centroid(geo);
-                let response = await this.dao.updateDocumentGeoref(documentID, zoneID, wellknown.stringify(geo as wellknown.GeoJSONGeometry), centroid.geometry.coordinates[0], centroid.geometry.coordinates[1]);
-                return response;
-            }
-            else if(coordinates ==  null && zoneID == null && latitude != null && longitude != null) {
-                const checkCoordinates = await this.helper.checkCoordinatesValidity(longitude, latitude);
-                if(!checkCoordinates) throw new CoordinatesOutOfBoundsError();
-                let response = await this.dao.updateDocumentGeoref(documentID, zoneID, coordinates, latitude, longitude);
-                return response;
-            }
-            else if(coordinates ==  null && zoneID != null && zoneID != 0 && latitude == null && longitude == null) {
-                let zone = await this.zoneDAO.getZone(zoneID);
-                let centroid = turf.centroid(zone.coordinates);
-                let response = await this.dao.updateDocumentGeoref(documentID, zoneID, coordinates, centroid.geometry.coordinates[1], centroid.geometry.coordinates[0]);
-                return response;
-            }
-            else throw new WrongGeoreferenceError();
-        } catch(err) {
-            throw err;
-        }
+    async updateDocumentGeoref(documentData: DocumentData, documentGeoData: DocumentGeoData): Promise<boolean> {
+        if(this.helper.isAssignedToKiruna(documentGeoData)) 
+            return await this.helper.nodeAssignedToKiruna(documentData, documentGeoData, this.dao, Modality.UPDATE);
+
+        if(this.helper.isAssignedToCustomZone(documentGeoData)) 
+            return await this.helper.nodeAssignedToCustomZone(documentData, documentGeoData, this.dao, Modality.UPDATE);
+
+        if(this.helper.isAssignedToPoint(documentGeoData)) 
+            return await this.helper.nodeAssignedToPoint(documentData, documentGeoData, this.dao, Modality.UPDATE);
+
+        if(this.helper.isAssignedToExistingZone(documentGeoData)) 
+            return await this.helper.nodeAssignedToExistingZone(documentData, documentGeoData, this.dao, this.zoneDAO, Modality.UPDATE);
+
+        throw new WrongGeoreferenceError();
     }
 
     async getDocument(documentID: number): Promise<Document> {
-        try {
-            const document = await this.dao.getDocumentByID(documentID);
-            return document;
-        } catch (err) {
-            throw err;
-        }
+        const document = await this.dao.getDocumentByID(documentID);
+        return document;
     }
 
     async getDocuments(filters: any): Promise<Document[]> {
-        try {
-            const documents = await this.dao.getDocsWithFilters(filters);
-            return documents;
-        } catch(err) {
-            throw err;
-        }
+        const documents = await this.dao.getDocsWithFilters(filters);
+        return documents;
     }
 
     async deleteAllDocuments(): Promise<boolean> {
-        try {
-            const response = await this.dao.deleteAllDocuments();
-            return response;
-        } catch(err) {
-            throw err;
-        }
+        const response = await this.dao.deleteAllDocuments();
+        return response;
     }
 
     async addResource(documentID: number, names: string[], paths: string[]): Promise<boolean>{

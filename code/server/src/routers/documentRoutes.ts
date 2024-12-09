@@ -92,9 +92,28 @@ class DocumentRoutes {
             body("coordinates.*.1").optional({nullable:true}).isFloat({ min: -90, max: 90 }),
             this.utilities.isUrbanPlanner,
             this.errorHandler.validateRequest,
-        (req: any, res: any, next: any) => this.controller.updateDocumentGeoref(req.params.id, req.body.zoneID, req.body.coordinates, req.body.latitude, req.body.longitude)
-        .then((val: boolean) => res.status(200).json(val))
-        .catch((err) => res.status(err.code? err.code : 500).json({error: err.message})))
+        (req: any, res: any, next: any) => {
+            const documentData: DocumentData = {
+                documentID: req.params.id,
+                title: req.body.title,
+                description: req.body.description,
+                stakeholders: req.body.stakeholders,
+                scale: req.body.scale,
+                issuanceDate: req.body.issuanceDate,
+                type: req.body.type,
+                language: req.body.language,
+                pages: req.body.pages
+            }
+            let documentGeoData: DocumentGeoData = {
+                zoneID: req.body.zoneID,
+                coordinates: req.body.coordinates,
+                latitude: req.body.latitude,
+                longitude: req.body.longitude
+            }
+            this.controller.updateDocumentGeoref(documentData, documentGeoData)
+            .then((val: boolean) => res.status(200).json(val))
+            .catch((err) => res.status(err.code? err.code : 500).json({error: err.message}))
+    })
             
         this.app.get("/api/document/:id",
             param("id").isInt(),
