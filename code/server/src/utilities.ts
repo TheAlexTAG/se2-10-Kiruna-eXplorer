@@ -82,6 +82,34 @@ class Utilities{
             return next();
         else res.status(422).json({error: "Pagination error: page size or page number missing"});
     }
+
+    isValidDate(dateStr: string): boolean {
+        const parts = dateStr.split('/').map(Number);
+    
+        if (parts.length === 3) {
+            const [day, month, year] = parts;
+            const date = new Date(year, month - 1, day);
+            return (
+                date.getFullYear() === year &&
+                date.getMonth() === month - 1 &&
+                date.getDate() === day
+            );
+        } 
+        else if (parts.length === 2) {
+            const [month, year] = parts;
+            const date = new Date(year, month - 1, 1);
+            return (
+                date.getFullYear() === year &&
+                date.getMonth() === month - 1
+            );
+        } 
+        else if (parts.length === 1) {
+            const [year] = parts;
+            return year >= 1000 && year <= 9999;
+        }
+    
+        return false;
+    }
     
 }
 
