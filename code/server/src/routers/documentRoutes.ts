@@ -26,10 +26,10 @@ const storage = multer.diskStorage({
 const upload = multer({storage: storage});
 
 class DocumentRoutes {
-    private app: express.Application
-    private controller: DocumentController
-    private errorHandler: ErrorHandler
-    private utilities: Utilities
+    private readonly app: express.Application
+    private readonly controller: DocumentController
+    private readonly errorHandler: ErrorHandler
+    private readonly utilities: Utilities
 
     constructor(app: express.Application) {
         this.app = app;
@@ -47,7 +47,12 @@ class DocumentRoutes {
             body("longitude").optional({nullable:true}).isFloat(), //send only if the georeference is a point, otherwise null
             body("stakeholders").isString().notEmpty(),
             body("scale").isString().notEmpty(),
-            body("issuanceDate").matches(/^(?:(?:31\/(0[13578]|1[02])\/\d{4})|(?:30\/(0[1-9]|1[0-2])\/\d{4})|(?:29\/02\/(?:(?:\d{2}(?:0[48]|[2468][048]|[13579][26]))|(?:[048]00)))|(?:0[1-9]|1\d|2[0-8])\/(0[1-9]|1[0-2])\/\d{4}|(?:0[1-9]|1[0-2])\/\d{4}|\d{4})$/),
+            body("issuanceDate").isString()
+            .custom((value: string) => {
+                if(!this.utilities.isValidDate(value)) 
+                    throw new Error("Invalid date format");
+                return true;
+            }),
             body("type").isString().notEmpty(),
             body("language").optional({nullable:true}).isString(),
             body("pages").optional({nullable:true}).isString(),
@@ -126,7 +131,12 @@ class DocumentRoutes {
             query("zoneID").optional().isInt(),
             query("stakeholders").optional().isString(),
             query("scale").optional().isString(),
-            query("issuanceDate").optional().isString().matches(/^(?:(?:31\/(0[13578]|1[02])\/\d{4})|(?:30\/(0[1-9]|1[0-2])\/\d{4})|(?:29\/02\/(?:(?:\d{2}(?:0[48]|[2468][048]|[13579][26]))|(?:[048]00)))|(?:0[1-9]|1\d|2[0-8])\/(0[1-9]|1[0-2])\/\d{4}|(?:0[1-9]|1[0-2])\/\d{4}|\d{4})$/),
+            query("issuanceDate").optional().isString()
+            .custom((value: string) => {
+                if(!this.utilities.isValidDate(value)) 
+                    throw new Error("Invalid date format");
+                return true;
+            }),
             query("type").optional().isString(),
             query("language").optional().isString(),
             this.utilities.paginationCheck,
