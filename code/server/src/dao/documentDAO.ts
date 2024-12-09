@@ -2,7 +2,7 @@ import db from "../db/db";
 import { DocumentNotFoundError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
 import { InternalServerError } from "../errors/link_docError";
 import { ZoneError } from "../errors/zoneError";
-import { Document } from "../components/document";
+import { Document, DocumentData, DocumentGeoData } from "../components/document";
 import { param } from "express-validator";
 
 
@@ -22,19 +22,32 @@ class DocumentDAO {
         }
     }
 
-    async createDocumentNode(title: string, description: string, zoneID: number | null, coordinates: string | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
+    async createDocumentNode(documentData: DocumentData, documentGeoData: DocumentGeoData): Promise<number> {
         let conn;
         try {
             conn = await db.getConnection();
             await conn.beginTransaction();
-            if(coordinates) {
-                let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [coordinates]);
-                zoneID = insResult.insertId? insResult.insertId : null;
-                if(!zoneID) throw new ZoneError();
+            if(documentGeoData.coordinates) {
+                let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [documentGeoData.coordinates]);
+                documentGeoData.zoneID = insResult.insertId? insResult.insertId : null;
+                if(!documentGeoData.zoneID) throw new ZoneError();
             }
             const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
             VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-            const result = await conn.query(sql, [title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages]);
+            const params = [
+                documentData.title,
+                documentData.description,
+                documentGeoData.zoneID,
+                documentGeoData.latitude,
+                documentGeoData.longitude,
+                documentData.stakeholders,
+                documentData.scale,
+                documentData.issuanceDate,
+                documentData.type,
+                documentData.language,
+                documentData.pages
+            ]
+            const result = await conn.query(sql, params);
             await conn.commit();
             return Number(result.insertId);
         } catch (err: any) {
@@ -53,7 +66,7 @@ class DocumentDAO {
             await conn.beginTransaction();
             if(coordinates) {
                 let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [coordinates]);
-                insResult.insertId ? zoneID = insResult.insertId : null;
+                zoneID = insResult.insertId? insResult.insertId : null;
                 if(!zoneID) throw new ZoneError();
             }
             const sql = `UPDATE document SET zoneID = ?, longitude = ?, latitude = ? WHERE documentID = ?`;

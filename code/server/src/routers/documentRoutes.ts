@@ -3,7 +3,7 @@ import { DocumentController } from "../controllers/documentController"
 import { ErrorHandler } from "../helper"
 import { body, param, query } from "express-validator"
 import { Utilities } from "../utilities"
-import { Document } from "../components/document"
+import { Document, DocumentData, DocumentGeoData } from "../components/document"
 
 const path = require('path');
 const multer = require('multer');
@@ -57,9 +57,28 @@ class DocumentRoutes {
             body("coordinates.*.1").optional({nullable:true}).isFloat({ min: -90, max: 90 }),
             this.utilities.isUrbanPlanner,
             this.errorHandler.validateRequest,
-        (req: any, res: any, next: any) => this.controller.createNode(req.body.title, req.body.description, req.body.zoneID, req.body.coordinates, req.body.latitude, req.body.longitude, req.body.stakeholders, req.body.scale, req.body.issuanceDate, req.body.type, req.body.language, req.body.pages)
-        .then((lastID: number) => res.status(200).json(lastID))
-        .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
+        (req: any, res: any, next: any) => {
+            const documentData: DocumentData = {
+                documentID: null,
+                title: req.body.title,
+                description: req.body.description,
+                stakeholders: req.body.stakeholders,
+                scale: req.body.scale,
+                issuanceDate: req.body.issuanceDate,
+                type: req.body.type,
+                language: req.body.language,
+                pages: req.body.pages
+            }
+            let documentGeoData: DocumentGeoData = {
+                zoneID: req.body.zoneID,
+                coordinates: req.body.coordinates,
+                latitude: req.body.latitude,
+                longitude: req.body.longitude
+            }
+            this.controller.createNode(documentData, documentGeoData)
+            .then((lastID: number) => res.status(200).json(lastID))
+            .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message}))
+        })
 
         this.app.put("/api/document/:id",
             param("id").isInt(),

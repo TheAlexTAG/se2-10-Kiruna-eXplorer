@@ -77,5 +77,24 @@ class Document {
         this.links = links;
     }
 }
-    
-export {Document};
+
+interface DocumentData {
+    documentID: number | null,
+    title: string | null,
+    description: string | null,
+    stakeholders: string | null,
+    scale: string | null,
+    issuanceDate: string | null,
+    type: string | null,
+    language: string | null,
+    pages: string | null
+}
+
+interface DocumentGeoData {
+    zoneID: number | null,
+    coordinates: any | null,
+    latitude: number | null,
+    longitude: number | null
+}
+
+export {Document, DocumentData, DocumentGeoData};
