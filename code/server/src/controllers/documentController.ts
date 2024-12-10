@@ -205,6 +205,11 @@ class DocumentController {
         return response;
     }
 
+    async updateDiagramDate(documentID: number, newParsedDate: string): Promise<boolean> {
+        const response = await this.dao.updateDiagramDate(documentID, newParsedDate);
+        return response;
+    }
+
     async deleteAllDocuments(): Promise<boolean> {
         const response = await this.dao.deleteAllDocuments();
         return response;

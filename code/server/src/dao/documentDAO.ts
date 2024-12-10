@@ -343,6 +343,21 @@ class DocumentDAO {
         }
     }
 
+    async updateDiagramDate(documentID: number, newParsedDate: string): Promise<boolean> {
+        let conn;
+        try {
+            conn = await db.getConnection();
+            const sql = `UPDATE document SET parsedDate = ? WHERE documentID = ?`;
+            const result = await conn.query(sql, [newParsedDate, documentID]);
+            if(result.affectedRows == 0) throw new Error("Failed to update the document date coordinates");
+            return true;
+        } catch (err: any) {
+            throw new InternalServerError(err.message? err.message : "");
+        } finally {
+            await conn?.release();
+        }
+    }
+
     async deleteAllDocuments(): Promise<boolean> {
         let conn;
         try {

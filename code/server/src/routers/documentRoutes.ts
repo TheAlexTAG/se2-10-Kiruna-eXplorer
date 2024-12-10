@@ -201,14 +201,29 @@ class DocumentRoutes {
     
         this.app.get("/api/stakeholders",
             this.utilities.isUrbanPlanner,
+            this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => this.controller.getStakeholders()
         .then((stakeholders) => res.status(200).json(stakeholders))
-        .catch((err: any) => res)
         .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
+
+        this.app.put("/api/diagram/:id",
+            this.utilities.isUrbanPlanner,
+            param("id").isInt(),
+            this.utilities.documentExists,
+            body("parsedDate").custom((value) => {
+                if (isNaN(Date.parse(value)))
+                    throw new Error("Invalid date format");
+                return true;
+              }),
+            this.errorHandler.validateRequest,
+        (req: any, res: any, next: any) => this.controller.updateDiagramDate(req.params.id, req.body.parsedDate.split("T")[0])
+        .then((response: boolean) => res.status(200).json(response))
+        .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
+        
 
         this.app.delete("/api/documents",
             this.utilities.isAdmin,
-        (req: any, res: any, next: any) => this.controller.deleteAllDocuments()
+        (req: Request, res: any, next: any) => this.controller.deleteAllDocuments()
         .then((result) => res.status(200).json(result))
         .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
     
