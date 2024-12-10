@@ -25,6 +25,7 @@ CREATE TABLE document (
 	stakeholders TEXT NOT NULL,
 	scale VARCHAR(30) NOT NULL,
 	issuanceDate VARCHAR(10) NOT NULL,
+	parsedDate DATE NOT NULL,
 	`type` VARCHAR(30) NOT NULL,
 	`language` VARCHAR(30),
 	pages VARCHAR(50),
