@@ -49,11 +49,14 @@ class DocumentControllerHelper {
 
     isAssignedToCustomZone(documentGeoData: DocumentGeoData): boolean {
         return (
-            documentGeoData.coordinates 
-            && documentGeoData.zoneID == null 
-            && documentGeoData.latitude == null 
-            && documentGeoData.longitude == null
-        )
+            Array.isArray(documentGeoData.coordinates) &&
+            documentGeoData.coordinates.every(
+                (coord) => Array.isArray(coord) && coord.length === 2 && typeof coord[0] === 'number' && typeof coord[1] === 'number'
+            ) &&
+            documentGeoData.zoneID == null &&
+            documentGeoData.latitude == null &&
+            documentGeoData.longitude == null
+        );
     }
 
     async nodeAssignedToCustomZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.CREATE): Promise<number>
@@ -155,6 +158,7 @@ class DocumentController {
     }
 
     async createNode(documentData: DocumentData, documentGeoData: DocumentGeoData): Promise<number> {
+
         if(this.helper.isAssignedToKiruna(documentGeoData)) 
             return await this.helper.nodeAssignedToKiruna(documentData, documentGeoData, this.dao, Modality.CREATE);
 
@@ -194,6 +198,11 @@ class DocumentController {
     async getDocuments(filters: any): Promise<Document[]> {
         const documents = await this.dao.getDocsWithFilters(filters);
         return documents;
+    }
+
+    async getStakeholders(): Promise<string[]> {
+        const response = await this.dao.getStakeholders();
+        return response;
     }
 
     async deleteAllDocuments(): Promise<boolean> {

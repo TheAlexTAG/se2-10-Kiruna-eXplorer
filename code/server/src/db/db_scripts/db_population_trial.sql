@@ -5,21 +5,22 @@ INSERT INTO `zone` (coordinates) VALUES
     ('POLYGON((20.200 67.850, 20.220 67.850, 20.220 67.870, 20.200 67.870, 20.200 67.850))'),
     ('POLYGON((20.150 67.860, 20.170 67.860, 20.170 67.880, 20.150 67.880, 20.150 67.860))');
 
-INSERT INTO `document` (title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages) VALUES
+INSERT INTO `document` (title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, parsedDate, type, language, pages) VALUES
     -- Documento associato a tutta l'area di Kiruna (zoneID, latitude, longitude = NULL)
-    ('General Plan', 'Plan for the entire Kiruna municipality', NULL, NULL, NULL, 'Public Administration', '1:1000', '2024', 'Report', 'English', 120),
+    ('General Plan', 'Plan for the entire Kiruna municipality', NULL, NULL, NULL, 'Public Administration', '1:1000', '2024', '2024-01-01', 'Report', 'English', 120),
 
     -- Documento associato alla zona 1 (coordinate del centroide della zona 1)
-    ('Zone 1 Development', 'Development plan for Zone 1', 1, 67.880, 20.185, 'Urban Planners, Developers', '1:500', '02/2024', 'Plan', 'Swedish', 30),
+    ('Zone 1 Development', 'Development plan for Zone 1', 1, 67.880, 20.185, 'Urban Planners, Developers', '1:500', '02/2024','2024-02-01', 'Plan', 'Swedish', 30),
 
     -- Documento con solo latitudine e longitudine (zoneID = NULL)
-    ('Special Project', 'Independent project in Kiruna', NULL, 67.860, 20.200, 'Private Companies', '1:100', '12/02/2024', 'Project', 'English', 15),
+    ('Special Project', 'Independent project in Kiruna', NULL, 67.860, 20.200, 'Private Companies', '1:100', '12/02/2024','2024-02-01', 'Project', 'English', 15),
 
     -- Documento associato alla zona 2 (coordinate del centroide della zona 2)
-    ('Zone 2 Report', 'Annual report for Zone 2', 2, 67.860, 20.210, 'Local Government', '1:200', '11/03/2001', 'Report', 'Swedish', 25);
+    ('Zone 2 Report', 'Annual report for Zone 2', 2, 67.860, 20.210, 'Local Government', '1:200', '11/03/2001', '2001-03-11', 'Report', 'Swedish', 25);
 
 INSERT INTO `attachment` (documentID, name, path) VALUES
     (1, 'General Plan PDF', '/attachments/general_plan.pdf'),
+    (1, 'General Plan PDF1', '/attachments/general_plan1.pdf'),
     (2, 'Zone 1 Map', '/attachments/zone1_map.png'),
     (3, 'Special Project Proposal', '/attachments/special_project_proposal.docx');
 

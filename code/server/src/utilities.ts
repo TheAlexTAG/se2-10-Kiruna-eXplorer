@@ -1,7 +1,5 @@
 import {User, Role} from "./components/user";
 import { DocumentDAO } from "./dao/documentDAO";
-import { DocumentNotFoundError } from "./errors/documentErrors";
-import { InternalServerError } from "./errors/link_docError";
 
 import kiruna from "./kiruna.json"
 import { booleanContains } from "@turf/boolean-contains";
@@ -111,6 +109,12 @@ class Utilities{
         return false;
     }
     
+    isValidScale(value: string): boolean {
+        const scalePattern = /^1:\d{1,3}(?:,\d{3})*$/;
+        const validStrings = ["Blueprints/effects", "Concept", "Text"];
+    
+        return scalePattern.test(value) || validStrings.includes(value);
+    }
 }
 
 class Kiruna {

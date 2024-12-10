@@ -25,17 +25,59 @@ const storage = multer.diskStorage({
 
 const upload = multer({storage: storage});
 
+class DocumentRoutesHelper {
+    parseDate (dateStr: string): Date {
+        const ddmmyyyyPattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+        const mmyyyyPattern = /^(\d{2})\/(\d{4})$/;
+        const yyyyPattern = /^(\d{4})$/;
+      
+        const matchDDMMYYYY = RegExp(ddmmyyyyPattern).exec(dateStr);
+        if (matchDDMMYYYY) {
+          const [, day, month, year] = matchDDMMYYYY;
+          const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          if (parsedDate.toString() === "Invalid Date") {
+            throw new Error(`Invalid date: ${dateStr}`);
+          }
+          return parsedDate;
+        }
+      
+        const matchMMYYYY = RegExp(mmyyyyPattern).exec(dateStr);
+        if (matchMMYYYY) {
+          const [, month, year] = matchMMYYYY;
+          const parsedDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+          if (parsedDate.toString() === "Invalid Date") {
+            throw new Error(`Invalid date: ${dateStr}`);
+          }
+          return parsedDate;
+        }
+      
+        const matchYYYY = RegExp(yyyyPattern).exec(dateStr);
+        if (matchYYYY) {
+          const [, year] = matchYYYY;
+          const parsedDate = new Date(parseInt(year), 0, 1);
+          if (parsedDate.toString() === "Invalid Date") {
+            throw new Error(`Invalid date: ${dateStr}`);
+          }
+          return parsedDate;
+        }
+      
+        throw new Error(`Invalid date format: ${dateStr}`);
+      }
+}
+
 class DocumentRoutes {
     private readonly app: express.Application
     private readonly controller: DocumentController
     private readonly errorHandler: ErrorHandler
     private readonly utilities: Utilities
+    private readonly helper: DocumentRoutesHelper
 
     constructor(app: express.Application) {
         this.app = app;
         this.controller = new DocumentController();
         this.errorHandler = new ErrorHandler();
         this.utilities = new Utilities();
+        this.helper = new DocumentRoutesHelper();
     }
 
     initRoutes = () => {
@@ -46,7 +88,12 @@ class DocumentRoutes {
             body("latitude").optional({nullable:true}).isFloat(), //send only if the georeference is a point, otherwise null
             body("longitude").optional({nullable:true}).isFloat(), //send only if the georeference is a point, otherwise null
             body("stakeholders").isString().notEmpty(),
-            body("scale").isString().notEmpty(),
+            body("scale")
+            .custom((value: string) => {
+                if(!this.utilities.isValidScale(value))
+                    throw new Error("Scale must be in the format '1:{number with thousand separator ,}' (e.g., '1:1,000') or one of 'Blueprints/effects', 'Concept', 'Text'");
+                return true;
+            }),
             body("issuanceDate").isString()
             .custom((value: string) => {
                 if(!this.utilities.isValidDate(value)) 
@@ -64,12 +111,13 @@ class DocumentRoutes {
             this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => {
             const documentData: DocumentData = {
-                documentID: null,
+                documentID: 0,
                 title: req.body.title,
                 description: req.body.description,
                 stakeholders: req.body.stakeholders,
                 scale: req.body.scale,
                 issuanceDate: req.body.issuanceDate,
+                parsedDate: this.helper.parseDate(req.body.issuanceDate),
                 type: req.body.type,
                 language: req.body.language,
                 pages: req.body.pages
@@ -105,6 +153,7 @@ class DocumentRoutes {
                 stakeholders: req.body.stakeholders,
                 scale: req.body.scale,
                 issuanceDate: req.body.issuanceDate,
+                parsedDate: this.helper.parseDate(req.body.issuanceDate),
                 type: req.body.type,
                 language: req.body.language,
                 pages: req.body.pages
@@ -130,7 +179,12 @@ class DocumentRoutes {
         this.app.get("/api/documents",
             query("zoneID").optional().isInt(),
             query("stakeholders").optional().isString(),
-            query("scale").optional().isString(),
+            query("scale").optional()
+            .custom((value: string) => {
+                if(!this.utilities.isValidScale(value))
+                    throw new Error("Scale must be in the format '1:{number with thousand separator ,}' (e.g., '1:1,000') or one of 'Blueprints/effects', 'Concept', 'Text'");
+                return true;
+            }),
             query("issuanceDate").optional().isString()
             .custom((value: string) => {
                 if(!this.utilities.isValidDate(value)) 
@@ -145,6 +199,13 @@ class DocumentRoutes {
         .then(docs => res.status(200).json(docs))
         .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
     
+        this.app.get("/api/stakeholders",
+            this.utilities.isUrbanPlanner,
+        (req: any, res: any, next: any) => this.controller.getStakeholders()
+        .then((stakeholders) => res.status(200).json(stakeholders))
+        .catch((err: any) => res)
+        .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
+
         this.app.delete("/api/documents",
             this.utilities.isAdmin,
         (req: any, res: any, next: any) => this.controller.deleteAllDocuments()

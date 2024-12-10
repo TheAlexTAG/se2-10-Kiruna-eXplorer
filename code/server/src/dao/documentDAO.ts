@@ -31,7 +31,7 @@ class DocumentDAO {
                 documentGeoData.zoneID = insResult.insertId? insResult.insertId : null;
                 if(!documentGeoData.zoneID) throw new ZoneError();
             }
-            const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
+            const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, parsedDate, type, language, pages)
             VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
             const params = [
                 documentData.title,
@@ -42,6 +42,7 @@ class DocumentDAO {
                 documentData.stakeholders,
                 documentData.scale,
                 documentData.issuanceDate,
+                documentData.parsedDate.toISOString().split("T")[0],
                 documentData.type,
                 documentData.language,
                 documentData.pages
@@ -87,7 +88,8 @@ class DocumentDAO {
         try {
             conn = await db.getConnection();
             const sql = `
-            SELECT d.documentID,
+            SELECT 
+                d.documentID,
                 d.title,
                 d.description,
                 d.zoneID,
@@ -96,6 +98,7 @@ class DocumentDAO {
                 d.stakeholders,
                 d.scale,
                 d.issuanceDate,
+                d.parsedDate,
                 d.type,
                 d.language,
                 d.pages,
@@ -109,18 +112,11 @@ class DocumentDAO {
                     ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', r.name, 'path', r.path))
                 END AS resource,
                 CASE 
-                    WHEN COUNT(l1.secondDoc) + COUNT(l2.firstDoc) = 0 THEN NULL
+                    WHEN COUNT(l.linkID) = 0 THEN NULL
                     ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT(
-                        'documentID', 
-                        CASE 
-                            WHEN l1.secondDoc IS NOT NULL THEN l1.secondDoc 
-                            ELSE l2.firstDoc 
-                        END, 
-                        'relationship', 
-                        CASE 
-                            WHEN l1.relationship IS NOT NULL THEN l1.relationship 
-                            ELSE l2.relationship 
-                        END
+                        'linkID', l.linkID,
+                        'documentID', l.linkedDocumentID,
+                        'relationship', l.relationship
                     ))
                 END AS links
             FROM document d
@@ -133,27 +129,47 @@ class DocumentDAO {
                 ) sub
                 GROUP BY docID
             ) conn ON d.documentID = conn.docID
+
             LEFT JOIN attachment a ON d.documentID = a.documentID
+
             LEFT JOIN resource r ON d.documentID = r.documentID
-            LEFT JOIN link l1 ON d.documentID = l1.firstDoc
-            LEFT JOIN link l2 ON d.documentID = l2.secondDoc
+
+            LEFT JOIN (
+                SELECT 
+                    linkID,
+                    firstDoc AS documentID,
+                    secondDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+                UNION ALL
+                SELECT 
+                    linkID,
+                    secondDoc AS documentID,
+                    firstDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+            ) l ON d.documentID = l.documentID
             WHERE d.documentID = ?
             GROUP BY d.documentID`
             const result = await conn.query(sql, [documentID]);
             if(result.length === 0) throw new DocumentNotFoundError();
             return new Document(
-                result[0].documentID,
-                result[0].title,
-                result[0].description,
-                (result[0].zoneID == null && result[0].latitude == null && result[0].longitude == null)? 0 : result[0].zoneID,
-                result[0].latitude,
-                result[0].longitude,
-                result[0].stakeholders,
-                result[0].scale,
-                result[0].issuanceDate,
-                result[0].type, 
-                result[0].language,
-                result[0].pages,
+                {
+                    documentID: result[0].documentID,
+                    title: result[0].title,
+                    description: result[0].description,
+                    stakeholders: result[0].stakeholders,
+                    scale: result[0].scale,
+                    issuanceDate: result[0].issuanceDate,
+                    parsedDate: new Date(new Date(result[0].parsedDate).getTime() - (new Date(result[0].parsedDate).getTimezoneOffset() * 60000)),
+                    language: result[0].language,
+                    pages: result[0].pages
+                } as DocumentData,
+                {
+                    zoneID: (result[0].zoneID == null && result[0].latitude == null && result[0].longitude == null)? 0 : result[0].zoneID,
+                    latitude: result[0].latitude,
+                    longitude: result[0].longitude,
+                }as DocumentGeoData,
                 Number(result[0].connections),
                 result[0].attachment || [],
                 result[0].resource || [],
@@ -172,7 +188,8 @@ class DocumentDAO {
         try{
             conn = await db.getConnection();
             let sql = `
-            SELECT d.documentID,
+            SELECT 
+                d.documentID,
                 d.title,
                 d.description,
                 d.zoneID,
@@ -181,6 +198,7 @@ class DocumentDAO {
                 d.stakeholders,
                 d.scale,
                 d.issuanceDate,
+                d.parsedDate,
                 d.type,
                 d.language,
                 d.pages,
@@ -194,18 +212,11 @@ class DocumentDAO {
                     ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', r.name, 'path', r.path))
                 END AS resource,
                 CASE 
-                    WHEN COUNT(l1.secondDoc) + COUNT(l2.firstDoc) = 0 THEN NULL
+                    WHEN COUNT(l.linkID) = 0 THEN NULL
                     ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT(
-                        'documentID', 
-                        CASE 
-                            WHEN l1.secondDoc IS NOT NULL THEN l1.secondDoc 
-                            ELSE l2.firstDoc 
-                        END, 
-                        'relationship', 
-                        CASE 
-                            WHEN l1.relationship IS NOT NULL THEN l1.relationship 
-                            ELSE l2.relationship 
-                        END
+                        'linkID', l.linkID,
+                        'documentID', l.linkedDocumentID,
+                        'relationship', l.relationship
                     ))
                 END AS links
             FROM document d
@@ -218,10 +229,26 @@ class DocumentDAO {
                 ) sub
                 GROUP BY docID
             ) conn ON d.documentID = conn.docID
+
             LEFT JOIN attachment a ON d.documentID = a.documentID
+
             LEFT JOIN resource r ON d.documentID = r.documentID
-            LEFT JOIN link l1 ON d.documentID = l1.firstDoc
-            LEFT JOIN link l2 ON d.documentID = l2.secondDoc
+
+            LEFT JOIN (
+                SELECT 
+                    linkID,
+                    firstDoc AS documentID,
+                    secondDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+                UNION ALL
+                SELECT 
+                    linkID,
+                    secondDoc AS documentID,
+                    firstDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+            ) l ON d.documentID = l.documentID
             `
             const conditions: string[] = [];
             const params: any[] = [];
@@ -262,32 +289,53 @@ class DocumentDAO {
                 sql += ` WHERE ${conditions.join(" AND ")}`;
             }
             sql += ` GROUP BY d.documentID`;
-            if (filters.pageSize && filters.pageNumber) {
-                const pageNumber = parseInt(filters.pageNumber, 10);
-                const pageSize = parseInt(filters.pageSize, 10);
-                const offset = (pageNumber - 1) * pageSize;
-                sql += ` LIMIT ? OFFSET ?`;
-                params.push(pageSize, offset);
-            }
+
             const result = await conn.query(sql, params);
             return result.map((row : any) => new Document(
-                row.documentID,
-                row.title,
-                row.description,
-                (row.zoneID == null && row.latitude == null && row.longitude == null) ? 0 : row.zoneID,
-                row.latitude,
-                row.longitude,
-                row.stakeholders,
-                row.scale,
-                row.issuanceDate,
-                row.type,
-                row.language,
-                row.pages,
+                {
+                    documentID: row.documentID,
+                    title: row.title,
+                    description: row.description,
+                    stakeholders: row.stakeholders,
+                    scale: row.scale,
+                    issuanceDate: row.issuanceDate,
+                    parsedDate: new Date(new Date(row.parsedDate).getTime() - (new Date(row.parsedDate).getTimezoneOffset() * 60000)),
+                    language: row.language,
+                    pages: row.pages
+                } as DocumentData,
+                {
+                    zoneID: (row.zoneID == null && row.latitude == null && row.longitude == null)? 0 : row.zoneID,
+                    latitude: row.latitude,
+                    longitude: row.longitude,
+                }as DocumentGeoData,
                 Number(row.connections),
                 row.attachment || [],
                 row.resource || [],
                 row.links || []
             ))
+        } catch (err: any) {
+            throw new InternalServerError(err.message? err.message : "");
+        } finally {
+            await conn?.release();
+        }
+    }
+
+    async getStakeholders(): Promise<string[]> {
+        let conn;
+        try {
+            conn = await db.getConnection();
+            const sql = `
+            SELECT DISTINCT TRIM(stakeholder) AS stakeholder
+            FROM (
+                SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(stakeholders, ',', n.n), ',', -1) AS stakeholder
+                FROM document
+                CROSS JOIN (SELECT 1 AS n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) n
+                WHERE CHAR_LENGTH(stakeholders) - CHAR_LENGTH(REPLACE(stakeholders, ',', '')) >= n.n - 1
+            ) AS stakeholderList
+            WHERE stakeholder NOT IN ('LKAB', 'Municipality', 'Regional authority', 'Architecture firms', 'Citizens', 'Kiruna kommun')`
+            const rows = await conn.query(sql, []);
+            const response = rows.map((row: any) => row.stakeholder)
+            return response;
         } catch (err: any) {
             throw new InternalServerError(err.message? err.message : "");
         } finally {
