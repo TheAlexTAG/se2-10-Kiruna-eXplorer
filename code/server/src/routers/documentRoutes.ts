@@ -46,7 +46,12 @@ class DocumentRoutes {
             body("latitude").optional({nullable:true}).isFloat(), //send only if the georeference is a point, otherwise null
             body("longitude").optional({nullable:true}).isFloat(), //send only if the georeference is a point, otherwise null
             body("stakeholders").isString().notEmpty(),
-            body("scale").isString().notEmpty(),
+            body("scale")
+            .custom((value: string) => {
+                if(!this.utilities.isValidScale(value))
+                    throw new Error("Scale must be in the format '1:{number with thousand separator ,}' (e.g., '1:1,000') or one of 'Blueprints/effects', 'Concept', 'Text'");
+                return true;
+            }),
             body("issuanceDate").isString()
             .custom((value: string) => {
                 if(!this.utilities.isValidDate(value)) 
@@ -130,7 +135,12 @@ class DocumentRoutes {
         this.app.get("/api/documents",
             query("zoneID").optional().isInt(),
             query("stakeholders").optional().isString(),
-            query("scale").optional().isString(),
+            query("scale")
+            .custom((value: string) => {
+                if(!this.utilities.isValidScale(value))
+                    throw new Error("Scale must be in the format '1:{number with thousand separator ,}' (e.g., '1:1,000') or one of 'Blueprints/effects', 'Concept', 'Text'");
+                return true;
+            }),
             query("issuanceDate").optional().isString()
             .custom((value: string) => {
                 if(!this.utilities.isValidDate(value)) 

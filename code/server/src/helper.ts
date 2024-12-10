@@ -16,7 +16,6 @@ class ErrorHandler {
     validateRequest(req: any, res: any, next: any) {
         const errors = validationResult(req)
         if (!errors.isEmpty()) {
-            console.log(errors);
             let error = "The parameters are not formatted properly\n\n"
             errors.array().forEach((e: any) => {
                 error += "- Parameter: **" + e.path + "** - Reason: *" + e.msg + "* - Location: *" + e.location + "*\n\n"

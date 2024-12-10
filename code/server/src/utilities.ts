@@ -111,6 +111,12 @@ class Utilities{
         return false;
     }
     
+    isValidScale(value: string): boolean {
+        const scalePattern = /^1:\d{1,3}(?:[,]\d{3})*$/;
+        const validStrings = ["Blueprints/effects", "Concept", "Text"];
+    
+        return scalePattern.test(value) || validStrings.includes(value);
+    }
 }
 
 class Kiruna {

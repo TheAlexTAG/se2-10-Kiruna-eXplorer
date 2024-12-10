@@ -20,6 +20,7 @@ INSERT INTO `document` (title, description, zoneID, latitude, longitude, stakeho
 
 INSERT INTO `attachment` (documentID, name, path) VALUES
     (1, 'General Plan PDF', '/attachments/general_plan.pdf'),
+    (1, 'General Plan PDF1', '/attachments/general_plan1.pdf'),
     (2, 'Zone 1 Map', '/attachments/zone1_map.png'),
     (3, 'Special Project Proposal', '/attachments/special_project_proposal.docx');
 

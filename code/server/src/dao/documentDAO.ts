@@ -87,7 +87,8 @@ class DocumentDAO {
         try {
             conn = await db.getConnection();
             const sql = `
-            SELECT d.documentID,
+            SELECT 
+                d.documentID,
                 d.title,
                 d.description,
                 d.zoneID,
@@ -109,18 +110,11 @@ class DocumentDAO {
                     ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', r.name, 'path', r.path))
                 END AS resource,
                 CASE 
-                    WHEN COUNT(l1.secondDoc) + COUNT(l2.firstDoc) = 0 THEN NULL
+                    WHEN COUNT(l.linkID) = 0 THEN NULL
                     ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT(
-                        'documentID', 
-                        CASE 
-                            WHEN l1.secondDoc IS NOT NULL THEN l1.secondDoc 
-                            ELSE l2.firstDoc 
-                        END, 
-                        'relationship', 
-                        CASE 
-                            WHEN l1.relationship IS NOT NULL THEN l1.relationship 
-                            ELSE l2.relationship 
-                        END
+                        'linkID', l.linkID,
+                        'documentID', l.linkedDocumentID,
+                        'relationship', l.relationship
                     ))
                 END AS links
             FROM document d
@@ -133,10 +127,26 @@ class DocumentDAO {
                 ) sub
                 GROUP BY docID
             ) conn ON d.documentID = conn.docID
+
             LEFT JOIN attachment a ON d.documentID = a.documentID
+
             LEFT JOIN resource r ON d.documentID = r.documentID
-            LEFT JOIN link l1 ON d.documentID = l1.firstDoc
-            LEFT JOIN link l2 ON d.documentID = l2.secondDoc
+
+            LEFT JOIN (
+                SELECT 
+                    linkID,
+                    firstDoc AS documentID,
+                    secondDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+                UNION ALL
+                SELECT 
+                    linkID,
+                    secondDoc AS documentID,
+                    firstDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+            ) l ON d.documentID = l.documentID
             WHERE d.documentID = ?
             GROUP BY d.documentID`
             const result = await conn.query(sql, [documentID]);
@@ -172,7 +182,8 @@ class DocumentDAO {
         try{
             conn = await db.getConnection();
             let sql = `
-            SELECT d.documentID,
+            SELECT 
+                d.documentID,
                 d.title,
                 d.description,
                 d.zoneID,
@@ -194,18 +205,11 @@ class DocumentDAO {
                     ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', r.name, 'path', r.path))
                 END AS resource,
                 CASE 
-                    WHEN COUNT(l1.secondDoc) + COUNT(l2.firstDoc) = 0 THEN NULL
+                    WHEN COUNT(l.linkID) = 0 THEN NULL
                     ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT(
-                        'documentID', 
-                        CASE 
-                            WHEN l1.secondDoc IS NOT NULL THEN l1.secondDoc 
-                            ELSE l2.firstDoc 
-                        END, 
-                        'relationship', 
-                        CASE 
-                            WHEN l1.relationship IS NOT NULL THEN l1.relationship 
-                            ELSE l2.relationship 
-                        END
+                        'linkID', l.linkID,
+                        'documentID', l.linkedDocumentID,
+                        'relationship', l.relationship
                     ))
                 END AS links
             FROM document d
@@ -218,10 +222,26 @@ class DocumentDAO {
                 ) sub
                 GROUP BY docID
             ) conn ON d.documentID = conn.docID
+
             LEFT JOIN attachment a ON d.documentID = a.documentID
+
             LEFT JOIN resource r ON d.documentID = r.documentID
-            LEFT JOIN link l1 ON d.documentID = l1.firstDoc
-            LEFT JOIN link l2 ON d.documentID = l2.secondDoc
+
+            LEFT JOIN (
+                SELECT 
+                    linkID,
+                    firstDoc AS documentID,
+                    secondDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+                UNION ALL
+                SELECT 
+                    linkID,
+                    secondDoc AS documentID,
+                    firstDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+            ) l ON d.documentID = l.documentID
             `
             const conditions: string[] = [];
             const params: any[] = [];
@@ -262,13 +282,7 @@ class DocumentDAO {
                 sql += ` WHERE ${conditions.join(" AND ")}`;
             }
             sql += ` GROUP BY d.documentID`;
-            if (filters.pageSize && filters.pageNumber) {
-                const pageNumber = parseInt(filters.pageNumber, 10);
-                const pageSize = parseInt(filters.pageSize, 10);
-                const offset = (pageNumber - 1) * pageSize;
-                sql += ` LIMIT ? OFFSET ?`;
-                params.push(pageSize, offset);
-            }
+
             const result = await conn.query(sql, params);
             return result.map((row : any) => new Document(
                 row.documentID,
