@@ -193,12 +193,37 @@ class DocumentRoutes {
             }),
             query("type").optional().isString(),
             query("language").optional().isString(),
-            this.utilities.paginationCheck,
             this.errorHandler.validateRequest, 
         (req: any, res: any, next: any) => this.controller.getDocuments(req.query)
         .then(docs => res.status(200).json(docs))
         .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
     
+        this.app.get("/api/pagination/documents",
+            query("zoneID").optional().isInt(),
+            query("stakeholders").optional().isString(),
+            query("scale").optional()
+            .custom((value: string) => {
+                if(!this.utilities.isValidScale(value))
+                    throw new Error("Scale must be in the format '1:{number with thousand separator ,}' (e.g., '1:1,000') or one of 'Blueprints/effects', 'Concept', 'Text'");
+                return true;
+            }),
+            query("issuanceDate").optional().isString()
+            .custom((value: string) => {
+                if(!this.utilities.isValidDate(value)) 
+                    throw new Error("Invalid date format");
+                return true;
+            }),
+            query("type").optional().isString(),
+            query("language").optional().isString(),
+            this.utilities.paginationCheck,
+            this.errorHandler.validateRequest,
+        (req: any, res: any, next: any) => {
+            const { pageSize, pageNumber, ...filters} = req.query;
+            this.controller.getDocumentsWithPagination(filters, parseInt(pageNumber, 10), pageSize? parseInt(pageSize, 10): undefined)
+            .then((paginatedDocs) => res.status(200).json(paginatedDocs))
+            .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message}))
+        })
+
         this.app.get("/api/stakeholders",
             this.utilities.isUrbanPlanner,
             this.errorHandler.validateRequest,
