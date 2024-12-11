@@ -162,6 +162,7 @@ class DocumentDAO {
                     scale: result[0].scale,
                     issuanceDate: result[0].issuanceDate,
                     parsedDate: new Date(new Date(result[0].parsedDate).getTime() - (new Date(result[0].parsedDate).getTimezoneOffset() * 60000)),
+                    type: result[0].type,
                     language: result[0].language,
                     pages: result[0].pages
                 } as DocumentData,
@@ -300,6 +301,7 @@ class DocumentDAO {
                     scale: row.scale,
                     issuanceDate: row.issuanceDate,
                     parsedDate: new Date(new Date(row.parsedDate).getTime() - (new Date(row.parsedDate).getTimezoneOffset() * 60000)),
+                    type: row.type,
                     language: row.language,
                     pages: row.pages
                 } as DocumentData,
