@@ -9,6 +9,7 @@ import InformativeIcon from "../../assets/icons/informative-icon";
 import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
 import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
 import TechnicalIcon from "../../assets/icons/technical-icon";
+import DocDefaultIcon from "../../assets/icons/doc-default-icon";
 import API from "../../API/API";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
 import L from "leaflet";
@@ -71,6 +72,10 @@ const legendData = [
   {
     label: "Material effects",
     icon: <MaterialEffectIcon width="15px" height="15px" color="black" />,
+  },
+  {
+    label: "Default doc.",
+    icon: <DocDefaultIcon width="15px" height="15px" color="black" />,
   },
   { label: "LKAB", color: "#000000" },
   { label: "Municipality", color: "#B38676" },
@@ -160,7 +165,7 @@ const getIconComponent = (type: string): React.FC<IconProps> => {
     case "Material effect":
       return MaterialEffectIcon;
     default:
-      return DesignIcon; // Fallback
+      return DocDefaultIcon; // Fallback
   }
 };
 
@@ -556,8 +561,8 @@ export const Diagram: React.FC = () => {
       .attr("stroke-dasharray", ({ relationship }) =>
         getLineStyle(relationship)
       );
-    /*
-          // Clustering logic
+    
+    // Clustering logic
     const clusterThreshold = 25;
     const clusteredNodes: {
       clusterId: number;
@@ -565,6 +570,7 @@ export const Diagram: React.FC = () => {
       y: number;
       nodes: Node[];
     }[] = [];
+
 
     nodes.forEach((node) => {
       const x = xScale(parseDate(node.issuanceDate));
@@ -574,16 +580,13 @@ export const Diagram: React.FC = () => {
       let addedToCluster = false;
 
       clusteredNodes.forEach((cluster) => {
-        const distance = Math.sqrt(
-          (x - cluster.x) ** 2 + (y! - cluster.y) ** 2
-        );
+        const distance = Math.sqrt((x - cluster.x) ** 2 + (y! - cluster.y) ** 2);
         if (distance < clusterThreshold) {
           cluster.nodes.push(node);
           cluster.x =
             (cluster.x * (cluster.nodes.length - 1) + x) / cluster.nodes.length;
           cluster.y =
-            (cluster.y * (cluster.nodes.length - 1) + y!) /
-            cluster.nodes.length;
+            (cluster.y * (cluster.nodes.length - 1) + y) / cluster.nodes.length;
           addedToCluster = true;
         }
       });
@@ -636,23 +639,50 @@ export const Diagram: React.FC = () => {
         .text(clusterNodes.length)
         .classed("cluster-label", true);
 
+      // Gestione stato del cluster (aperto/chiuso)
+      let isExpanded = false;
+
       // Evento click sul cluster
       clusterCircle.on("click", () => {
-        // Rimuove il cerchio del cluster e la sua etichetta
-        clusterCircle.remove();
-        clusterLabel.remove();
+        if (!isExpanded) {
+          // Espandi i nodi intorno al cluster
+          const angleStep = (2 * Math.PI) / clusterNodes.length;
+          clusterNodes.forEach((node, index) => {
+            const angle = index * angleStep;
+            const nodeX = x + 30 * Math.cos(angle);
+            const nodeY = y + 30 * Math.sin(angle);
 
-        // Mostra i nodi appartenenti al cluster
-        clusterNodes.forEach((node) => {
-          xScale(parseDate(node.issuanceDate));
-          yScale(node.scale);
-          graphGroup
-            .selectAll("g.node")
-            .filter((d) => d.id === node.id)
-            .style("visibility", "visible");
-        });
+            graphGroup
+              .selectAll("g.node")
+              .filter((d) => d.id === node.id)
+              .attr("transform", `translate(${nodeX}, ${nodeY})`)
+              .style("visibility", "visible");
+
+            });
+
+          // Modifica il cluster per mostrare la "X"
+          clusterLabel.text("X");
+          clusterCircle.attr("fill", "#FF0000");
+
+          isExpanded = true;
+        } else {
+          // Collassa i nodi all'interno del cluster
+          clusterNodes.forEach((node) => {
+            graphGroup
+              .selectAll("g.node")
+              .filter((d) => d.id === node.id)
+              .attr("transform", `translate(${x}, ${y})`)
+              .style("visibility", "hidden");
+          });
+
+          // Ripristina il cluster
+          clusterLabel.text(clusterNodes.length);
+          clusterCircle.attr("fill", "#3182CE");
+
+          isExpanded = false;
+        }
       });
-    });*/
+  });
   }, [nodes]);
 
   return (
