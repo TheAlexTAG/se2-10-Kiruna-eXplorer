@@ -53,6 +53,23 @@ class WrongGeoreferenceUpdateError extends Error {
     }
 }
 
+class InvalidNewDateCoordinatesError extends Error {
+    code: number
+
+    constructor() {
+        super("The specified new coordinate is invalid");
+        this.code = 400;
+    }
+}
+
+class InvalidPageNumberError extends Error {
+    code: number
+
+    constructor() {
+        super("The specified page does not exist");
+        this.code = 400;
+    }
+}
 
 
-export {DocumentNotFoundError, WrongGeoreferenceError, DocumentZoneNotFoundError, InvalidDocumentZoneError, CoordinatesOutOfBoundsError, WrongGeoreferenceUpdateError};
+export {DocumentNotFoundError, WrongGeoreferenceError, DocumentZoneNotFoundError, InvalidDocumentZoneError, CoordinatesOutOfBoundsError, WrongGeoreferenceUpdateError, InvalidNewDateCoordinatesError, InvalidPageNumberError};

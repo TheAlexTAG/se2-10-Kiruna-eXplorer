@@ -1,5 +1,5 @@
 import { DocumentDAO } from "../dao/documentDAO";
-import { CoordinatesOutOfBoundsError, WrongGeoreferenceError} from "../errors/documentErrors";
+import { CoordinatesOutOfBoundsError, WrongGeoreferenceError, InvalidNewDateCoordinatesError, InvalidPageNumberError} from "../errors/documentErrors";
 import * as turf from "@turf/turf"
 import kiruna from "../kiruna.json"
 import { ZoneDAO } from "../dao/zoneDAO";
@@ -13,6 +13,14 @@ import { InternalServerError } from "../errors/link_docError";
 enum Modality {
     CREATE = "Create",
     UPDATE = "Update"
+}
+
+interface PaginatedDocs {
+    documents: Document[],
+    totalItems: number,
+    itemsPerPage: number,
+    currentPage: number,
+    totalPages: number
 }
 
 class DocumentControllerHelper {
@@ -143,6 +151,42 @@ class DocumentControllerHelper {
         }
         throw new InternalServerError("Wrong modality");
     }
+
+    isValidDate(issuanceDate: string, newParsedDate: string): boolean {
+        if (!issuanceDate || !newParsedDate || isNaN(Date.parse(newParsedDate))) {
+            return false;
+        }
+    
+        const [year, month, day] = newParsedDate.split('-').map(Number);
+        if (!year || !month || !day) {
+            return false;
+        }
+    
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(issuanceDate)) {
+            return false;
+        }
+    
+        if (/^\d{2}\/\d{4}$/.test(issuanceDate)) {
+            const [issuanceMonth, issuanceYear] = issuanceDate.split('/').map(Number);
+    
+            const startOfMonth = new Date(issuanceYear, issuanceMonth - 1, 1);
+            const endOfMonth = new Date(issuanceYear, issuanceMonth, 0);
+    
+            const newDate = new Date(year, month - 1, day);
+            return newDate >= startOfMonth && newDate <= endOfMonth;
+        }
+    
+        if (/^\d{4}$/.test(issuanceDate)) {
+            const issuanceYear = Number(issuanceDate);
+    
+            const startOfYear = new Date(issuanceYear, 0, 1);
+            const endOfYear = new Date(issuanceYear, 11, 31);
+    
+            const newDate = new Date(year, month - 1, day);
+            return newDate >= startOfYear && newDate <= endOfYear;
+        }
+        return false;
+    }
 }
 
 
@@ -200,12 +244,35 @@ class DocumentController {
         return documents;
     }
 
+    async getDocumentsWithPagination(filters: any, pageNumber: number, pageSize: number = 10): Promise<PaginatedDocs> {
+        const documents = await this.dao.getDocsWithFilters(filters);
+
+        const startIndex = (pageNumber - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const totalPages = Math.ceil(documents.length / pageSize);
+
+        if(pageNumber > totalPages)
+            throw new InvalidPageNumberError();
+
+        const paginatedDocs: PaginatedDocs = {
+            documents: documents.slice(startIndex, endIndex),
+            totalItems: documents.length,
+            itemsPerPage: pageSize,
+            currentPage: pageNumber,
+            totalPages: totalPages
+        }
+        return paginatedDocs;
+    }
+
     async getStakeholders(): Promise<string[]> {
         const response = await this.dao.getStakeholders();
         return response;
     }
 
     async updateDiagramDate(documentID: number, newParsedDate: string): Promise<boolean> {
+        const document = await this.dao.getDocumentByID(documentID);
+        if(!this.helper.isValidDate(document.issuanceDate, newParsedDate))
+            throw new InvalidNewDateCoordinatesError();
         const response = await this.dao.updateDiagramDate(documentID, newParsedDate);
         return response;
     }

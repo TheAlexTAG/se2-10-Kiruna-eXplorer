@@ -76,9 +76,9 @@ class Utilities{
     }
 
     async paginationCheck(req: any, res: any, next: any) {
-        if((req.query.pageSize && req.query.pageNumber) || (!req.query.pageSize && !req.query.pageNumber)) 
+        if(req.query.pageNumber && req.query.pageNumber > 0)
             return next();
-        else res.status(422).json({error: "Pagination error: page size or page number missing"});
+        else res.status(422).json({error: "Page number missing or incorrect"});
     }
 
     isValidDate(dateStr: string): boolean {
