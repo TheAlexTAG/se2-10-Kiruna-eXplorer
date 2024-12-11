@@ -24,8 +24,6 @@ class DocumentDAO {
     async createDocumentNode(documentData: DocumentData, documentGeoData: DocumentGeoData): Promise<number> {
         let conn;
         try {
-            console.log(documentData);
-            console.log(documentGeoData);
             conn = await db.getConnection();
             await conn.beginTransaction();
             if(documentGeoData.coordinates) {
@@ -54,7 +52,6 @@ class DocumentDAO {
             return Number(result.insertId);
         } catch (err: any) {
             await conn?.rollback();
-            console.error(err.message);
             if(err instanceof ZoneError) throw err;
             else throw new InternalServerError(err.message? err.message : "");
         } finally {
