@@ -92,6 +92,19 @@ interface DocumentData {
     pages: string | null
 }
 
+interface DocumentEditData {
+    documentID: number,
+    title: string | null,
+    description: string | null,
+    stakeholders: string | null,
+    scale: string | null,
+    issuanceDate: string | null,
+    parsedDate: Date | null,
+    type: string | null,
+    language: string | null,
+    pages: string | null
+}
+
 interface DocumentGeoData {
     zoneID: number | null,
     coordinates: Array<[number, number]> | string | null,
@@ -99,4 +112,4 @@ interface DocumentGeoData {
     longitude: number | null
 }
 
-export {Document, DocumentData, DocumentGeoData};
+export {Document, DocumentData, DocumentEditData, DocumentGeoData};

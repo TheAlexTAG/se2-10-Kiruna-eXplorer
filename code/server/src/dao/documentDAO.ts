@@ -2,7 +2,7 @@ import db from "../db/db";
 import { DocumentNotFoundError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
 import { InternalServerError } from "../errors/link_docError";
 import { ZoneError } from "../errors/zoneError";
-import { Document, DocumentData, DocumentGeoData } from "../components/document";
+import { Document, DocumentData, DocumentEditData, DocumentGeoData } from "../components/document";
 
 
 class DocumentDAO {
@@ -24,6 +24,8 @@ class DocumentDAO {
     async createDocumentNode(documentData: DocumentData, documentGeoData: DocumentGeoData): Promise<number> {
         let conn;
         try {
+            console.log(documentData);
+            console.log(documentGeoData);
             conn = await db.getConnection();
             await conn.beginTransaction();
             if(documentGeoData.coordinates) {
@@ -32,7 +34,7 @@ class DocumentDAO {
                 if(!documentGeoData.zoneID) throw new ZoneError();
             }
             const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, parsedDate, type, language, pages)
-            VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
             const params = [
                 documentData.title,
                 documentData.description,
@@ -52,6 +54,7 @@ class DocumentDAO {
             return Number(result.insertId);
         } catch (err: any) {
             await conn?.rollback();
+            console.error(err.message);
             if(err instanceof ZoneError) throw err;
             else throw new InternalServerError(err.message? err.message : "");
         } finally {
@@ -59,10 +62,15 @@ class DocumentDAO {
         }
     }
 
-    async updateDocument(documentData: DocumentData, documentGeoData: DocumentGeoData): Promise<boolean> {
+    async updateDocument(documentData: DocumentEditData, documentGeoData: DocumentGeoData): Promise<boolean> {
         let conn;
         try {
             conn = await db.getConnection();
+
+            const conditions: string[] = [];
+            const params: any[] = [];
+
+            
             await conn.beginTransaction();
             if(documentGeoData.coordinates) {
                 let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [documentGeoData.coordinates]);
