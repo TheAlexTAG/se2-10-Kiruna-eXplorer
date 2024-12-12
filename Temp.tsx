@@ -1,4 +1,3 @@
-// Full code for Diagram Component
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import ReactDOMServer from "react-dom/server";
@@ -39,44 +38,18 @@ type Node = {
   parsedDate: Date;
 };
 
-// Legend data
 const legendData = [
-  {
-    label: "Design doc.",
-    icon: <DesignIcon width="15px" height="15px" color="black" />,
-  },
-  {
-    label: "Informative doc.",
-    icon: <InformativeIcon width="15px" height="15px" color="black" />,
-  },
-  {
-    label: "Prescriptive doc.",
-    icon: <PrescriptiveIcon width="15px" height="15px" color="black" />,
-  },
-  {
-    label: "Technical doc.",
-    icon: <TechnicalIcon width="15px" height="15px" color="black" />,
-  },
-  {
-    label: "Agreement",
-    icon: <AgreementIcon width="15px" height="15px" color="black" />,
-  },
-  {
-    label: "Conflict",
-    icon: <ConflictIcon width="15px" height="15px" color="black" />,
-  },
-  {
-    label: "Consultation",
-    icon: <ConsultationIcon width="15px" height="15px" color="black" />,
-  },
-  {
-    label: "Material effects",
-    icon: <MaterialEffectIcon width="15px" height="15px" color="black" />,
-  },
-  {
-    label: "Default doc.",
-    icon: <DocDefaultIcon width="15px" height="15px" color="black" />,
-  },
+  // Node type icons
+  { label: "Design doc.", icon: <DesignIcon width="15px" height="15px" color="black" /> },
+  { label: "Informative doc.", icon: <InformativeIcon width="15px" height="15px" color="black" /> },
+  { label: "Prescriptive doc.", icon: <PrescriptiveIcon width="15px" height="15px" color="black" /> },
+  { label: "Technical doc.", icon: <TechnicalIcon width="15px" height="15px" color="black" /> },
+  { label: "Agreement", icon: <AgreementIcon width="15px" height="15px" color="black" /> },
+  { label: "Conflict", icon: <ConflictIcon width="15px" height="15px" color="black" /> },
+  { label: "Consultation", icon: <ConsultationIcon width="15px" height="15px" color="black" /> },
+  { label: "Material effects", icon: <MaterialEffectIcon width="15px" height="15px" color="black" /> },
+  { label: "Default doc.", icon: <DocDefaultIcon width="15px" height="15px" color="black" /> },
+  // Stakeholders
   { label: "LKAB", color: "#000000" },
   { label: "Municipality", color: "#B38676" },
   { label: "Regional authority", color: "#A42121" },
@@ -84,13 +57,14 @@ const legendData = [
   { label: "Citizens", color: "#87CEEB" },
   { label: "Others", color: "#5F9EA0" },
   { label: "More than 1", color: "#1D2D7A" },
+  // Connections
   { label: "Direct consequence", lineStyle: "solid" },
   { label: "Collateral consequence", lineStyle: "5,5" },
   { label: "Projection", lineStyle: "1,5,1,5" },
   { label: "Update", lineStyle: "1,5,5,5" },
 ];
 
-// Helper functions for parsing and styling
+// Helper functions
 const parseDate = (dateStr: string): Date => {
   const ddmmyyyy = d3.timeParse("%d/%m/%Y");
   const mmyyyy = d3.timeParse("%m/%Y");
@@ -164,7 +138,6 @@ const getIconComponent = (type: string): React.FC<IconProps> => {
   }
 };
 
-// Fetching documents
 const fetchDocuments = async (): Promise<Node[]> => {
   const response = await API.getDocuments();
 
@@ -228,7 +201,39 @@ export const Diagram: React.FC = () => {
 
     svg.selectAll("*").remove();
 
-    const graphGroup = svg.append("g").attr("transform", `translate(${margin.left + 150}, 0)`);
+    const gridGroup = svg.append("g").attr("class", "grid");
+
+    // Horizontal grid lines
+    gridGroup
+      .selectAll(".horizontal-line")
+      .data(yScale.domain())
+      .enter()
+      .append("line")
+      .attr("class", "horizontal-line")
+      .attr("x1", margin.left)
+      .attr("x2", width - margin.right)
+      .attr("y1", (d) => yScale(d)!)
+      .attr("y2", (d) => yScale(d)!)
+      .attr("stroke", "#ccc")
+      .attr("stroke-width", 1)
+      .attr("opacity", 0.5);
+
+    // Vertical grid lines
+    gridGroup
+      .selectAll(".vertical-line")
+      .data(xScale.ticks(20))
+      .enter()
+      .append("line")
+      .attr("class", "vertical-line")
+      .attr("x1", (d) => xScale(d))
+      .attr("x2", (d) => xScale(d))
+      .attr("y1", margin.top)
+      .attr("y2", height - margin.bottom)
+      .attr("stroke", "#ccc")
+      .attr("stroke-width", 1)
+      .attr("opacity", 0.5);
+
+    const graphGroup = svg.append("g").attr("transform", `translate(${margin.left}, 0)`);
 
     const drawConnections = (nodeData) => {
       graphGroup.selectAll("path").remove();
@@ -279,7 +284,7 @@ export const Diagram: React.FC = () => {
         .enter()
         .append("g")
         .attr("class", "node")
-              .attr(
+        .attr(
           "transform",
           (d) =>
             `translate(${xScale(d.parsedDate)}, ${yScale(d.parsedScale as unknown as string)})`
@@ -324,15 +329,14 @@ export const Diagram: React.FC = () => {
       const legendGroup = svg.append("g").attr("transform", `translate(${margin.left - 75}, ${margin.top})`);
       let currentY = 0;
 
-      // Node types legend
+      // Node types
       legendGroup
         .append("text")
         .text("Node types:")
         .attr("x", 0)
         .attr("y", 5)
         .attr("font-size", 12)
-        .attr("font-weight", "bold")
-        .attr("alignment-baseline", "middle");
+        .attr("font-weight", "bold");
 
       legendData
         .filter((item) => item.icon)
@@ -344,9 +348,7 @@ export const Diagram: React.FC = () => {
             .text(item.label)
             .attr("x", 190)
             .attr("y", 5)
-            .attr("font-size", 10)
-            .attr("alignment-baseline", "middle")
-            .attr("text-anchor", "end");
+            .attr("font-size", 10);
 
           legendItem
             .append("g")
@@ -356,15 +358,14 @@ export const Diagram: React.FC = () => {
           currentY += 20;
         });
 
-      // Stakeholders legend
+      // Stakeholders
       legendGroup
         .append("text")
         .text("Stakeholders:")
         .attr("x", 0)
         .attr("y", currentY + 5)
         .attr("font-size", 12)
-        .attr("font-weight", "bold")
-        .attr("alignment-baseline", "middle");
+        .attr("font-weight", "bold");
 
       legendData
         .filter((item) => item.color)
@@ -376,9 +377,7 @@ export const Diagram: React.FC = () => {
             .text(item.label)
             .attr("x", 190)
             .attr("y", 5)
-            .attr("font-size", 10)
-            .attr("alignment-baseline", "middle")
-            .attr("text-anchor", "end");
+            .attr("font-size", 10);
 
           legendItem
             .append("rect")
@@ -391,15 +390,14 @@ export const Diagram: React.FC = () => {
           currentY += 20;
         });
 
-      // Connections legend
+      // Connections
       legendGroup
         .append("text")
         .text("Connections:")
         .attr("x", 0)
         .attr("y", currentY + 5)
         .attr("font-size", 12)
-        .attr("font-weight", "bold")
-        .attr("alignment-baseline", "middle");
+        .attr("font-weight", "bold");
 
       legendData
         .filter((item) => item.lineStyle)
@@ -411,9 +409,7 @@ export const Diagram: React.FC = () => {
             .text(item.label)
             .attr("x", 190)
             .attr("y", 5)
-            .attr("font-size", 10)
-            .attr("alignment-baseline", "middle")
-            .attr("text-anchor", "end");
+            .attr("font-size", 10);
 
           legendItem
             .append("line")
@@ -429,7 +425,6 @@ export const Diagram: React.FC = () => {
         });
     };
 
-    // Draw legend, nodes, and connections
     addLegend();
     drawNodes(nodes);
     drawConnections(nodes);
