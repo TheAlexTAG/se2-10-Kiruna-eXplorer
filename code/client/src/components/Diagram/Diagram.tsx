@@ -13,6 +13,8 @@ import DocDefaultIcon from "../../assets/icons/doc-default-icon";
 import API from "../../API/API";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
 import L from "leaflet";
+import { Dropdown } from 'react-bootstrap';
+import ReactDOM from "react-dom"
 
 interface IconProps {
   width?: string | number;
@@ -123,7 +125,7 @@ const parseDate = (dateStr: string): Date => {
   }
 };
 
-const parseScale = (scale: string): Number | String => {
+const parseScale = (scale: string): number | string => {
   if (scale.split(":")[0] != "1") return scale;
   const parts = scale.split(":");
   const numericValue = parseInt(parts[1].replace(/[.,]/g, ""), 10);
@@ -243,7 +245,7 @@ export const Diagram: React.FC = () => {
       "Blueprints/effects",
       "",
     ];
-
+    
     const yScale = d3
       .scalePoint()
       .domain(newYDomain as Iterable<string>)
@@ -425,13 +427,13 @@ export const Diagram: React.FC = () => {
       .append("g")
       .attr("transform", `translate(${margin.left + 150}, 0)`);
 
-    graphGroup
+    const xAxis = graphGroup
       .append("g")
       .attr("transform", `translate(0,${height - margin.bottom})`)
       .call(d3.axisBottom(xScale).ticks(20))
       .attr("font-size", "12px");
 
-    graphGroup
+    const yAxis = graphGroup
       .append("g")
       .attr("transform", `translate(${margin.left},0)`)
       .call(
@@ -527,13 +529,15 @@ export const Diagram: React.FC = () => {
             }))
             .filter(({ sourceNode, targetNode, relationship }) => {
               if (targetNode) {
-                const linkKey = [sourceNode.id, targetNode.id, relationship].sort().join("-");
+                const linkKey = [sourceNode.id, targetNode.id, relationship]
+                  .sort()
+                  .join("-");
                 if (seenLinks.has(linkKey)) {
-                  return false; 
+                  return false;
                 }
-                seenLinks.add(linkKey); 
+                seenLinks.add(linkKey);
               }
-              return true; 
+              return true;
             })
         )
       )
@@ -546,11 +550,9 @@ export const Diagram: React.FC = () => {
           const endX = xScale(targetNode.parsedDate);
           const endY = yScale(targetNode.parsedScale as unknown as string);
 
-          // Calcolo di un punto di controllo per la curva
-          const controlX = (startX + endX) / 2; // Punto medio sull'asse X
-          const controlY = (startY! + endY!) / 2 - 50 - index * 50; // Punto medio sull'asse Y con offset per separare le curve
+          const controlX = (startX + endX) / 2;
+          const controlY = (startY! + endY!) / 2 - 50 - index * 50;
 
-          // Genera una curva quadratica Bezier
           return `M${startX},${startY} Q${controlX},${controlY} ${endX},${endY}`;
         }
         return "";
@@ -560,8 +562,52 @@ export const Diagram: React.FC = () => {
       .attr("fill", "none")
       .attr("stroke-dasharray", ({ relationship }) =>
         getLineStyle(relationship)
-      );
+      )
+      .on("click", function (event, d) {
+        const dropdownContainer = document.createElement("div");
+        dropdownContainer.id = "dropdown-container";
+        dropdownContainer.style.position = "absolute";
+        dropdownContainer.style.left = `${event.pageX}px`;
+        dropdownContainer.style.top = `${event.pageY}px`;
+        document.body.appendChild(dropdownContainer);
     
+        const root = ReactDOM.createRoot(dropdownContainer);
+    
+        const onRelationshipChange = (rel) => {
+          d.relationship = rel; // Aggiorna il tipo di relazione
+          d3.select(this) // Aggiorna lo stile della linea
+            .attr("stroke-dasharray", getLineStyle(rel));
+          root.unmount();
+          document.body.removeChild(dropdownContainer);
+        };
+    
+        root.render(
+          <Dropdown show={true}>
+            <Dropdown.Toggle variant="secondary" id="dropdown-basic">
+              Update Relationship
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              {["Direct Consequence", "Collateral consequence", "Projection", "Update"].map((rel) => (
+                <Dropdown.Item key={rel} onClick={() => onRelationshipChange(rel)}>
+                  {rel}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+        );
+    
+        const removeDropdown = () => {
+          if (document.body.contains(dropdownContainer)) {
+            root.unmount();
+            document.body.removeChild(dropdownContainer);
+            document.removeEventListener("click", removeDropdown);
+          }
+        };
+    
+        setTimeout(() => document.addEventListener("click", removeDropdown), 10);
+      });
+
+
     // Clustering logic
     const clusterThreshold = 25;
     const clusteredNodes: {
@@ -617,72 +663,47 @@ export const Diagram: React.FC = () => {
           .style("visibility", "hidden");
       });
 
+      // Gruppo del cluster
+      const clusterGroup = graphGroup
+        .append("g")
+        .attr("class", "cluster-group")
+        .attr("transform", `translate(${x}, ${y})`)
+        .style("cursor", "pointer");
+
       // Disegna il cerchio del cluster
-      const clusterCircle = graphGroup
+      const clusterCircle = clusterGroup
         .append("circle")
-        .attr("cx", x)
-        .attr("cy", y)
         .attr("r", 15)
         .attr("fill", "#3182CE")
         .attr("opacity", 0.8)
-        .style("cursor", "pointer")
         .classed("cluster", true);
 
       // Etichetta del cluster
-      const clusterLabel = graphGroup
+      const clusterLabel = clusterGroup
         .append("text")
-        .attr("x", x)
-        .attr("y", y + 4)
+        .attr("y", 4) // Offset verticale per centrare rispetto al cerchio
         .attr("text-anchor", "middle")
         .attr("font-size", 12)
         .attr("fill", "white")
         .text(clusterNodes.length)
         .classed("cluster-label", true);
 
-      // Gestione stato del cluster (aperto/chiuso)
-      let isExpanded = false;
+      // Evento click sul gruppo
+      clusterGroup.on("click", () => {
 
-      // Evento click sul cluster
-      clusterCircle.on("click", () => {
-        if (!isExpanded) {
-          // Espandi i nodi intorno al cluster
-          const angleStep = (2 * Math.PI) / clusterNodes.length;
-          clusterNodes.forEach((node, index) => {
-            const angle = index * angleStep;
-            const nodeX = x + 30 * Math.cos(angle);
-            const nodeY = y + 30 * Math.sin(angle);
+        // Rendi invisibili sia il cerchio che l'etichetta
+        clusterCircle.style("visibility", "hidden");
+        clusterLabel.style("visibility", "hidden");
 
-            graphGroup
-              .selectAll("g.node")
-              .filter((d) => d.id === node.id)
-              .attr("transform", `translate(${nodeX}, ${nodeY})`)
-              .style("visibility", "visible");
-
-            });
-
-          // Modifica il cluster per mostrare la "X"
-          clusterLabel.text("X");
-          clusterCircle.attr("fill", "#FF0000");
-
-          isExpanded = true;
-        } else {
-          // Collassa i nodi all'interno del cluster
-          clusterNodes.forEach((node) => {
-            graphGroup
-              .selectAll("g.node")
-              .filter((d) => d.id === node.id)
-              .attr("transform", `translate(${x}, ${y})`)
-              .style("visibility", "hidden");
-          });
-
-          // Ripristina il cluster
-          clusterLabel.text(clusterNodes.length);
-          clusterCircle.attr("fill", "#3182CE");
-
-          isExpanded = false;
-        }
+        clusterNodes.forEach((node) => {
+          graphGroup
+            .selectAll("g.node")
+            .filter((d) => d.id === node.id)
+            .style("visibility", "visible");
+        });
       });
   });
+
   }, [nodes]);
 
   return (
