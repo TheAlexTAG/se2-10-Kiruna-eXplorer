@@ -14,9 +14,9 @@ const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
 class ZoneRoutes {    
-    private app: express.Application;
-    private controller: ZoneController;
-    private utility: Utilities;
+    private readonly app: express.Application;
+    private readonly controller: ZoneController;
+    private readonly utility: Utilities;
 
     constructor(app: express.Application) {
         this.app = app;

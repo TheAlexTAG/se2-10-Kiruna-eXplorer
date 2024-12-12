@@ -47,7 +47,7 @@ class ZoneDAO {
             conn = await db.getConnection();
             const sql = "SELECT COUNT(*) AS count FROM zone WHERE coordinates = ?"
             const result = await conn.query(sql, [coordinates]);
-            return Number(result[0].count)? true : false;
+            return Boolean(result[0].count);
         } catch(err: any) {
             throw new InternalServerError(err.message? err.message : "");
         } finally {
@@ -95,7 +95,7 @@ class ZoneDAO {
             }
 
             const documentsUpdate= await conn.query("update document set latitude=?, longitude=? where zoneID=?", [lat, long, zoneID]);
-            if(!documentsUpdate || !documentsUpdate.affectedRows){
+            if(!documentsUpdate?.affectedRows){
                 throw new WrongGeoreferenceUpdateError();
             }
             

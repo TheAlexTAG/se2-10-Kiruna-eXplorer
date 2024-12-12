@@ -9,7 +9,7 @@ const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
 class LinkDocumentController{
-    private dao: LinkDocumentDAO;
+    private readonly dao: LinkDocumentDAO;
 
     constructor(){
         this.dao= new LinkDocumentDAO();

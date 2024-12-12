@@ -10,9 +10,9 @@ const window = new JSDOM("").window;
 const DOMPurify = createDOMPurify(window);
 
 class LinkDocumentRoutes {
-    private app: express.Application;
-    private controller: LinkDocumentController;
-    private utility: Utilities;
+    private readonly app: express.Application;
+    private readonly controller: LinkDocumentController;
+    private readonly utility: Utilities;
 
     constructor(app: express.Application) {
         this.app = app;

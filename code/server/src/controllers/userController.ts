@@ -1,7 +1,7 @@
 import { UserDAO } from "../dao/userDAO";
 
 class UserController {
-    private dao: UserDAO;
+    private readonly dao: UserDAO;
 
     constructor() {
         this.dao = new UserDAO();

@@ -1,9 +1,9 @@
 import express from 'express';
 
 class UserRoutes {
-    private app: express.Application;
-    private passport: any;
-    private isLoggedIn: (req: any, res: any, next: any) => any;
+    private readonly app: express.Application;
+    private readonly passport: any;
+    private readonly isLoggedIn: (req: any, res: any, next: any) => any;
 
     constructor(app: express.Application, passport: any, isLoggedIn: (req: any, res: any, next: any) => any) {
         this.app = app;
