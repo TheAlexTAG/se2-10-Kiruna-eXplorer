@@ -1,3 +1,4 @@
+// Full code for Diagram Component
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import ReactDOMServer from "react-dom/server";
@@ -38,7 +39,58 @@ type Node = {
   parsedDate: Date;
 };
 
-// Helper functions
+// Legend data
+const legendData = [
+  {
+    label: "Design doc.",
+    icon: <DesignIcon width="15px" height="15px" color="black" />,
+  },
+  {
+    label: "Informative doc.",
+    icon: <InformativeIcon width="15px" height="15px" color="black" />,
+  },
+  {
+    label: "Prescriptive doc.",
+    icon: <PrescriptiveIcon width="15px" height="15px" color="black" />,
+  },
+  {
+    label: "Technical doc.",
+    icon: <TechnicalIcon width="15px" height="15px" color="black" />,
+  },
+  {
+    label: "Agreement",
+    icon: <AgreementIcon width="15px" height="15px" color="black" />,
+  },
+  {
+    label: "Conflict",
+    icon: <ConflictIcon width="15px" height="15px" color="black" />,
+  },
+  {
+    label: "Consultation",
+    icon: <ConsultationIcon width="15px" height="15px" color="black" />,
+  },
+  {
+    label: "Material effects",
+    icon: <MaterialEffectIcon width="15px" height="15px" color="black" />,
+  },
+  {
+    label: "Default doc.",
+    icon: <DocDefaultIcon width="15px" height="15px" color="black" />,
+  },
+  { label: "LKAB", color: "#000000" },
+  { label: "Municipality", color: "#B38676" },
+  { label: "Regional authority", color: "#A42121" },
+  { label: "Architecture firms", color: "#A9A9A9" },
+  { label: "Citizens", color: "#87CEEB" },
+  { label: "Others", color: "#5F9EA0" },
+  { label: "More than 1", color: "#1D2D7A" },
+  { label: "Direct consequence", lineStyle: "solid" },
+  { label: "Collateral consequence", lineStyle: "5,5" },
+  { label: "Projection", lineStyle: "1,5,1,5" },
+  { label: "Update", lineStyle: "1,5,5,5" },
+];
+
+// Helper functions for parsing and styling
 const parseDate = (dateStr: string): Date => {
   const ddmmyyyy = d3.timeParse("%d/%m/%Y");
   const mmyyyy = d3.timeParse("%m/%Y");
@@ -112,7 +164,7 @@ const getIconComponent = (type: string): React.FC<IconProps> => {
   }
 };
 
-// Fetch documents
+// Fetching documents
 const fetchDocuments = async (): Promise<Node[]> => {
   const response = await API.getDocuments();
 
@@ -227,7 +279,7 @@ export const Diagram: React.FC = () => {
         .enter()
         .append("g")
         .attr("class", "node")
-        .attr(
+              .attr(
           "transform",
           (d) =>
             `translate(${xScale(d.parsedDate)}, ${yScale(d.parsedScale as unknown as string)})`
@@ -245,10 +297,140 @@ export const Diagram: React.FC = () => {
             .attr("transform", "translate(-10, -10)");
 
           node
+            .append("rect")
+            .attr("x", -20)
+            .attr("y", -20)
+            .attr("width", 40)
+            .attr("height", 40)
+            .attr("fill", "transparent");
+
+          node
+            .append("text")
+            .attr("x", 0)
+            .attr("y", 30)
+            .attr("text-anchor", "middle")
+            .attr("font-size", 10)
+            .style("visibility", "hidden")
+            .text(d.title);
+
+          node
+            .on("mouseover", () => node.select("text").style("visibility", "visible"))
+            .on("mouseout", () => node.select("text").style("visibility", "hidden"))
             .on("click", () => setSelectedDocument(d));
         });
     };
 
+    const addLegend = () => {
+      const legendGroup = svg.append("g").attr("transform", `translate(${margin.left - 75}, ${margin.top})`);
+      let currentY = 0;
+
+      // Node types legend
+      legendGroup
+        .append("text")
+        .text("Node types:")
+        .attr("x", 0)
+        .attr("y", 5)
+        .attr("font-size", 12)
+        .attr("font-weight", "bold")
+        .attr("alignment-baseline", "middle");
+
+      legendData
+        .filter((item) => item.icon)
+        .forEach((item) => {
+          const legendItem = legendGroup.append("g").attr("transform", `translate(0, ${currentY})`);
+
+          legendItem
+            .append("text")
+            .text(item.label)
+            .attr("x", 190)
+            .attr("y", 5)
+            .attr("font-size", 10)
+            .attr("alignment-baseline", "middle")
+            .attr("text-anchor", "end");
+
+          legendItem
+            .append("g")
+            .html(ReactDOMServer.renderToStaticMarkup(item.icon))
+            .attr("transform", `translate(200, -5)`);
+
+          currentY += 20;
+        });
+
+      // Stakeholders legend
+      legendGroup
+        .append("text")
+        .text("Stakeholders:")
+        .attr("x", 0)
+        .attr("y", currentY + 5)
+        .attr("font-size", 12)
+        .attr("font-weight", "bold")
+        .attr("alignment-baseline", "middle");
+
+      legendData
+        .filter((item) => item.color)
+        .forEach((item) => {
+          const legendItem = legendGroup.append("g").attr("transform", `translate(0, ${currentY})`);
+
+          legendItem
+            .append("text")
+            .text(item.label)
+            .attr("x", 190)
+            .attr("y", 5)
+            .attr("font-size", 10)
+            .attr("alignment-baseline", "middle")
+            .attr("text-anchor", "end");
+
+          legendItem
+            .append("rect")
+            .attr("x", 200)
+            .attr("y", -5)
+            .attr("width", 15)
+            .attr("height", 15)
+            .attr("fill", item.color!);
+
+          currentY += 20;
+        });
+
+      // Connections legend
+      legendGroup
+        .append("text")
+        .text("Connections:")
+        .attr("x", 0)
+        .attr("y", currentY + 5)
+        .attr("font-size", 12)
+        .attr("font-weight", "bold")
+        .attr("alignment-baseline", "middle");
+
+      legendData
+        .filter((item) => item.lineStyle)
+        .forEach((item) => {
+          const legendItem = legendGroup.append("g").attr("transform", `translate(0, ${currentY})`);
+
+          legendItem
+            .append("text")
+            .text(item.label)
+            .attr("x", 190)
+            .attr("y", 5)
+            .attr("font-size", 10)
+            .attr("alignment-baseline", "middle")
+            .attr("text-anchor", "end");
+
+          legendItem
+            .append("line")
+            .attr("x1", 200)
+            .attr("x2", 235)
+            .attr("y1", 5)
+            .attr("y2", 5)
+            .attr("stroke", "black")
+            .attr("stroke-width", 2)
+            .attr("stroke-dasharray", item.lineStyle === "solid" ? "" : item.lineStyle!);
+
+          currentY += 20;
+        });
+    };
+
+    // Draw legend, nodes, and connections
+    addLegend();
     drawNodes(nodes);
     drawConnections(nodes);
   }, [nodes]);
