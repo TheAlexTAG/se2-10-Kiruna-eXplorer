@@ -1,11 +1,135 @@
 import db from "../db/db";
-import { DocumentNotFoundError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
+import { DocumentNotFoundError, DocumentUpdateError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
 import { InternalServerError } from "../errors/link_docError";
-import { ZoneError } from "../errors/zoneError";
+import { InsertZoneError, ZoneError } from "../errors/zoneError";
 import { Document, DocumentData, DocumentEditData, DocumentGeoData } from "../components/document";
+import { PoolConnection } from "mariadb";
 
+class DocumentDaoHelper {
+
+    filtersToSQL(filters: any): {sql: string, params: any[]} {
+        const conditions: string[] = [];
+        const params: any[] = [];
+        let sql = "";
+
+        if (filters.zoneID != null) {
+            if(filters.zoneID == 0) {
+                conditions.push("d.zoneID = ? AND d.latitude = ? AND d.longitude = ?");
+                params.push(null, null, null);
+            }
+            else {
+                conditions.push("d.zoneID = ?");
+                params.push(filters.zoneID);
+            }  
+        }
+
+        if (filters.stakeholders) {
+            conditions.push("d.stakeholders LIKE ?");
+            params.push(`%${filters.stakeholders}%`);
+        }
+
+        if (filters.scale) {
+            conditions.push("d.scale = ?");
+            params.push(filters.scale);
+        }
+
+        if (filters.issuanceDate) {
+            conditions.push("d.issuanceDate LIKE ?");
+            params.push(`%${filters.issuanceDate}%`);
+        }
+
+        if (filters.type) {
+            conditions.push("d.type = ?");
+            params.push(filters.type);
+        }
+
+        if (filters.language) {
+            conditions.push("d.language = ?");
+            params.push(filters.language);
+        }
+        
+        if (conditions.length > 0)
+            sql += ` WHERE ${conditions.join(" AND ")}`;
+
+        return {
+            sql: sql,
+            params: params
+        }
+    }
+
+    async insertZone(coordinates: string, conn: PoolConnection): Promise<number | null> {
+        const sql = `INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)`;
+        const result = await conn.query(sql, coordinates);
+        const lastID = result.insertId? result.insertId : null
+        return lastID;
+    }
+
+    editDataToSQL(documentData: DocumentEditData, documentGeoData: DocumentGeoData, georefEdit: boolean): {sql: string, params: any[]} {
+        const conditions: string[] = [];
+        const params: any[] = [];
+        let sql = "";
+
+        if(georefEdit) {
+            conditions.push("zoneID = ?, latitude = ?, longitude = ?");
+            params.push(documentGeoData.zoneID, documentGeoData.latitude, documentGeoData.longitude);
+        }
+
+        if(documentData.description) {
+            conditions.push("description = ?");
+            params.push(documentData.description);
+        }
+
+        if(documentData.issuanceDate) {
+            conditions.push("issuanceDate = ?, parsedDate = ?");
+            params.push(documentData.issuanceDate, documentData.parsedDate);
+        }
+
+        if(documentData.language) {
+            conditions.push("language = ?");
+            params.push(documentData.language)
+        }
+
+        if(documentData.pages) {
+            conditions.push("pages = ?");
+            params.push(documentData.pages);
+        }
+
+        if(documentData.scale) {
+            conditions.push("scale = ?");
+            params.push(documentData.scale);
+        }
+
+        if(documentData.stakeholders) {
+            conditions.push("stakeholders = ?");
+            params.push(documentData.stakeholders);
+        }
+
+        if(documentData.title) {
+            conditions.push("title = ?");
+            params.push(documentData.title);
+        }
+
+        if(documentData.type) {
+            conditions.push("type = ?");
+            params.push(documentData.title);
+        }
+
+        if(conditions.length > 0) 
+            sql += conditions.join(", ");
+
+        return {
+            sql: sql,
+            params: params
+        }
+    }
+}
 
 class DocumentDAO {
+    private readonly helper: DocumentDaoHelper
+
+    constructor() {
+        this.helper = new DocumentDaoHelper()
+    }
 
     static async documentExists(documentID: number): Promise<boolean> {
         let conn;
@@ -25,12 +149,14 @@ class DocumentDAO {
         let conn;
         try {
             conn = await db.getConnection();
-            await conn.beginTransaction();
+
             if(documentGeoData.coordinates) {
-                let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [documentGeoData.coordinates]);
-                documentGeoData.zoneID = insResult.insertId? insResult.insertId : null;
-                if(!documentGeoData.zoneID) throw new ZoneError();
+                await conn.beginTransaction();
+                const lastID = await this.helper.insertZone(documentGeoData.coordinates as string, conn);
+                if(!lastID) throw new InsertZoneError();
+                documentGeoData.zoneID = lastID;
             }
+
             const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, parsedDate, type, language, pages)
             VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
             const params = [
@@ -47,11 +173,14 @@ class DocumentDAO {
                 documentData.language,
                 documentData.pages
             ]
+
             const result = await conn.query(sql, params);
-            await conn.commit();
+
+            if(documentGeoData.coordinates) await conn.commit();
+            
             return Number(result.insertId);
         } catch (err: any) {
-            await conn?.rollback();
+            if(documentGeoData.coordinates) await conn?.rollback();
             if(err instanceof ZoneError) throw err;
             else throw new InternalServerError();
         } finally {
@@ -59,30 +188,30 @@ class DocumentDAO {
         }
     }
 
-    async updateDocument(documentData: DocumentEditData, documentGeoData: DocumentGeoData, goerefEdit: boolean = true): Promise<boolean> {
+    async updateDocument(documentData: DocumentEditData, documentGeoData: DocumentGeoData, georefEdit: boolean = false): Promise<boolean> {
         let conn;
         try {
             conn = await db.getConnection();
-
-            const conditions: string[] = [];
-            const params: any[] = [];
-
-            await conn.beginTransaction();
-            if(goerefEdit) {
-                if(documentGeoData.coordinates) {
-                    let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [documentGeoData.coordinates]);
-                    documentGeoData.zoneID = insResult.insertId? insResult.insertId : null;
-                    if(!documentGeoData.zoneID) throw new ZoneError();
-                }
+            if(georefEdit && documentGeoData.coordinates != null) {
+                await conn.beginTransaction();
+                const lastID = await this.helper.insertZone(documentGeoData.coordinates as string, conn);
+                if(!lastID) throw new InsertZoneError();
+                documentGeoData.zoneID = lastID;
             }
-            
-            const sql = `UPDATE document SET zoneID = ?, longitude = ?, latitude = ? WHERE documentID = ?`;
-            const result = await conn.query(sql, [documentGeoData.zoneID, documentGeoData.longitude, documentGeoData.latitude, documentData.documentID]);
-            if(!result.affectedRows) throw new WrongGeoreferenceUpdateError();
-            await conn.commit();
+            let sql = `UPDATE document SET `;
+
+            const editDataObj = this.helper.editDataToSQL(documentData, documentGeoData, georefEdit);
+
+            sql += editDataObj.sql + ' WHERE documentID = ?';
+            editDataObj.params.push(documentData.documentID);
+
+            const response = await conn.query(sql, editDataObj.params);
+            if(response.affectedRows == 0) throw new DocumentUpdateError();
+            if(georefEdit && documentGeoData.coordinates != null) await conn.commit();
+
             return true;
         } catch (err: any) {
-            await conn?.rollback();
+            if(georefEdit && documentGeoData.coordinates != null) await conn?.rollback();
             if(err instanceof ZoneError || err instanceof WrongGeoreferenceUpdateError) throw err;
             else throw new InternalServerError();
         } finally {
@@ -258,47 +387,12 @@ class DocumentDAO {
                 FROM link
             ) l ON d.documentID = l.documentID
             `
-            const conditions: string[] = [];
-            const params: any[] = [];
+            const filterObj = this.helper.filtersToSQL(filters);
 
-            
-            if (filters.zoneID != null) {
-                if(filters.zoneID == 0) {
-                    conditions.push("d.zoneID = ? AND d.latitude = ? AND d.longitude = ?");
-                    params.push(null, null, null);
-                }
-                else {
-                    conditions.push("d.zoneID = ?");
-                    params.push(filters.zoneID);
-                }  
-            }
-            if (filters.stakeholders) {
-                conditions.push("d.stakeholders LIKE ?");
-                params.push(`%${filters.stakeholders}%`);
-            }
-            if (filters.scale) {
-                conditions.push("d.scale = ?");
-                params.push(filters.scale);
-            }
-            if (filters.issuanceDate) {
-                conditions.push("d.issuanceDate LIKE ?");
-                params.push(`%${filters.issuanceDate}%`);
-            }
-            if (filters.type) {
-                conditions.push("d.type = ?");
-                params.push(filters.type);
-            }
-            if (filters.language) {
-                conditions.push("d.language = ?");
-                params.push(filters.language);
-            }
-            
-            if (conditions.length > 0) {
-                sql += ` WHERE ${conditions.join(" AND ")}`;
-            }
+            sql += filterObj.sql;
             sql += ` GROUP BY d.documentID`;
 
-            const result = await conn.query(sql, params);
+            const result = await conn.query(sql, filterObj.params);
             return result.map((row : any) => new Document(
                 {
                     documentID: row.documentID,
