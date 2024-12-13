@@ -1,0 +1,168 @@
+.hotspot-cluster-icon {
+  background-color: rgba(255, 69, 0, 0.8); /* Unique color for hotspot */
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  border: 3px solid white;
+}
+
+.hotspot-cluster {
+  width: 50px;
+  height: 50px;
+}
+
+/* Default styles for other clusters */
+.custom-cluster-icon {
+  background-color: rgba(0, 123, 255, 0.7);
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  border: 2px solid white;
+}
+
+.small-cluster {
+  width: 30px;
+  height: 30px;
+}
+
+.medium-cluster {
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255, 193, 7, 0.7);
+}
+
+.large-cluster {
+  width: 50px;
+  height: 50px;
+  background-color: rgba(220, 53, 69, 0.7);
+}
+
+.moreBtn {
+  color: blue;
+  cursor: pointer;
+}
+
+.toggle-satellite-btn {
+  background-color: #4caf50;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s ease;
+}
+
+.toggle-satellite-btn:hover {
+  background-color: #45a049;
+}
+.map-toggle-btn {
+  background-color: #fff;
+  border-radius: 50%;
+  padding: 10px;
+  cursor: pointer;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  transition: transform 0.2s ease;
+}
+
+.map-toggle-btn:hover {
+  transform: scale(1.1);
+}
+
+.kiruna-doc-btn {
+  background-color: #fff;
+  border: 2px solid #003da0; /*kiruna flag color actually*/
+  border-radius: 50%;
+  padding: 10px;
+  cursor: pointer;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  transition: transform 0.2s ease;
+}
+
+.kiruna-doc-btn:hover {
+  transform: scale(1.1);
+}
+
+.kiruna-doc-btn:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.tooltip {
+  visibility: hidden;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 5px;
+  padding: 5px 10px;
+  position: absolute;
+  bottom: 55px;
+  left: 10px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-size: 12px;
+  z-index: 1001;
+  white-space: nowrap;
+}
+
+.map-toggle-btn:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.custom-icon {
+  background-color: #fff;
+  border-radius: 50%;
+  padding: 10px;
+  cursor: pointer;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  width: 40px;
+  transition: transform 0.2s ease;
+}
+
+.custom-icon.highlighted {
+  background-color: rgb(184, 181, 28);
+  border: 1px solid gold;
+  box-shadow: 0px 10px 8px rgba(0, 0, 0, 0.5);
+}
+
+.custom-icon-border {
+  background: none;
+}
+
+.custom-icon-png {
+  background-color: #fff;
+  border-radius: 50%;
+  padding: 10px;
+  cursor: pointer;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  width: 40px;
+  transition: transform 0.2s ease;
+}

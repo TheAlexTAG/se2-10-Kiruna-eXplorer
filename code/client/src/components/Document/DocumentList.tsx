@@ -3,12 +3,14 @@ import {
   Table,
   Button,
   Form,
-  Row,
   Col,
   Collapse,
   Dropdown,
   DropdownButton,
   Alert,
+  InputGroup,
+  Card,
+  Pagination,
 } from "react-bootstrap";
 import API from "../../API/API";
 import { LinkingDocumentsModal } from "./LinkingDocuments/LinkingDocumentsModal";
@@ -36,6 +38,28 @@ export const DocumentList = ({ userInfo }: userProps) => {
     language: "",
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const handlePageChange = (pageNumber: number) => {
+    if (pageNumber >= 1 && pageNumber <= totalPages) {
+      setCurrentPage(pageNumber);
+    }
+  };
+  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
+  const paginationItems = [];
+  for (let number = 1; number <= totalPages; number++) {
+    paginationItems.push(
+      <Pagination.Item
+        key={number}
+        active={number === currentPage}
+        onClick={() => handlePageChange(number)}
+      >
+        {number}
+      </Pagination.Item>
+    );
+  }
   const stakeholderOptions: string[] = [
     "LKAB",
     "Municipalty",
@@ -139,10 +163,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
       files.some((existingFile) => existingFile.name === newFile.name)
     );
     const duplicateFilesFromDoc = document?.resource.filter((resource: any) =>
-      selectedFiles.some(
-        (newFile: any) =>
-          "resources/" + document.id + "-" + newFile.name === resource
-      )
+      selectedFiles.some((newFile: any) => newFile.name === resource.name)
     );
     if (duplicateFiles.length > 0) {
       setError(
@@ -161,6 +182,9 @@ export const DocumentList = ({ userInfo }: userProps) => {
     } else {
       setError(null);
       setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -190,140 +214,161 @@ export const DocumentList = ({ userInfo }: userProps) => {
     <div className="mx-4 document-list" style={{ paddingBottom: "20px" }}>
       {/* Header */}
       <div className="my-4 d-flex justify-content-between align-items-center">
-        <h2>Documents</h2>
-        {userInfo?.role === "Urban Planner" && (
-          <NewDocument
-            setSuccessMessage={setSuccessMessage}
-            updateTable={fetchDocuments}
-            userInfo={userInfo}
-          />
-        )}
+        <div>
+          <h2 className="main-text">Documents</h2>
+        </div>
+        <div className="d-flex align-items-center">
+          {/* Search Bar */}
+          <div>
+            <InputGroup className="search-bar" data-bs-theme="dark">
+              <Form.Control
+                type="text"
+                placeholder="Search by title..."
+                value={searchTerm}
+                onChange={handleSearch}
+              />
+              <InputGroup.Text
+                style={{ background: "none", borderLeft: "none" }}
+              >
+                <i className="bi bi-search" style={{ color: "#085FB2" }}></i>
+              </InputGroup.Text>
+            </InputGroup>
+          </div>
+          {/* Button to toggle filter visibility */}
+          <Button variant="link" onClick={toggleFilterVisibility}>
+            {filterVisible ? (
+              <i className="bi bi-x-lg fs-4" style={{ color: "#dc3545" }}></i>
+            ) : (
+              <i className="bi bi-funnel fs-4" style={{ color: "#085FB2" }}></i>
+            )}
+          </Button>
+        </div>
       </div>
-
-      {/* Search Bar */}
-      <Form.Group className="mb-3">
-        <Form.Control
-          type="text"
-          placeholder="Search by title..."
-          value={searchTerm}
-          onChange={handleSearch}
+      {userInfo?.role === "Urban Planner" && (
+        <NewDocument
+          setSuccessMessage={setSuccessMessage}
+          updateTable={fetchDocuments}
+          userInfo={userInfo}
         />
-      </Form.Group>
-
-      {/* Button to toggle filter visibility */}
-      <Button
-        variant={filterVisible ? "danger" : "primary"}
-        onClick={toggleFilterVisibility}
-        className="mb-3"
-      >
-        {filterVisible ? "Hide Filters" : "Show Filters"}
-      </Button>
+      )}
 
       {/* Filters Form */}
       <Collapse in={filterVisible}>
-        <div>
-          <Form className="mb-3">
-            <Row>
-              <Form.Group as={Col} controlId="filterStakeholders">
-                <Form.Label>Stakeholders</Form.Label>
-                <Form.Select
-                  name="stakeholders"
-                  value={filters.stakeholders}
-                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-                    handleFilterChange(event)
-                  }
-                >
-                  <option value="">Select Stakeholder</option>
-                  {stakeholderOptions.map((stakeholder) => (
-                    <option key={stakeholder} value={stakeholder}>
-                      {stakeholder}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-              <Form.Group as={Col} controlId="filterScale">
-                <Form.Label>Scale</Form.Label>
-                <Form.Select
-                  name="scale"
-                  value={filters.scale}
-                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-                    handleFilterChange(event)
-                  }
-                >
-                  <option value="">Select Scale</option>
-                  <option value="1:1000">1:1000</option>
-                  <option value="1:5000">1:5000</option>
-                  <option value="1:10000">1:10000</option>
-                  <option value="1:100000">1:100000</option>
-                </Form.Select>
-              </Form.Group>
-              
-            </Row>
-            <Row>
-              <Form.Group as={Col} controlId="filterIssuanceDate">
-                <Form.Label>Issuance Date</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="DD/MM/YYYY"
-                  name="issuanceDate"
-                  value={filters.issuanceDate}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    handleFilterChange(event)
-                  }
-                />
-              </Form.Group>
-              <Form.Group as={Col} controlId="filterType">
-                <Form.Label>Type</Form.Label>
-                <Form.Select
-                  name="type"
-                  value={filters.type}
-                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-                    handleFilterChange(event)
-                  }
-                >
-                  <option value="">Select Type</option>
-                  {typeOptions.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
+        <Card
+          data-bs-theme="dark"
+          className="main-text"
+          style={{
+            width: "310px",
+            position: "absolute",
+            right: "32px",
+            zIndex: "999",
+            top: "140px",
+          }}
+        >
+          <h3>Filters</h3>
 
-              <Form.Group as={Col} controlId="filterLanguage">
-                <Form.Label>Language</Form.Label>
-                <Form.Select
-                  name="language"
-                  value={filters.language}
-                  onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-                    handleFilterChange(event)
-                  }
-                >
-                  <option value="">Select Language</option>
-                  <option value="English">English</option>
-                  <option value="Spanish">Spanish</option>
-                  <option value="Swedish">Swedish</option>
-                  <option value="French">French</option>
-                  <option value="German">German</option>
-                  <option value="Italian">Italian</option>
-                  <option value="Chinese">Chinese</option>
-                  <option value="Japanese">Japanese</option>
-                  <option value="Korean">Korean</option>
-                  <option value="Russian">Russian</option>
-                  <option value="Arabic">Arabic</option>
-                </Form.Select>
-              </Form.Group>
-            </Row>
-            <div className="d-flex justify-content-between">
+          <Form className="mb-3 filter-card" data-bs-theme="dark">
+            <Form.Group as={Col} controlId="filterStakeholders">
+              <Form.Label>Stakeholders</Form.Label>
+              <Form.Select
+                name="stakeholders"
+                value={filters.stakeholders}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                  handleFilterChange(event)
+                }
+              >
+                <option value="">Select Stakeholder</option>
+                {stakeholderOptions.map((stakeholder) => (
+                  <option key={stakeholder} value={stakeholder}>
+                    {stakeholder}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+            <Form.Group as={Col} controlId="filterScale">
+              <Form.Label>Scale</Form.Label>
+              <Form.Select
+                name="scale"
+                value={filters.scale}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                  handleFilterChange(event)
+                }
+              >
+                <option value="">Select Scale</option>
+                <option value="Blueprints/effects">Blueprints/effects</option>
+                <option value="1:1,000">1:1,000</option>
+                <option value="1:5,000">1:5,000</option>
+                <option value="1:10,000">1:10,000</option>
+                <option value="1:100,000">1:100,000</option>
+                <option value="Concept">Concept</option>
+                <option value="Text">Text</option>
+              </Form.Select>
+            </Form.Group>
+
+            <Form.Group as={Col} controlId="filterIssuanceDate">
+              <Form.Label>Issuance Date</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="DD/MM/YYYY"
+                name="issuanceDate"
+                value={filters.issuanceDate}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                  handleFilterChange(event)
+                }
+              />
+            </Form.Group>
+            <Form.Group as={Col} controlId="filterType">
+              <Form.Label>Type</Form.Label>
+              <Form.Select
+                name="type"
+                value={filters.type}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                  handleFilterChange(event)
+                }
+              >
+                <option value="">Select Type</option>
+                {typeOptions.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+
+            <Form.Group as={Col} controlId="filterLanguage">
+              <Form.Label>Language</Form.Label>
+              <Form.Select
+                name="language"
+                value={filters.language}
+                onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                  handleFilterChange(event)
+                }
+              >
+                <option value="">Select Language</option>
+                <option value="English">English</option>
+                <option value="Spanish">Spanish</option>
+                <option value="Swedish">Swedish</option>
+                <option value="French">French</option>
+                <option value="German">German</option>
+                <option value="Italian">Italian</option>
+                <option value="Chinese">Chinese</option>
+                <option value="Japanese">Japanese</option>
+                <option value="Korean">Korean</option>
+                <option value="Russian">Russian</option>
+                <option value="Arabic">Arabic</option>
+              </Form.Select>
+            </Form.Group>
+
+            <div className="d-flex justify-content-between mt-3">
               <Button variant="primary" onClick={applyFilters}>
-                Apply Filters
+                Apply
               </Button>
-              <Button variant="secondary" onClick={handleResetFilters}>
-                Reset Filters
+              <Button variant="outline-danger" onClick={handleResetFilters}>
+                Reset
               </Button>
             </div>
           </Form>
-        </div>
+        </Card>
       </Collapse>
       {successMessage && (
         <Alert variant="success" dismissible>
@@ -331,7 +376,14 @@ export const DocumentList = ({ userInfo }: userProps) => {
         </Alert>
       )}
       <div>
-        <Table striped bordered hover className="text-center">
+        <Table
+          striped
+          bordered
+          hover
+          className="text-center"
+          data-bs-theme="dark"
+          style={{ color: "whitesmoke" }}
+        >
           <thead>
             <tr>
               <th>#</th>
@@ -346,57 +398,64 @@ export const DocumentList = ({ userInfo }: userProps) => {
             </tr>
           </thead>
           <tbody>
-            {filteredDocuments.map((document: any, index: number) => (
-              <tr key={index}>
-                <td>{index + 1}</td>
-                <td>{document.title ? document.title : "-"}</td>
-                <td>{document.stakeholders ? document.stakeholders : "-"}</td>
-                <td>{document.scale ? document.scale : "-"}</td>
-                <td>{document.type ? document.type : "-"}</td>
-                <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
-                <td>{document.connections ? document.connections : "-"}</td>
-                <td>{document.language ? document.language : "-"}</td>
-                {userInfo?.role === "Urban Planner" && (
-                  <td className="d-flex justify-content-center">
-                    <DropdownButton
-                      variant="link-black"
-                      title={<i className="bi bi-three-dots-vertical"></i>}
-                    >
-                      <Dropdown.Item>
-                        <LinkingDocumentsModal
-                          currentDocument={document}
-                          documents={documents}
-                          updateTable={fetchDocuments}
-                        />
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Item>
-                        <div
-                          className="p-2"
-                          onClick={() => handleEditClick(document)}
-                          style={{ color: "green" }}
-                        >
-                          <i className="bi bi-pencil-square"></i> Edit Document
-                        </div>
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Item>
-                        <div
-                          style={{ color: "#2d6efd" }}
-                          onClick={() => handleSelectDiv(document)}
-                          className="p-2"
-                        >
-                          <i className="bi bi-file-earmark-arrow-up-fill"></i>{" "}
-                          Upload Files
-                        </div>
-                      </Dropdown.Item>
-                    </DropdownButton>
-                  </td>
-                )}
-              </tr>
-            ))}
+            {filteredDocuments
+              .slice(startIndex, endIndex)
+              .map((document: any, index: number) => (
+                <tr key={index}>
+                  <td>{index + 1}</td>
+                  <td>{document.title ? document.title : "-"}</td>
+                  <td>{document.stakeholders ? document.stakeholders : "-"}</td>
+                  <td>{document.scale ? document.scale : "-"}</td>
+                  <td>{document.type ? document.type : "-"}</td>
+                  <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
+                  <td>{document.connections ? document.connections : "-"}</td>
+                  <td>{document.language ? document.language : "-"}</td>
+                  {userInfo?.role === "Urban Planner" && (
+                    <td>
+                      <DropdownButton
+                        variant="link-black"
+                        title={<i className="bi bi-three-dots-vertical"></i>}
+                      >
+                        <Dropdown.Item>
+                          <LinkingDocumentsModal
+                            currentDocument={document}
+                            documents={documents}
+                            updateTable={fetchDocuments}
+                            setSuccessMessage={setSuccessMessage}
+                          />
+                        </Dropdown.Item>
+                        <Dropdown.Divider />
+                        <Dropdown.Item>
+                          <div
+                            className="p-2"
+                            onClick={() => handleEditClick(document)}
+                            style={{ color: "green" }}
+                          >
+                            <i className="bi bi-pencil-square"></i> Edit
+                            Document
+                          </div>
+                        </Dropdown.Item>
+                        <Dropdown.Divider />
+                        <Dropdown.Item>
+                          <div
+                            style={{ color: "#2d6efd" }}
+                            onClick={() => handleSelectDiv(document)}
+                            className="p-2"
+                          >
+                            <i className="bi bi-file-earmark-arrow-up-fill"></i>{" "}
+                            Upload Files
+                          </div>
+                        </Dropdown.Item>
+                      </DropdownButton>
+                    </td>
+                  )}
+                </tr>
+              ))}
           </tbody>
         </Table>
+        <div className="d-flex justify-content-center ">
+          <Pagination data-bs-theme="dark">{paginationItems}</Pagination>
+        </div>
       </div>
 
       {selectedDocument && (
@@ -410,8 +469,12 @@ export const DocumentList = ({ userInfo }: userProps) => {
 
       <div className={`original-resources ${show ? "show" : "hide"}`}>
         <div className="original-resources-header">
-          <h4>Upload Original Resources {show ? "show" : "hide"}</h4>
-          <Button variant="close" onClick={() => closeUploadingFile()}></Button>
+          <h4 className="main-text">
+            Upload Original Resources {show ? "show" : "hide"}
+          </h4>
+          <Button variant="link" onClick={() => closeUploadingFile()}>
+            <i className="bi bi-x-lg fs-5" style={{ color: "red" }}></i>
+          </Button>
         </div>
         <div className="original-resources-body">
           {error && (
@@ -419,26 +482,24 @@ export const DocumentList = ({ userInfo }: userProps) => {
               {error}
             </Alert>
           )}
+
           <div>
             {document && document.resource && document.resource.length > 0 && (
               <>
                 <div>
-                  <strong>Existing resources:</strong>
+                  <strong className="main-text">Existing resources:</strong>
                 </div>
 
                 {document.resource.map((resource: any, index: number) => {
-                  const cleanedResource =
-                    document.id + "-" + resource.replace("resources/", "");
-
                   return (
                     <div key={index}>
                       <Button
                         variant="link"
                         onClick={() =>
-                          API.handleDownloadResource(cleanedResource)
+                          API.handleDownloadResource(document.id, resource.name)
                         }
                       >
-                        {cleanedResource}
+                        {resource.name}
                       </Button>
                     </div>
                   );
@@ -448,14 +509,15 @@ export const DocumentList = ({ userInfo }: userProps) => {
 
             {files.length > 0 ? (
               <>
-                <p>List of the added files:</p>
+                <p className="main-text">List of the added files:</p>
                 <ul>
                   {files.map((file, index) => (
-                    <li key={index}>
+                    <li key={index} className="main-text">
                       {file.name}{" "}
                       <Button
                         variant="link"
                         onClick={() => handleRemoveFile(index)}
+                        style={{ color: "#dc3545" }}
                       >
                         Remove
                       </Button>
@@ -464,7 +526,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
                 </ul>
               </>
             ) : (
-              <p>No files selected.</p>
+              <p className="main-text">No files selected.</p>
             )}
           </div>
           <div

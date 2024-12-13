@@ -12,7 +12,7 @@ interface Attachment {
     path: string
 }
 
-interface link {
+interface Link {
     documentID: number,
     relationship: string 
 }
@@ -27,13 +27,14 @@ class Document {
     stakeholders: string;
     scale: string;
     issuanceDate: string;
+    parsedDate: Date;
     type: string;
     language: string | null;
-    pages: number | null;
+    pages: string | null;
     connections: number;
     attachment: Attachment[];
     resource: Resource[];
-    links: link[];
+    links: Link[];
 
   
     /**
@@ -56,26 +57,59 @@ class Document {
      * @param resource list of resource URLs related to the document
      * @param links the id of the documents linked to the actual document
     */
-    constructor(id: number, title: string, description: string, zoneID: number | null, latitude: number | null, longitude: number | null,
-        stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: number | null, connections: number, 
-        attachment: Attachment[] = [], resource: Resource[] = [], links: link[] = []) {
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.zoneID = zoneID;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.stakeholders = stakeholders;
-        this.scale = scale;
-        this.issuanceDate = issuanceDate;
-        this.type = type;
-        this.language = language;
-        this.pages = pages;
+    constructor(documentData: DocumentData, documentGeoData: DocumentGeoData, connections: number, 
+        attachment: Attachment[] = [], resource: Resource[] = [], links: Link[] = []) {
+        this.id = documentData.documentID;
+        this.title = documentData.title;
+        this.description = documentData.description;
+        this.zoneID = documentGeoData.zoneID;
+        this.latitude = documentGeoData.latitude;
+        this.longitude = documentGeoData.longitude;
+        this.stakeholders = documentData.stakeholders;
+        this.scale = documentData.scale;
+        this.issuanceDate = documentData.issuanceDate;
+        this.parsedDate = documentData.parsedDate;
+        this.type = documentData.type;
+        this.language = documentData.language;
+        this.pages = documentData.pages;
         this.connections= connections;
         this.attachment= attachment;
         this.resource= resource;
         this.links = links;
     }
 }
-    
-export {Document};
+
+interface DocumentData {
+    documentID: number,
+    title: string,
+    description: string,
+    stakeholders: string,
+    scale: string,
+    issuanceDate: string,
+    parsedDate: Date,
+    type: string,
+    language: string | null,
+    pages: string | null
+}
+
+interface DocumentEditData {
+    documentID: number,
+    title: string | null,
+    description: string | null,
+    stakeholders: string | null,
+    scale: string | null,
+    issuanceDate: string | null,
+    parsedDate: Date | null,
+    type: string | null,
+    language: string | null,
+    pages: string | null
+}
+
+interface DocumentGeoData {
+    zoneID: number | null,
+    coordinates: Array<[number, number]> | string | null,
+    latitude: number | null,
+    longitude: number | null
+}
+
+export {Document, DocumentData, DocumentEditData, DocumentGeoData};

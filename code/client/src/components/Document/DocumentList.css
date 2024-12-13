@@ -4,3 +4,16 @@
 .document-list .dropdown-toggle.show {
   border: none;
 }
+
+.document-list .search-bar {
+  height: 38px;
+}
+.document-list .search-bar input {
+  border-radius: 8px;
+  color: whitesmoke;
+  border-right: none;
+}
+
+.document-list .search-bar input::placeholder {
+  color: whitesmoke;
+}

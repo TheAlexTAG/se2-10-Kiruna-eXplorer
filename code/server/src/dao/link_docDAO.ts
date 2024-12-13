@@ -1,6 +1,6 @@
 import { LinkDocument, Relationship } from "../components/link_doc";
 import db from "../db/db";
-import { InternalServerError, LinkError } from "../errors/link_docError";
+import { InternalServerError, LinkError, ModifyLinkError } from "../errors/link_docError";
 
 /* Sanitize input */
 import createDOMPurify from "dompurify";
@@ -10,21 +10,44 @@ const DOMPurify = createDOMPurify(window);
 
 class LinkDocumentDAO {
 
-  async getLink(firstDoc: number, secondDoc: number, relationship: Relationship): Promise<LinkDocument | null> {
+  async checkLink(firstDoc: number, secondDoc: number, relationship: Relationship): Promise<LinkDocument | null> {
     let conn;
 
     try {
       conn= await db.getConnection();
-      const sql = "SELECT * FROM link WHERE (firstDoc=? AND secondDoc=?) OR (firstDoc=? AND secondDoc=?) AND relationship=?";
+      const sql = "SELECT * FROM link WHERE ((firstDoc=? AND secondDoc=?) OR (firstDoc=? AND secondDoc=?)) AND relationship=?";
 
       const row= await conn.query(sql, [firstDoc, secondDoc, secondDoc, firstDoc, relationship]);
       if(!row || row.length=== 0){
         return null;
       }
-      return new LinkDocument(+DOMPurify.sanitize(row[0].firstDoc), +DOMPurify.sanitize(row[0].secondDoc), DOMPurify.sanitize(row[0].relationship) as Relationship);
+      return new LinkDocument(+DOMPurify.sanitize(row[0].linkID), +DOMPurify.sanitize(row[0].firstDoc), +DOMPurify.sanitize(row[0].secondDoc), DOMPurify.sanitize(row[0].relationship) as Relationship);
     
     } catch (err: any) {
-      throw new InternalServerError(err.message ? err.message : "Error with the server!");
+      throw new InternalServerError();
+    }
+    finally {
+      if (conn) {
+        await conn.release();      
+      }
+    }
+  };
+
+  async getLink(id: number): Promise<LinkDocument | null>{
+    let conn;
+
+    try {
+      conn= await db.getConnection();
+      const sql = "SELECT * FROM link WHERE linkID=?";
+
+      const row= await conn.query(sql, [id]);
+      if(!row || row.length=== 0){
+        return null;
+      }
+      return new LinkDocument(+DOMPurify.sanitize(row[0].linkID), +DOMPurify.sanitize(row[0].firstDoc), +DOMPurify.sanitize(row[0].secondDoc), DOMPurify.sanitize(row[0].relationship) as Relationship);
+    
+    } catch (err: any) {
+      throw new InternalServerError();
     }
     finally {
       if (conn) {
@@ -50,7 +73,7 @@ class LinkDocumentDAO {
       if(err instanceof LinkError){
         throw err; 
       }
-      throw new InternalServerError(err.message ? err.message : "Error with the server!");
+      throw new InternalServerError();
     }
     finally{
       if (conn) {
@@ -75,7 +98,7 @@ class LinkDocumentDAO {
       return true;
 
     } catch (err: any) {
-      throw new InternalServerError(err.message ? err.message : "Error with the server!");
+      throw new InternalServerError();
     }
     finally{
       if (conn) {
@@ -99,13 +122,40 @@ class LinkDocumentDAO {
       if (conn) {
         await conn.rollback();
       }
-      throw new InternalServerError(err.message ? err.message : "Error with the server!");
+      throw new InternalServerError();
     }
     finally{
       if (conn) {
         await conn.release();      
       }
     }
+  };
+
+  async modifyLink(link: LinkDocument): Promise<LinkDocument> {
+    let conn;
+
+    try {
+      conn = await db.getConnection();
+
+      const res = await conn.query("update link set firstDoc=?, secondDoc=?, relationship=?  where linkID=?", [link.firstDoc, link.secondDoc, link.relationship, link.id]);
+      if (!res || res.affectedRows !== 1) {
+        throw new ModifyLinkError();
+      }
+
+      return link;
+
+    } catch (err: any) {
+      if (err instanceof ModifyLinkError) {
+        throw err;
+      }
+      throw new InternalServerError();
+    }
+    finally {
+      if (conn) {
+        await conn.release();
+      }
+    }
+
   };
 }
 

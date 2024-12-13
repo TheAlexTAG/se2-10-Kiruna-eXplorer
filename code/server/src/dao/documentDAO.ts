@@ -1,12 +1,135 @@
 import db from "../db/db";
-import { DocumentNotFoundError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
+import { DocumentNotFoundError, DocumentUpdateError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
 import { InternalServerError } from "../errors/link_docError";
-import { ZoneError } from "../errors/zoneError";
-import { Document } from "../components/document";
-import { param } from "express-validator";
+import { InsertZoneError, ZoneError } from "../errors/zoneError";
+import { Document, DocumentData, DocumentEditData, DocumentGeoData } from "../components/document";
+import { PoolConnection } from "mariadb";
 
+class DocumentDaoHelper {
+
+    filtersToSQL(filters: any): {sql: string, params: any[]} {
+        const conditions: string[] = [];
+        const params: any[] = [];
+        let sql = "";
+
+        if (filters.zoneID != null) {
+            if(filters.zoneID == 0) {
+                conditions.push("d.zoneID = ? AND d.latitude = ? AND d.longitude = ?");
+                params.push(null, null, null);
+            }
+            else {
+                conditions.push("d.zoneID = ?");
+                params.push(filters.zoneID);
+            }  
+        }
+
+        if (filters.stakeholders) {
+            conditions.push("d.stakeholders LIKE ?");
+            params.push(`%${filters.stakeholders}%`);
+        }
+
+        if (filters.scale) {
+            conditions.push("d.scale = ?");
+            params.push(filters.scale);
+        }
+
+        if (filters.issuanceDate) {
+            conditions.push("d.issuanceDate LIKE ?");
+            params.push(`%${filters.issuanceDate}%`);
+        }
+
+        if (filters.type) {
+            conditions.push("d.type = ?");
+            params.push(filters.type);
+        }
+
+        if (filters.language) {
+            conditions.push("d.language = ?");
+            params.push(filters.language);
+        }
+        
+        if (conditions.length > 0)
+            sql += ` WHERE ${conditions.join(" AND ")}`;
+
+        return {
+            sql: sql,
+            params: params
+        }
+    }
+
+    async insertZone(coordinates: string, conn: PoolConnection): Promise<number | null> {
+        const sql = `INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)`;
+        const result = await conn.query(sql, coordinates);
+        const lastID = result.insertId? result.insertId : null
+        return lastID;
+    }
+
+    editDataToSQL(documentData: DocumentEditData, documentGeoData: DocumentGeoData, georefEdit: boolean): {sql: string, params: any[]} {
+        const conditions: string[] = [];
+        const params: any[] = [];
+        let sql = "";
+
+        if(georefEdit) {
+            conditions.push("zoneID = ?, latitude = ?, longitude = ?");
+            params.push(documentGeoData.zoneID, documentGeoData.latitude, documentGeoData.longitude);
+        }
+
+        if(documentData.description) {
+            conditions.push("description = ?");
+            params.push(documentData.description);
+        }
+
+        if(documentData.issuanceDate) {
+            conditions.push("issuanceDate = ?, parsedDate = ?");
+            params.push(documentData.issuanceDate, documentData.parsedDate);
+        }
+
+        if(documentData.language) {
+            conditions.push("language = ?");
+            params.push(documentData.language)
+        }
+
+        if(documentData.pages) {
+            conditions.push("pages = ?");
+            params.push(documentData.pages);
+        }
+
+        if(documentData.scale) {
+            conditions.push("scale = ?");
+            params.push(documentData.scale);
+        }
+
+        if(documentData.stakeholders) {
+            conditions.push("stakeholders = ?");
+            params.push(documentData.stakeholders);
+        }
+
+        if(documentData.title) {
+            conditions.push("title = ?");
+            params.push(documentData.title);
+        }
+
+        if(documentData.type) {
+            conditions.push("type = ?");
+            params.push(documentData.title);
+        }
+
+        if(conditions.length > 0) 
+            sql += conditions.join(", ");
+
+        return {
+            sql: sql,
+            params: params
+        }
+    }
+}
 
 class DocumentDAO {
+    private readonly helper: DocumentDaoHelper
+
+    constructor() {
+        this.helper = new DocumentDaoHelper()
+    }
 
     static async documentExists(documentID: number): Promise<boolean> {
         let conn;
@@ -14,57 +137,83 @@ class DocumentDAO {
             conn = await db.getConnection();
             const sql = `SELECT COUNT(*) AS count FROM document WHERE documentID = ?`
             const result = await conn.query(sql, [documentID]);
-            return Number(result[0].count)? true : false;
+            return !!Number(result[0].count);
         } catch(err: any) {
-            throw new InternalServerError(err.message? err.message : "");
+            throw new InternalServerError();
         } finally {
             await conn?.release();
         }
     }
 
-    async createDocumentNode(title: string, description: string, zoneID: number | null, coordinates: string | null, latitude: number | null, longitude: number | null, stakeholders: string, scale: string, issuanceDate: string, type: string, language: string | null, pages: string | null): Promise<number> {
+    async createDocumentNode(documentData: DocumentData, documentGeoData: DocumentGeoData): Promise<number> {
         let conn;
         try {
             conn = await db.getConnection();
-            await conn.beginTransaction();
-            if(coordinates) {
-                let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [coordinates]);
-                zoneID = insResult.insertId? insResult.insertId : null;
-                if(!zoneID) throw new ZoneError();
+
+            if(documentGeoData.coordinates) {
+                await conn.beginTransaction();
+                const lastID = await this.helper.insertZone(documentGeoData.coordinates as string, conn);
+                if(!lastID) throw new InsertZoneError();
+                documentGeoData.zoneID = lastID;
             }
-            const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
-            VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-            const result = await conn.query(sql, [title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages]);
-            await conn.commit();
+
+            const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, parsedDate, type, language, pages)
+            VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            const params = [
+                documentData.title,
+                documentData.description,
+                documentGeoData.zoneID,
+                documentGeoData.latitude,
+                documentGeoData.longitude,
+                documentData.stakeholders,
+                documentData.scale,
+                documentData.issuanceDate,
+                documentData.parsedDate.toISOString().split("T")[0],
+                documentData.type,
+                documentData.language,
+                documentData.pages
+            ]
+
+            const result = await conn.query(sql, params);
+
+            if(documentGeoData.coordinates) await conn.commit();
+            
             return Number(result.insertId);
         } catch (err: any) {
-            await conn?.rollback();
+            if(documentGeoData.coordinates) await conn?.rollback();
             if(err instanceof ZoneError) throw err;
-            else throw new InternalServerError(err.message? err.message : "");
+            else throw new InternalServerError();
         } finally {
             await conn?.release();
         }
     }
 
-    async updateDocumentGeoref(documentID: number, zoneID: number | null, coordinates: string | null, latitude: number | null, longitude: number | null): Promise<boolean> {
+    async updateDocument(documentData: DocumentEditData, documentGeoData: DocumentGeoData, georefEdit: boolean = false): Promise<boolean> {
         let conn;
         try {
             conn = await db.getConnection();
-            await conn.beginTransaction();
-            if(coordinates) {
-                let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [coordinates]);
-                insResult.insertId ? zoneID = insResult.insertId : null;
-                if(!zoneID) throw new ZoneError();
+            if(georefEdit && documentGeoData.coordinates != null) {
+                await conn.beginTransaction();
+                const lastID = await this.helper.insertZone(documentGeoData.coordinates as string, conn);
+                if(!lastID) throw new InsertZoneError();
+                documentGeoData.zoneID = lastID;
             }
-            const sql = `UPDATE document SET zoneID = ?, longitude = ?, latitude = ? WHERE documentID = ?`;
-            const result = await conn.query(sql, [zoneID, longitude, latitude, documentID]);
-            if(!result.affectedRows) throw new WrongGeoreferenceUpdateError();
-            await conn.commit();
+            let sql = `UPDATE document SET `;
+
+            const editDataObj = this.helper.editDataToSQL(documentData, documentGeoData, georefEdit);
+
+            sql += editDataObj.sql + ' WHERE documentID = ?';
+            editDataObj.params.push(documentData.documentID);
+
+            const response = await conn.query(sql, editDataObj.params);
+            if(response.affectedRows == 0) throw new DocumentUpdateError();
+            if(georefEdit && documentGeoData.coordinates != null) await conn.commit();
+
             return true;
         } catch (err: any) {
-            await conn?.rollback();
+            if(georefEdit && documentGeoData.coordinates != null) await conn?.rollback();
             if(err instanceof ZoneError || err instanceof WrongGeoreferenceUpdateError) throw err;
-            else throw new InternalServerError(err.message? err.message : "");
+            else throw new InternalServerError();
         } finally {
             await conn?.release();
         }
@@ -75,7 +224,8 @@ class DocumentDAO {
         try {
             conn = await db.getConnection();
             const sql = `
-            SELECT d.documentID,
+            SELECT 
+                d.documentID,
                 d.title,
                 d.description,
                 d.zoneID,
@@ -84,43 +234,79 @@ class DocumentDAO {
                 d.stakeholders,
                 d.scale,
                 d.issuanceDate,
+                d.parsedDate,
                 d.type,
                 d.language,
                 d.pages,
-                COUNT(l.firstDoc) AS connections,
+                conn.connections,
                 CASE 
                     WHEN COUNT(a.attachmentID) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('name', a.name, 'path', a.path))
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', a.name, 'path', a.path))
                 END AS attachment,
                 CASE 
                     WHEN COUNT(r.resourceID) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('name', r.name, 'path', r.path))
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', r.name, 'path', r.path))
                 END AS resource,
                 CASE 
-                    WHEN COUNT(l.secondDoc) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('documentID', l.secondDoc, 'relationship', l.relationship))
+                    WHEN COUNT(l.linkID) = 0 THEN NULL
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT(
+                        'linkID', l.linkID,
+                        'documentID', l.linkedDocumentID,
+                        'relationship', l.relationship
+                    ))
                 END AS links
             FROM document d
+            LEFT JOIN (
+                SELECT docID, COUNT(*) AS connections
+                FROM (
+                    SELECT firstDoc AS docID FROM link
+                    UNION ALL
+                    SELECT secondDoc AS docID FROM link
+                ) sub
+                GROUP BY docID
+            ) conn ON d.documentID = conn.docID
+
             LEFT JOIN attachment a ON d.documentID = a.documentID
+
             LEFT JOIN resource r ON d.documentID = r.documentID
-            LEFT JOIN link l ON d.documentID = l.firstDoc
+
+            LEFT JOIN (
+                SELECT 
+                    linkID,
+                    firstDoc AS documentID,
+                    secondDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+                UNION ALL
+                SELECT 
+                    linkID,
+                    secondDoc AS documentID,
+                    firstDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+            ) l ON d.documentID = l.documentID
             WHERE d.documentID = ?
             GROUP BY d.documentID`
             const result = await conn.query(sql, [documentID]);
             if(result.length === 0) throw new DocumentNotFoundError();
             return new Document(
-                result[0].documentID,
-                result[0].title,
-                result[0].description,
-                (result[0].zoneID == null && result[0].latitude == null && result[0].longitude == null)? 0 : result[0].zoneID,
-                result[0].latitude,
-                result[0].longitude,
-                result[0].stakeholders,
-                result[0].scale,
-                result[0].issuanceDate,
-                result[0].type, 
-                result[0].language,
-                result[0].pages,
+                {
+                    documentID: result[0].documentID,
+                    title: result[0].title,
+                    description: result[0].description,
+                    stakeholders: result[0].stakeholders,
+                    scale: result[0].scale,
+                    issuanceDate: result[0].issuanceDate,
+                    parsedDate: new Date(new Date(result[0].parsedDate).getTime() - (new Date(result[0].parsedDate).getTimezoneOffset() * 60000)),
+                    type: result[0].type,
+                    language: result[0].language,
+                    pages: result[0].pages
+                } as DocumentData,
+                {
+                    zoneID: (result[0].zoneID == null && result[0].latitude == null && result[0].longitude == null)? 0 : result[0].zoneID,
+                    latitude: result[0].latitude,
+                    longitude: result[0].longitude,
+                }as DocumentGeoData,
                 Number(result[0].connections),
                 result[0].attachment || [],
                 result[0].resource || [],
@@ -128,7 +314,7 @@ class DocumentDAO {
             )
         } catch (err: any) {
             if (err instanceof DocumentNotFoundError) throw err;
-            else throw new InternalServerError(err.message? err.message : "");
+            else throw new InternalServerError();
         } finally {
             await conn?.release();
         }
@@ -139,7 +325,8 @@ class DocumentDAO {
         try{
             conn = await db.getConnection();
             let sql = `
-            SELECT d.documentID,
+            SELECT 
+                d.documentID,
                 d.title,
                 d.description,
                 d.zoneID,
@@ -148,94 +335,127 @@ class DocumentDAO {
                 d.stakeholders,
                 d.scale,
                 d.issuanceDate,
+                d.parsedDate,
                 d.type,
                 d.language,
                 d.pages,
-                COUNT(l.firstDoc) AS connections,
+                conn.connections,
                 CASE 
                     WHEN COUNT(a.attachmentID) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('name', a.name, 'path', a.path))
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', a.name, 'path', a.path))
                 END AS attachment,
                 CASE 
                     WHEN COUNT(r.resourceID) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('name', r.name, 'path', r.path))
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT('name', r.name, 'path', r.path))
                 END AS resource,
                 CASE 
-                    WHEN COUNT(l.secondDoc) = 0 THEN NULL
-                    ELSE JSON_ARRAYAGG(JSON_OBJECT('documentID', l.secondDoc, 'relationship', l.relationship))
+                    WHEN COUNT(l.linkID) = 0 THEN NULL
+                    ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT(
+                        'linkID', l.linkID,
+                        'documentID', l.linkedDocumentID,
+                        'relationship', l.relationship
+                    ))
                 END AS links
             FROM document d
-            LEFT JOIN attachment a ON d.documentID = a.documentID
-            LEFT JOIN resource r ON d.documentID = r.documentID
-            LEFT JOIN link l ON d.documentID = l.firstDoc
-            `
-            const conditions: string[] = [];
-            const params: any[] = [];
+            LEFT JOIN (
+                SELECT docID, COUNT(*) AS connections
+                FROM (
+                    SELECT firstDoc AS docID FROM link
+                    UNION ALL
+                    SELECT secondDoc AS docID FROM link
+                ) sub
+                GROUP BY docID
+            ) conn ON d.documentID = conn.docID
 
-            
-            if (filters.zoneID != null) {
-                if(filters.zoneID == 0) {
-                    conditions.push("d.zoneID = ? AND d.latitude = ? AND d.longitude = ?");
-                    params.push(null, null, null);
-                }
-                else {
-                    conditions.push("d.zoneID = ?");
-                    params.push(filters.zoneID);
-                }  
-            }
-            if (filters.stakeholders) {
-                conditions.push("d.stakeholders LIKE ?");
-                params.push(`%${filters.stakeholders}%`);
-            }
-            if (filters.scale) {
-                conditions.push("d.scale = ?");
-                params.push(filters.scale);
-            }
-            if (filters.issuanceDate) {
-                conditions.push("d.issuanceDate LIKE ?");
-                params.push(`%${filters.issuanceDate}%`);
-            }
-            if (filters.type) {
-                conditions.push("d.type = ?");
-                params.push(filters.type);
-            }
-            if (filters.language) {
-                conditions.push("d.language = ?");
-                params.push(filters.language);
-            }
-            
-            if (conditions.length > 0) {
-                sql += ` WHERE ${conditions.join(" AND ")}`;
-            }
+            LEFT JOIN attachment a ON d.documentID = a.documentID
+
+            LEFT JOIN resource r ON d.documentID = r.documentID
+
+            LEFT JOIN (
+                SELECT 
+                    linkID,
+                    firstDoc AS documentID,
+                    secondDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+                UNION ALL
+                SELECT 
+                    linkID,
+                    secondDoc AS documentID,
+                    firstDoc AS linkedDocumentID,
+                    relationship
+                FROM link
+            ) l ON d.documentID = l.documentID
+            `
+            const filterObj = this.helper.filtersToSQL(filters);
+
+            sql += filterObj.sql;
             sql += ` GROUP BY d.documentID`;
-            if (filters.pageSize && filters.pageNumber) {
-                const pageNumber = parseInt(filters.pageNumber, 10);
-                const pageSize = parseInt(filters.pageSize, 10);
-                const offset = (pageNumber - 1) * pageSize;
-                sql += ` LIMIT ? OFFSET ?`;
-                params.push(pageSize, offset);
-            }
-            const result = await conn.query(sql, params);
+
+            const result = await conn.query(sql, filterObj.params);
             return result.map((row : any) => new Document(
-                row.documentID,
-                row.title,
-                row.description,
-                (row.zoneID == null && row.latitude == null && row.longitude == null) ? 0 : row.zoneID,
-                row.latitude,
-                row.longitude,
-                row.stakeholders,
-                row.scale,
-                row.issuanceDate,
-                row.type,
-                row.language,
-                row.pages,
+                {
+                    documentID: row.documentID,
+                    title: row.title,
+                    description: row.description,
+                    stakeholders: row.stakeholders,
+                    scale: row.scale,
+                    issuanceDate: row.issuanceDate,
+                    parsedDate: new Date(new Date(row.parsedDate).getTime() - (new Date(row.parsedDate).getTimezoneOffset() * 60000)),
+                    type: row.type,
+                    language: row.language,
+                    pages: row.pages
+                } as DocumentData,
+                {
+                    zoneID: (row.zoneID == null && row.latitude == null && row.longitude == null)? 0 : row.zoneID,
+                    latitude: row.latitude,
+                    longitude: row.longitude,
+                }as DocumentGeoData,
                 Number(row.connections),
                 row.attachment || [],
                 row.resource || [],
                 row.links || []
             ))
         } catch (err: any) {
-            throw new InternalServerError(err.message? err.message : "");
+            throw new InternalServerError();
+        } finally {
+            await conn?.release();
+        }
+    }
+
+    async getStakeholders(): Promise<string[]> {
+        let conn;
+        try {
+            conn = await db.getConnection();
+            const sql = `
+            SELECT DISTINCT TRIM(stakeholder) AS stakeholder
+            FROM (
+                SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(stakeholders, ',', n.n), ',', -1) AS stakeholder
+                FROM document
+                CROSS JOIN (SELECT 1 AS n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6 UNION SELECT 7 UNION SELECT 8 UNION SELECT 9 UNION SELECT 10) n
+                WHERE CHAR_LENGTH(stakeholders) - CHAR_LENGTH(REPLACE(stakeholders, ',', '')) >= n.n - 1
+            ) AS stakeholderList
+            WHERE stakeholder NOT IN ('LKAB', 'Municipality', 'Regional authority', 'Architecture firms', 'Citizens', 'Kiruna kommun')`
+            const rows = await conn.query(sql, []);
+            const response = rows.map((row: any) => row.stakeholder)
+            return response;
+        } catch (err: any) {
+            throw new InternalServerError();
+        } finally {
+            await conn?.release();
+        }
+    }
+
+    async updateDiagramDate(documentID: number, newParsedDate: string): Promise<boolean> {
+        let conn;
+        try {
+            conn = await db.getConnection();
+            const sql = `UPDATE document SET parsedDate = ? WHERE documentID = ?`;
+            const result = await conn.query(sql, [newParsedDate, documentID]);
+            if(result.affectedRows == 0) throw new Error("Failed to update the document date coordinates");
+            return true;
+        } catch (err: any) {
+            throw new InternalServerError();
         } finally {
             await conn?.release();
         }
@@ -249,7 +469,7 @@ class DocumentDAO {
             await conn.query(sql, []);
             return true;
         } catch(err: any) {
-            throw new InternalServerError(err.message? err.message : "")
+            throw new InternalServerError()
         } finally {
             await conn?.release();
         }
@@ -267,7 +487,7 @@ class DocumentDAO {
             return true;
         } catch(err: any) {
             await conn?.rollback();
-            throw new InternalServerError(err.message? err.message : "");
+            throw new InternalServerError();
         } finally {
             await conn?.release();
         }

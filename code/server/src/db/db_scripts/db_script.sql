@@ -25,6 +25,7 @@ CREATE TABLE document (
 	stakeholders TEXT NOT NULL,
 	scale VARCHAR(30) NOT NULL,
 	issuanceDate VARCHAR(10) NOT NULL,
+	parsedDate DATE NOT NULL,
 	`type` VARCHAR(30) NOT NULL,
 	`language` VARCHAR(30),
 	pages VARCHAR(50),
@@ -32,10 +33,10 @@ CREATE TABLE document (
 );
 
 CREATE TABLE link (
+	linkID INT AUTO_INCREMENT PRIMARY KEY,
 	firstDoc INT NOT NULL,
 	secondDoc INT NOT NULL,
 	relationship ENUM('Direct consequence', 'Collateral consequence', 'Projection', 'Update'),
-	PRIMARY KEY (firstDoc, secondDoc, relationship),
 	FOREIGN KEY (firstDoc) REFERENCES document(documentID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (secondDoc) REFERENCES document(documentID) ON UPDATE CASCADE ON DELETE CASCADE
 );
@@ -70,4 +71,46 @@ BEGIN
 		DELETE FROM `zone` WHERE zoneID = OLD.zoneID;
 	END IF;
 END;$$
+
+CREATE OR REPLACE TRIGGER unique_links_insert
+BEFORE INSERT ON link
+FOR EACH ROW
+BEGIN
+	 DECLARE links_number INT;
+	IF NEW.firstDoc = NEW.secondDoc THEN
+		SIGNAL SQLSTATE '45000' 
+      SET MESSAGE_TEXT = 'Links must be between two different documents';
+   END IF;
+   SELECT COUNT(*) INTO links_number
+   FROM link
+   WHERE 
+      ((firstDoc = NEW.firstDoc AND secondDoc = NEW.secondDoc) 
+      OR (secondDoc = NEW.firstDoc AND firstDoc = NEW.secondDoc))
+      AND Relationship = NEW.Relationship;
+   IF links_number != 0 THEN
+      SIGNAL SQLSTATE '45000' 
+      SET MESSAGE_TEXT = 'Duplicate link with the same relationship is not allowed';
+   END IF;
+END$$
+
+CREATE OR REPLACE TRIGGER unique_links_upate
+BEFORE UPDATE ON link
+FOR EACH ROW
+BEGIN
+	DECLARE links_number INT;
+	IF NEW.firstDoc = NEW.secondDoc THEN
+		SIGNAL SQLSTATE '45000' 
+      SET MESSAGE_TEXT = 'Links must be between two different documents';
+   END IF;
+   SELECT COUNT(*) INTO links_number
+   FROM link
+   WHERE 
+      ((firstDoc = NEW.firstDoc AND secondDoc = NEW.secondDoc) 
+      OR (secondDoc = NEW.firstDoc AND firstDoc = NEW.secondDoc))
+      AND relationship = NEW.relationship;
+   IF links_number != 0 THEN
+      SIGNAL SQLSTATE '45000' 
+      SET MESSAGE_TEXT = 'Duplicate link with the same relationship is not allowed';
+   END IF;
+END$$
 DELIMITER ;

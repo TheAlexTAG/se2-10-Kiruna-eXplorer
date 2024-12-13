@@ -1,7 +1,5 @@
 import {User, Role} from "./components/user";
 import { DocumentDAO } from "./dao/documentDAO";
-import { DocumentNotFoundError } from "./errors/documentErrors";
-import { InternalServerError } from "./errors/link_docError";
 
 import kiruna from "./kiruna.json"
 import { booleanContains } from "@turf/boolean-contains";
@@ -67,20 +65,56 @@ class Utilities{
 
     async documentExists(req: any, res: any, next: any) {
         try {
-            await DocumentDAO.documentExists(req.params.id) 
+            let exists = await DocumentDAO.documentExists(req.params.id); 
+            if(!exists) {  
+                return res.status(404).json({ error: 'Document not found' });
+            }
             return next();
         } catch(err: any) {
-            if(err instanceof DocumentNotFoundError) throw err;
-            else throw new InternalServerError(err.message? err.message : "");
+            res.status(err.code? err.code : 500).json({error: err.message});
         }
     }
 
     async paginationCheck(req: any, res: any, next: any) {
-        if((req.query.pageSize && req.query.pageNumber) || (!req.query.pageSize && !req.query.pageNumber)) 
+        if(req.query.pageNumber && req.query.pageNumber > 0)
             return next();
-        else res.status(422).json({error: "Pagination error: page size or page number missing"});
+        else res.status(422).json({error: "Page number missing or incorrect"});
+    }
+
+    isValidDate(dateStr: string): boolean {
+        const parts = dateStr.split('/').map(Number);
+    
+        if (parts.length === 3) {
+            const [day, month, year] = parts;
+            const date = new Date(year, month - 1, day);
+            return (
+                date.getFullYear() === year &&
+                date.getMonth() === month - 1 &&
+                date.getDate() === day
+            );
+        } 
+        else if (parts.length === 2) {
+            const [month, year] = parts;
+            const date = new Date(year, month - 1, 1);
+            return (
+                date.getFullYear() === year &&
+                date.getMonth() === month - 1
+            );
+        } 
+        else if (parts.length === 1) {
+            const [year] = parts;
+            return year >= 1000 && year <= 9999;
+        }
+    
+        return false;
     }
     
+    isValidScale(value: string): boolean {
+        const scalePattern = /^1:\d{1,3}(?:,\d{3})*$/;
+        const validStrings = ["Blueprints/effects", "Concept", "Text"];
+    
+        return scalePattern.test(value) || validStrings.includes(value);
+    }
 }
 
 class Kiruna {
