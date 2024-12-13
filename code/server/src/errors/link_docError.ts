@@ -28,7 +28,7 @@ class DocumentsError extends Error {
 class InternalServerError extends Error {
     code: number
 
-    constructor(message: string) {
+    constructor(message: string = "Internal server error") {
         super(message);
         this.code = 500;
     }

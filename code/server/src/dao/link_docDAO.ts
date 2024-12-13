@@ -24,7 +24,7 @@ class LinkDocumentDAO {
       return new LinkDocument(+DOMPurify.sanitize(row[0].linkID), +DOMPurify.sanitize(row[0].firstDoc), +DOMPurify.sanitize(row[0].secondDoc), DOMPurify.sanitize(row[0].relationship) as Relationship);
     
     } catch (err: any) {
-      throw new InternalServerError(err.message ? err.message : "Error with the server!");
+      throw new InternalServerError();
     }
     finally {
       if (conn) {
@@ -47,7 +47,7 @@ class LinkDocumentDAO {
       return new LinkDocument(+DOMPurify.sanitize(row[0].linkID), +DOMPurify.sanitize(row[0].firstDoc), +DOMPurify.sanitize(row[0].secondDoc), DOMPurify.sanitize(row[0].relationship) as Relationship);
     
     } catch (err: any) {
-      throw new InternalServerError(err.message ? err.message : "Error with the server!");
+      throw new InternalServerError();
     }
     finally {
       if (conn) {
@@ -73,7 +73,7 @@ class LinkDocumentDAO {
       if(err instanceof LinkError){
         throw err; 
       }
-      throw new InternalServerError(err.message ? err.message : "Error with the server!");
+      throw new InternalServerError();
     }
     finally{
       if (conn) {
@@ -98,7 +98,7 @@ class LinkDocumentDAO {
       return true;
 
     } catch (err: any) {
-      throw new InternalServerError(err.message ? err.message : "Error with the server!");
+      throw new InternalServerError();
     }
     finally{
       if (conn) {
@@ -122,7 +122,7 @@ class LinkDocumentDAO {
       if (conn) {
         await conn.rollback();
       }
-      throw new InternalServerError(err.message ? err.message : "Error with the server!");
+      throw new InternalServerError();
     }
     finally{
       if (conn) {
@@ -148,7 +148,7 @@ class LinkDocumentDAO {
       if (err instanceof ModifyLinkError) {
         throw err;
       }
-      throw new InternalServerError(err.message ? err.message : "Error with the server!");
+      throw new InternalServerError();
     }
     finally {
       if (conn) {

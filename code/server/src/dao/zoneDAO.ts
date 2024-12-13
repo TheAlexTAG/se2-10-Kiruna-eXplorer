@@ -33,7 +33,7 @@ class ZoneDAO {
             return ZoneDAO.createZone(+DOMPurify.sanitize(result[0].zoneID), DOMPurify.sanitize(result[0].coordinates));
         } catch (err: any) {
             if(err instanceof ZoneError) throw err;
-            throw new InternalServerError(err.message ? err.message : "Error with the server!");
+            throw new InternalServerError();
         } finally {
             if (conn) {
                 await conn.release();      
@@ -49,7 +49,7 @@ class ZoneDAO {
             const result = await conn.query(sql, [coordinates]);
             return Boolean(result[0].count);
         } catch(err: any) {
-            throw new InternalServerError(err.message? err.message : "");
+            throw new InternalServerError();
         } finally {
             if (conn) {
                 await conn.release();      
@@ -73,7 +73,7 @@ class ZoneDAO {
             if(err instanceof ZoneError){
                 throw err;
             }
-            throw new InternalServerError(err.message ? err.message : "Error with the server!");
+            throw new InternalServerError();
         }
         finally {
             if (conn) {
@@ -109,7 +109,7 @@ class ZoneDAO {
             if(err instanceof ModifyZoneError || err instanceof WrongGeoreferenceUpdateError){
                 throw err;
             }
-            throw new InternalServerError(err.message ? err.message : "Error with the server!");
+            throw new InternalServerError();
         }
         finally {
             if (conn) {

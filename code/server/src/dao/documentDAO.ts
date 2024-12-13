@@ -15,7 +15,7 @@ class DocumentDAO {
             const result = await conn.query(sql, [documentID]);
             return !!Number(result[0].count);
         } catch(err: any) {
-            throw new InternalServerError(err.message? err.message : "");
+            throw new InternalServerError();
         } finally {
             await conn?.release();
         }
@@ -53,13 +53,13 @@ class DocumentDAO {
         } catch (err: any) {
             await conn?.rollback();
             if(err instanceof ZoneError) throw err;
-            else throw new InternalServerError(err.message? err.message : "");
+            else throw new InternalServerError();
         } finally {
             await conn?.release();
         }
     }
 
-    async updateDocument(documentData: DocumentEditData, documentGeoData: DocumentGeoData): Promise<boolean> {
+    async updateDocument(documentData: DocumentEditData, documentGeoData: DocumentGeoData, goerefEdit: boolean = true): Promise<boolean> {
         let conn;
         try {
             conn = await db.getConnection();
@@ -67,13 +67,15 @@ class DocumentDAO {
             const conditions: string[] = [];
             const params: any[] = [];
 
-            
             await conn.beginTransaction();
-            if(documentGeoData.coordinates) {
-                let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [documentGeoData.coordinates]);
-                documentGeoData.zoneID = insResult.insertId? insResult.insertId : null;
-                if(!documentGeoData.zoneID) throw new ZoneError();
+            if(goerefEdit) {
+                if(documentGeoData.coordinates) {
+                    let insResult = await conn.query("INSERT INTO zone(zoneID, coordinates) VALUES(null, ?)", [documentGeoData.coordinates]);
+                    documentGeoData.zoneID = insResult.insertId? insResult.insertId : null;
+                    if(!documentGeoData.zoneID) throw new ZoneError();
+                }
             }
+            
             const sql = `UPDATE document SET zoneID = ?, longitude = ?, latitude = ? WHERE documentID = ?`;
             const result = await conn.query(sql, [documentGeoData.zoneID, documentGeoData.longitude, documentGeoData.latitude, documentData.documentID]);
             if(!result.affectedRows) throw new WrongGeoreferenceUpdateError();
@@ -82,7 +84,7 @@ class DocumentDAO {
         } catch (err: any) {
             await conn?.rollback();
             if(err instanceof ZoneError || err instanceof WrongGeoreferenceUpdateError) throw err;
-            else throw new InternalServerError(err.message? err.message : "");
+            else throw new InternalServerError();
         } finally {
             await conn?.release();
         }
@@ -183,7 +185,7 @@ class DocumentDAO {
             )
         } catch (err: any) {
             if (err instanceof DocumentNotFoundError) throw err;
-            else throw new InternalServerError(err.message? err.message : "");
+            else throw new InternalServerError();
         } finally {
             await conn?.release();
         }
@@ -321,7 +323,7 @@ class DocumentDAO {
                 row.links || []
             ))
         } catch (err: any) {
-            throw new InternalServerError(err.message? err.message : "");
+            throw new InternalServerError();
         } finally {
             await conn?.release();
         }
@@ -344,7 +346,7 @@ class DocumentDAO {
             const response = rows.map((row: any) => row.stakeholder)
             return response;
         } catch (err: any) {
-            throw new InternalServerError(err.message? err.message : "");
+            throw new InternalServerError();
         } finally {
             await conn?.release();
         }
@@ -359,7 +361,7 @@ class DocumentDAO {
             if(result.affectedRows == 0) throw new Error("Failed to update the document date coordinates");
             return true;
         } catch (err: any) {
-            throw new InternalServerError(err.message? err.message : "");
+            throw new InternalServerError();
         } finally {
             await conn?.release();
         }
@@ -373,7 +375,7 @@ class DocumentDAO {
             await conn.query(sql, []);
             return true;
         } catch(err: any) {
-            throw new InternalServerError(err.message? err.message : "")
+            throw new InternalServerError()
         } finally {
             await conn?.release();
         }
@@ -391,7 +393,7 @@ class DocumentDAO {
             return true;
         } catch(err: any) {
             await conn?.rollback();
-            throw new InternalServerError(err.message? err.message : "");
+            throw new InternalServerError();
         } finally {
             await conn?.release();
         }
