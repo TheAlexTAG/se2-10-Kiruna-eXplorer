@@ -6,7 +6,7 @@ import { ZoneDAO } from "../dao/zoneDAO";
 import { Geometry } from "geojson";
 import { InsertZoneError } from "../errors/zoneError";
 import wellknown from "wellknown"
-import { Document, DocumentData, DocumentGeoData } from "../components/document";
+import { Document, DocumentData, DocumentEditData, DocumentGeoData } from "../components/document";
 import { Kiruna } from "../utilities";
 import { InternalServerError } from "../errors/link_docError";
 
@@ -41,7 +41,7 @@ class DocumentControllerHelper {
     }
 
     async nodeAssignedToKiruna(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.CREATE): Promise<number>
-    async nodeAssignedToKiruna(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.UPDATE): Promise<boolean>
+    async nodeAssignedToKiruna(documentData: DocumentEditData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.UPDATE): Promise<boolean>
     async nodeAssignedToKiruna(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality): Promise<number | boolean> {
         documentGeoData.zoneID = null;
         if(modality == Modality.CREATE) {
@@ -49,7 +49,7 @@ class DocumentControllerHelper {
             return lastID;
         }
         if(modality == Modality.UPDATE) {
-            let response = await dao.updateDocument(documentData, documentGeoData);
+            let response = await dao.updateDocument(documentData, documentGeoData, true);
             return response;
         }
         throw new InternalServerError("Wrong Modality");
@@ -68,7 +68,7 @@ class DocumentControllerHelper {
     }
 
     async nodeAssignedToCustomZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.CREATE): Promise<number>
-    async nodeAssignedToCustomZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.UPDATE): Promise<boolean>
+    async nodeAssignedToCustomZone(documentData: DocumentEditData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.UPDATE): Promise<boolean>
     async nodeAssignedToCustomZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality): Promise<number | boolean> {
         const geo: Geometry= turf.geometry("Polygon", [documentGeoData.coordinates])
         const zoneExists = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geo as wellknown.GeoJSONGeometry));
@@ -89,7 +89,7 @@ class DocumentControllerHelper {
             return lastID;
         }
         if(modality == Modality.UPDATE) {
-            let response = await dao.updateDocument(documentData, documentGeoData);
+            let response = await dao.updateDocument(documentData, documentGeoData, true);
             return response;
         }
         throw new InternalServerError("Wrong modality");
@@ -105,7 +105,7 @@ class DocumentControllerHelper {
         )
     }
     async nodeAssignedToPoint(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.CREATE): Promise<number>
-    async nodeAssignedToPoint(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.UPDATE): Promise<boolean>
+    async nodeAssignedToPoint(documentData: DocumentEditData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality.UPDATE): Promise<boolean>
     async nodeAssignedToPoint(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, modality: Modality): Promise<number | boolean> {
         const checkCoordinates = await this.checkCoordinatesValidity(documentGeoData.longitude as number, documentGeoData.latitude as number);
         if(!checkCoordinates) 
@@ -116,7 +116,7 @@ class DocumentControllerHelper {
             return lastID;
         }
         if(modality == Modality.UPDATE) {
-            let response = await dao.updateDocument(documentData, documentGeoData);
+            let response = await dao.updateDocument(documentData, documentGeoData, true);
             return response;
         }
         throw new InternalServerError("Wrong modality");
@@ -133,7 +133,7 @@ class DocumentControllerHelper {
     }
 
     async nodeAssignedToExistingZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, zoneDAO: ZoneDAO, modality: Modality.CREATE): Promise<number>
-    async nodeAssignedToExistingZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, zoneDAO: ZoneDAO, modality: Modality.UPDATE): Promise<boolean>
+    async nodeAssignedToExistingZone(documentData: DocumentEditData, documentGeoData: DocumentGeoData, dao: DocumentDAO, zoneDAO: ZoneDAO, modality: Modality.UPDATE): Promise<boolean>
     async nodeAssignedToExistingZone(documentData: DocumentData, documentGeoData: DocumentGeoData, dao: DocumentDAO, zoneDAO: ZoneDAO, modality: Modality): Promise<number | boolean> {
         let zone = await zoneDAO.getZone(documentGeoData.zoneID as number);
 
@@ -146,7 +146,7 @@ class DocumentControllerHelper {
             return lastID;
         }
         if(modality == Modality.UPDATE) {
-            let response = await dao.updateDocument(documentData, documentGeoData);
+            let response = await dao.updateDocument(documentData, documentGeoData, true);
             return response;
         }
         throw new InternalServerError("Wrong modality");
@@ -187,6 +187,38 @@ class DocumentControllerHelper {
         }
         return false;
     }
+
+    hasWrongGeoref(documentGeoData: DocumentGeoData): boolean {
+        const isValidCoordinates = (
+            documentGeoData.coordinates != null
+            && documentGeoData.zoneID == null
+            && documentGeoData.latitude == null
+            && documentGeoData.longitude == null
+        );
+
+        const isValidZone = (
+            documentGeoData.coordinates == null
+            && documentGeoData.zoneID != null
+            && documentGeoData.latitude == null
+            && documentGeoData.longitude == null
+        );
+
+        const isValidLatLon = (
+            documentGeoData.coordinates == null
+            && documentGeoData.zoneID == null
+            && documentGeoData.latitude != null
+            && documentGeoData.longitude != null
+        );
+
+        const hasNoGeoref = (
+            documentGeoData.coordinates == null
+            && documentGeoData.zoneID == null
+            && documentGeoData.latitude == null
+            && documentGeoData.longitude == null
+        )
+
+        return !(isValidCoordinates || isValidZone || isValidLatLon || hasNoGeoref)
+    }
 }
 
 
@@ -218,7 +250,7 @@ class DocumentController {
         throw new WrongGeoreferenceError();
     }
 
-    async updateDocumentGeoref(documentData: DocumentData, documentGeoData: DocumentGeoData): Promise<boolean> {
+    async updateDocument(documentData: DocumentEditData, documentGeoData: DocumentGeoData): Promise<boolean> {
         if(this.helper.isAssignedToKiruna(documentGeoData)) 
             return await this.helper.nodeAssignedToKiruna(documentData, documentGeoData, this.dao, Modality.UPDATE);
 
@@ -231,7 +263,9 @@ class DocumentController {
         if(this.helper.isAssignedToExistingZone(documentGeoData)) 
             return await this.helper.nodeAssignedToExistingZone(documentData, documentGeoData, this.dao, this.zoneDAO, Modality.UPDATE);
 
-        throw new WrongGeoreferenceError();
+        if(this.helper.hasWrongGeoref(documentGeoData)) throw new WrongGeoreferenceError();
+
+        return await this.dao.updateDocument(documentData, documentGeoData);
     }
 
     async getDocument(documentID: number): Promise<Document> {

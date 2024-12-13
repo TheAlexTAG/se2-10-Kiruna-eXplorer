@@ -71,5 +71,14 @@ class InvalidPageNumberError extends Error {
     }
 }
 
+class DocumentUpdateError extends Error {
+    code: number
 
-export {DocumentNotFoundError, WrongGeoreferenceError, DocumentZoneNotFoundError, InvalidDocumentZoneError, CoordinatesOutOfBoundsError, WrongGeoreferenceUpdateError, InvalidNewDateCoordinatesError, InvalidPageNumberError};
+    constructor() {
+        super("The document update is not valid");
+        this.code = 400;
+    }
+}
+
+
+export {DocumentNotFoundError, WrongGeoreferenceError, DocumentZoneNotFoundError, InvalidDocumentZoneError, CoordinatesOutOfBoundsError, WrongGeoreferenceUpdateError, InvalidNewDateCoordinatesError, InvalidPageNumberError, DocumentUpdateError};

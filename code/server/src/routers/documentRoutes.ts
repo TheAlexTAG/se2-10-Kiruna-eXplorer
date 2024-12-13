@@ -3,7 +3,7 @@ import { DocumentController } from "../controllers/documentController"
 import { ErrorHandler } from "../helper"
 import { body, param, query } from "express-validator"
 import { Utilities } from "../utilities"
-import { Document, DocumentData, DocumentGeoData } from "../components/document"
+import { Document, DocumentData, DocumentEditData, DocumentGeoData } from "../components/document"
 
 const path = require('path');
 const multer = require('multer');
@@ -119,14 +119,14 @@ class DocumentRoutes {
                 issuanceDate: req.body.issuanceDate,
                 parsedDate: this.helper.parseDate(req.body.issuanceDate),
                 type: req.body.type,
-                language: req.body.language,
-                pages: req.body.pages
+                language: req.body.language ?? null,
+                pages: req.body.pages ?? null
             }
             let documentGeoData: DocumentGeoData = {
-                zoneID: req.body.zoneID,
-                coordinates: req.body.coordinates,
-                latitude: req.body.latitude,
-                longitude: req.body.longitude
+                zoneID: req.body.zoneID ?? null,
+                coordinates: req.body.coordinates ?? null,
+                latitude: req.body.latitude ?? null,
+                longitude: req.body.longitude ?? null
             }
             this.controller.createNode(documentData, documentGeoData)
             .then((lastID: number) => res.status(200).json(lastID))
@@ -146,25 +146,25 @@ class DocumentRoutes {
             this.utilities.isUrbanPlanner,
             this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => {
-            const documentData: DocumentData = {
+            const documentData: DocumentEditData = {
                 documentID: req.params.id,
-                title: req.body.title,
-                description: req.body.description,
-                stakeholders: req.body.stakeholders,
-                scale: req.body.scale,
-                issuanceDate: req.body.issuanceDate,
-                parsedDate: this.helper.parseDate(req.body.issuanceDate),
-                type: req.body.type,
-                language: req.body.language,
-                pages: req.body.pages
+                title: req.body.title ?? null,
+                description: req.body.description ?? null,
+                stakeholders: req.body.stakeholders ?? null,
+                scale: req.body.scale ?? null,
+                issuanceDate: req.body.issuanceDate ?? null,
+                parsedDate: req.body.issuanceDate ? this.helper.parseDate(req.body.issuanceDate): null,
+                type: req.body.type ?? null,
+                language: req.body.language ?? null,
+                pages: req.body.pages ?? null
             }
             let documentGeoData: DocumentGeoData = {
-                zoneID: req.body.zoneID,
-                coordinates: req.body.coordinates,
-                latitude: req.body.latitude,
-                longitude: req.body.longitude
+                zoneID: req.body.zoneID ?? null,
+                coordinates: req.body.coordinates ?? null,
+                latitude: req.body.latitude ?? null,
+                longitude: req.body.longitude ?? null
             }
-            this.controller.updateDocumentGeoref(documentData, documentGeoData)
+            this.controller.updateDocument(documentData, documentGeoData)
             .then((val: boolean) => res.status(200).json(val))
             .catch((err) => res.status(err.code? err.code : 500).json({error: err.message}))
     })
