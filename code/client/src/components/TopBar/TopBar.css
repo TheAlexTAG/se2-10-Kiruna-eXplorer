@@ -67,6 +67,7 @@
 
 .home-login-btn:hover {
   color: #ffffff;
+  background: #2e4451;
 }
 
 .home-logout-btn {
@@ -92,5 +93,7 @@
 }
 
 .home-logout-btn:hover {
-  color: #dc3545;
+  color: #ffffff;
+  background-color: #dc3545;
+  transition: 200ms;
 }
