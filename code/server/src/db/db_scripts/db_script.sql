@@ -37,7 +37,7 @@ CREATE TABLE link (
 	firstDoc INT NOT NULL,
 	secondDoc INT NOT NULL,
 	relationship ENUM('Direct consequence', 'Collateral consequence', 'Projection', 'Update'),
-	PRIMARY KEY (linkID, relationship),
+	PRIMARY KEY (linkID),
 	FOREIGN KEY (firstDoc) REFERENCES document(documentID) ON UPDATE CASCADE ON DELETE CASCADE,
 	FOREIGN KEY (secondDoc) REFERENCES document(documentID) ON UPDATE CASCADE ON DELETE CASCADE
 );
