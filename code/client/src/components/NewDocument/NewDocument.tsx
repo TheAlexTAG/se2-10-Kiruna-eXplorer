@@ -98,7 +98,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
     label: string;
   };
 
-  const stakeholderOptions: OptionType[] = [
+  const staticStakeholderOptions: OptionType[] = [
     { value: "LKAB", label: "LKAB" },
     { value: "Municipality", label: "Municipalty" },
     { value: "Regional authority", label: "Regional authority" },
@@ -107,6 +107,9 @@ const NewDocument: React.FC<NewDocumentProps> = ({
     { value: "Kiruna kommun", label: "Kiruna kommun" },
     // { value: "Others", label: "Others" },
   ];
+  const [stakeholderOptions, setStakeholderOptions] = useState<OptionType[]>(
+    []
+  );
 
   const scaleOptions: OptionType[] = [
     { value: "Blueprints/effects", label: "Blueprints/effects" },
@@ -386,6 +389,18 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       window.removeEventListener("keydown", globalKeyboardWatcher);
     };
   }, [isFocused]);
+  useEffect(() => {
+    API.getStakeholders().then((res: any) => {
+      const customStakeholders = res.map((stakeholder: any) => ({
+        value: stakeholder,
+        label: stakeholder,
+      }));
+      setStakeholderOptions([
+        ...staticStakeholderOptions,
+        ...customStakeholders,
+      ]);
+    });
+  }, [show]);
   return (
     <div
       className="document-container"
@@ -556,6 +571,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   options={scaleOptions}
                   handleSelect={handleScaleSelect}
                   isMulti={false}
+                  value={null}
                 />
                 {/* <Form.Select
                   value={scale ?? ""}

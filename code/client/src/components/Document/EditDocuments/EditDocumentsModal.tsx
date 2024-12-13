@@ -5,6 +5,7 @@ import API from "../../../API/API";
 import "./EditDocumentsModal.css";
 import { Feature, MultiPolygon } from "geojson";
 import GeoReferenceComponent from "../../GeoreferenceComponent/GeoreferenceComponent";
+import CustomSelectBox from "../../NewDocument/CustomSelectBox/CustomSelectBox";
 
 interface EditDocumentProps {
   document: any;
@@ -19,6 +20,8 @@ export default function EditDocumentModal({
   onHide,
   updateTable,
 }: EditDocumentProps) {
+  const [stakeholders, setStakeholders] = useState("");
+  const [scale, setScale] = useState("");
   const [latitude, setLatitude] = useState<number | null>(document.latitude);
   const [longitude, setLongitude] = useState<number | null>(document.longitude);
   const [zoneID, setZoneID] = useState<number | null>(document.zoneID);
@@ -52,13 +55,26 @@ export default function EditDocumentModal({
   const [kirunaBoundary, setKirunaBoundary] =
     useState<Feature<MultiPolygon> | null>(null);
 
-  const stakeholderOptions = [
+  const staticStakeholderOptions: OptionType[] = [
     { value: "LKAB", label: "LKAB" },
-    { value: "Municipalty", label: "Municipalty" },
+    { value: "Municipality", label: "Municipalty" },
     { value: "Regional authority", label: "Regional authority" },
     { value: "Architecture firms", label: "Architecture firms" },
     { value: "Citizens", label: "Citizens" },
-    { value: "Others", label: "Others" },
+    { value: "Kiruna kommun", label: "Kiruna kommun" },
+    // { value: "Others", label: "Others" },
+  ];
+  const [stakeholderOptions, setStakeholderOptions] = useState<OptionType[]>(
+    []
+  );
+  const scaleOptions: OptionType[] = [
+    { value: "Blueprints/effects", label: "Blueprints/effects" },
+    { value: "1:1,000", label: "1:1,000" },
+    { value: "1:5,000", label: "1:5,000" },
+    { value: "1:10,000", label: "1:10,000" },
+    { value: "1:100,000", label: "1:100,000" },
+    { value: "Concept", label: "Concept" },
+    { value: "Text", label: "Text" },
   ];
 
   const handleLocationSelect = () => {
@@ -97,14 +113,21 @@ export default function EditDocumentModal({
 
     setIsReady(true);
 
-    console.log(document.id, zoneID, longitude, latitude);
+    // console.log(document.id, zoneID, longitude, latitude);
   };
 
   useEffect(() => {
     const realSubmit = async () => {
       setIsReady(false);
       try {
-        await API.updateGeoreference(document.id, zoneID, longitude, latitude);
+        await API.updateDocument(
+          document.id,
+          zoneID,
+          longitude,
+          latitude,
+          stakeholders,
+          scale
+        );
         updateTable();
         onHide();
       } catch (error: any) {
@@ -118,6 +141,40 @@ export default function EditDocumentModal({
       realSubmit();
     }
   }, [isReady]);
+  useEffect(() => {
+    API.getStakeholders().then((res: any) => {
+      const customStakeholders = res.map((stakeholder: any) => ({
+        value: stakeholder,
+        label: stakeholder,
+      }));
+      setStakeholderOptions([
+        ...staticStakeholderOptions,
+        ...customStakeholders,
+      ]);
+    });
+  }, [show]);
+  const handleScaleSelect = (selectedScale: any) => {
+    const scalePattern = /^1:\d{1,3}(?:,\d{3})*$/;
+
+    if (selectedScale) {
+      if (scalePattern.test(selectedScale.label)) {
+        setScale(selectedScale.label);
+        setErrorMessage(null);
+      } else if (
+        selectedScale.label === "Blueprints/effects" ||
+        selectedScale.label === "Concept" ||
+        selectedScale.label === "Text"
+      ) {
+        setScale(selectedScale.label);
+        setErrorMessage(null);
+      } else {
+        setScale("");
+        setErrorMessage(
+          "Invalid format. Please enter the scale as '1:1,000' or select a valid option."
+        );
+      }
+    }
+  };
 
   const handleZoneSelect = (zoneId: number | null) => {
     setTempZoneId(zoneId);
@@ -126,8 +183,21 @@ export default function EditDocumentModal({
     }
   };
 
+  const handleStakeholderSelect = (selectedStakeholders: any) => {
+    const valuesString = [...selectedStakeholders]
+      .map((option) => option.value)
+      .join(", ");
+    setStakeholders(valuesString);
+  };
+
   return (
-    <Modal show={show} onHide={onHide} centered data-bs-theme="dark">
+    <Modal
+      show={show}
+      onHide={onHide}
+      centered
+      data-bs-theme="dark"
+      className="new-doc"
+    >
       <Modal.Header closeButton>
         <Modal.Title className="main-text">Edit Document</Modal.Title>
       </Modal.Header>
@@ -150,14 +220,14 @@ export default function EditDocumentModal({
 
             <Form.Group as={Col} controlId="formStakeholders">
               <Form.Label className="main-text">Stakeholders</Form.Label>
-              <Select
+              <CustomSelectBox
                 options={stakeholderOptions}
-                isMulti
-                value={stakeholderOptions.filter((opt) =>
-                  document.stakeholders.split(", ").includes(opt.value)
-                )}
-                isDisabled
-                className="custom-input"
+                handleSelect={handleStakeholderSelect}
+                isMulti={true}
+                value={document.stakeholders.split(",").map((item) => ({
+                  value: item.trim(),
+                  label: item.trim(),
+                }))}
               />
             </Form.Group>
           </Row>
@@ -224,7 +294,12 @@ export default function EditDocumentModal({
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formScale">
               <Form.Label className="main-text">Scale</Form.Label>
-              <Form.Control type="text" value={document.scale} disabled />
+              <CustomSelectBox
+                options={scaleOptions}
+                handleSelect={handleScaleSelect}
+                isMulti={false}
+                value={{ value: document.scale, label: document.scale }}
+              />
             </Form.Group>
 
             <Form.Group as={Col} controlId="formIssuanceDate">

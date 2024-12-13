@@ -136,11 +136,13 @@ const connectDocuments = async (
   return await response.json();
 };
 
-const updateGeoreference = async (
+const updateDocument = async (
   documentID: number,
   zoneID: number | null,
   longitude: number | null,
-  latitude: number | null
+  latitude: number | null,
+  stakeholders: string | null,
+  scale: string | null
 ) => {
   // console.log(documentID, zoneID, longitude, latitude);
   const response = await fetch(`${SERVER_URL}/document/${documentID}`, {
@@ -149,7 +151,7 @@ const updateGeoreference = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ zoneID, longitude, latitude }),
+    body: JSON.stringify({ zoneID, longitude, latitude, stakeholders, scale }),
   });
 
   if (!response.ok) {
@@ -298,6 +300,24 @@ const handleDownloadResource = async (id: number, fileName: string) => {
   }
 };
 
+const getStakeholders = async () => {
+  const response = await fetch(`${SERVER_URL}/stakeholders`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error getting stakeholders:", errorData);
+    throw new Error(errorData.message || "Failed to get stakeholders");
+  }
+
+  return await response.json();
+};
+
 const API = {
   login,
   logout,
@@ -306,10 +326,11 @@ const API = {
   getZones,
   getDocuments,
   connectDocuments,
-  updateGeoreference,
+  updateDocument,
   filterDocuments,
   createZone,
   addOriginalResource,
   handleDownloadResource,
+  getStakeholders,
 };
 export default API;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MultiValue } from "react-select";
 import CreatableSelect from "react-select/creatable";
 
@@ -13,12 +13,14 @@ interface CustomSelectBoxProps {
     selectedOptions: MultiValue<OptionType> | OptionType | null
   ) => void;
   isMulti: boolean;
+  value?: any;
 }
 
 const CustomSelectBox = ({
   options,
   handleSelect,
   isMulti,
+  value,
 }: CustomSelectBoxProps) => {
   const [selectedOptions, setSelectedOptions] = useState<
     OptionType[] | OptionType | null
@@ -50,6 +52,12 @@ const CustomSelectBox = ({
       handleSelect(newOption);
     }
   };
+  useEffect(() => {
+    if (value) {
+      setSelectedOptions(value);
+      console.log(value);
+    }
+  }, []);
 
   return (
     <div>
