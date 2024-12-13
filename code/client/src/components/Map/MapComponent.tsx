@@ -124,6 +124,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const [polygonExists, setPolygonExists] = useState(false);
   const [isSatelliteView, setIsSatelliteView] = useState(true);
   const [showDocs, setShowDocs] = useState(true);
+  const [hoveredZoneId, setHoveredZoneId] = useState<number | null>(null);
 
   const defaultTileLayer = [
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -215,6 +216,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       setSelectedDocument(null);
       //setHighlightedDocumentId(null);
       setTempHighlightedDocumentId(null);
+      handleDocumentLeave();
       if (setTempCoordinates) {
         if (selectionMode === "point") {
           setTempCoordinates({ lat: null, lng: null });
@@ -295,6 +297,28 @@ const MapComponent: React.FC<MapComponentProps> = ({
   };
   console.log("zones is ", zones);
   console.log("custom area is ", customArea);
+
+  const renderHoveredZone = () => {
+    if (!hoveredZoneId) return null;
+
+    const hoveredZone = zones.find((zone) => zone.id === hoveredZoneId);
+    if (!hoveredZone) return null;
+
+    return (
+      <Polygon
+        key={hoveredZone.id}
+        positions={hoveredZone.coordinates.coordinates[0].map(([lng, lat]) => [
+          lat,
+          lng,
+        ])}
+        pathOptions={{
+          color: "orange", // Highlight color for hovered zone
+          fillOpacity: 0.5,
+        }}
+      />
+    );
+  };
+
   const renderZones = () => {
     if (!showZones) return null;
 
@@ -310,8 +334,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 lng,
               ])}
               pathOptions={{
-                color: highlightedZoneId === zone.id ? "blue" : "green",
-                fillOpacity: 0.2,
+                color:
+                  highlightedZoneId === zone.id
+                    ? "blue"
+                    : hoveredZoneId === zone.id
+                    ? "orange"
+                    : "green",
+                fillOpacity: hoveredZoneId === zone.id ? 0.5 : 0.2,
               }}
               eventHandlers={{
                 click: () => {
@@ -362,6 +391,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
   console.log("Test - highlighted documetn id ", highlightedDocumentId);
   console.log("Test - selectedDocument is ", selectedDocument);
   console.log("Test - selectionMode is ", selectionMode);
+  const handleDocumentHover = (doc: Document | KirunaDocument) => {
+    setHoveredZoneId(doc.zoneID);
+  };
+
+  const handleDocumentLeave = () => {
+    setHoveredZoneId(null);
+  };
 
   return (
     <div>
@@ -426,7 +462,17 @@ const MapComponent: React.FC<MapComponentProps> = ({
                           /*handleMoreClick(doc);*/
                         },
                       }
-                    : {}
+                    : {
+                        click: () => {
+                          setTempHighlightedDocumentId(doc.id);
+                          handleDocumentHover(doc);
+                        },
+                        mouseover: () => handleDocumentHover(doc),
+                        mouseout: () => {
+                          if (tempHighlightedDocumentId !== doc.id)
+                            handleDocumentLeave();
+                        },
+                      }
                 }
               >
                 <Popup>
@@ -485,6 +531,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         )}
         {renderZones()}
         {renderCustomPolygon()}
+        {renderHoveredZone()}
       </MapContainer>
       {selectedDocument && (
         <DocumentCard
