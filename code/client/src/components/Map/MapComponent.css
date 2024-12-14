@@ -14,6 +14,12 @@
   width: 50px;
   height: 50px;
 }
+.leaflet-interactive {
+  transition: fill-opacity 0.3s, stroke-width 0.3s, stroke 0.3s;
+}
+.leaflet-interactive:hover {
+  filter: brightness(1.2); /* Slightly brighter on hover */
+}
 
 /* Default styles for other clusters */
 .custom-cluster-icon {
