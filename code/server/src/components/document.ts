@@ -14,6 +14,7 @@ interface Attachment {
 
 interface Link {
     documentID: number,
+    title: string,
     relationship: string 
 }
 
