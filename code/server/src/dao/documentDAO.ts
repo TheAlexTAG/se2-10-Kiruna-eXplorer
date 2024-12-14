@@ -252,7 +252,8 @@ class DocumentDAO {
                     ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT(
                         'linkID', l.linkID,
                         'documentID', l.linkedDocumentID,
-                        'relationship', l.relationship
+                        'relationship', l.relationship,
+                        'title', linkedDoc.title  -- Aggiunta del titolo relativo a linkedDocumentID
                     ))
                 END AS links
             FROM document d
@@ -285,8 +286,11 @@ class DocumentDAO {
                     relationship
                 FROM link
             ) l ON d.documentID = l.documentID
+
+            LEFT JOIN document linkedDoc ON l.linkedDocumentID = linkedDoc.documentID
             WHERE d.documentID = ?
-            GROUP BY d.documentID`
+            GROUP BY d.documentID
+            `
             const result = await conn.query(sql, [documentID]);
             if(result.length === 0) throw new DocumentNotFoundError();
             return new Document(
@@ -353,7 +357,8 @@ class DocumentDAO {
                     ELSE JSON_ARRAYAGG(DISTINCT JSON_OBJECT(
                         'linkID', l.linkID,
                         'documentID', l.linkedDocumentID,
-                        'relationship', l.relationship
+                        'relationship', l.relationship,
+                        'title', linkedDoc.title  -- Aggiunta del titolo relativo a linkedDocumentID
                     ))
                 END AS links
             FROM document d
@@ -386,6 +391,8 @@ class DocumentDAO {
                     relationship
                 FROM link
             ) l ON d.documentID = l.documentID
+
+            LEFT JOIN document linkedDoc ON l.linkedDocumentID = linkedDoc.documentID
             `
             const filterObj = this.helper.filtersToSQL(filters);
 
