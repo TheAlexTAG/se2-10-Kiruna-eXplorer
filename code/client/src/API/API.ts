@@ -318,6 +318,31 @@ const getStakeholders = async () => {
   return await response.json();
 };
 
+const updateLink = async (
+  linkID: number,
+  firstDoc: number,
+  secondDoc: number,
+  relationship: string
+) => {
+  const response = await fetch(`${SERVER_URL}/link/${linkID}`, {
+    method: "PUT",
+    credentials: "include", 
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ firstDoc, secondDoc, relationship }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error updating link:", errorData);
+    throw new Error(errorData.error || "Failed to update link");
+  }
+
+  return await response.json();
+};
+
+
 const API = {
   login,
   logout,
@@ -332,5 +357,6 @@ const API = {
   addOriginalResource,
   handleDownloadResource,
   getStakeholders,
+  updateLink,
 };
 export default API;

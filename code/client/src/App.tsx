@@ -20,7 +20,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/map" element={<DocumentsMap />} />
         <Route path="/document" element={<DocumentList userInfo={user} />} />
-        <Route path="/diagram" element={<Diagram />} />
+        <Route path="/diagram" element={<Diagram userInfo={user} />} />
       </Routes>
     </>
   );
