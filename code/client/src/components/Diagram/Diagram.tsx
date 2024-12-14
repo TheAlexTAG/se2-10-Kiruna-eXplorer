@@ -34,7 +34,7 @@ type Node = {
   type: string;
   iconComponent: React.FC<IconProps>;
   connections: number;
-  links: { documentID: number; relationship: string }[];
+  links: { linkID: number, documentID: number; relationship: string }[];
   attachment: [];
   resource: [];
   parsedScale: number;
@@ -196,7 +196,11 @@ const fetchDocuments = async (): Promise<Node[]> => {
   }));
 };
 
-export const Diagram: React.FC = () => {
+interface userProps {
+  userInfo: { username: string; role: string } | null;
+}
+
+export const Diagram: React.FC<userProps> = ({userInfo}) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
@@ -522,6 +526,7 @@ export const Diagram: React.FC = () => {
         nodeData.flatMap((sourceNode) =>
           sourceNode.links
             .map((link, index) => ({
+              id: link.linkID,
               sourceNode,
               targetNode: nodeData.find((node) => node.id === link.documentID),
               relationship: link.relationship,
@@ -564,30 +569,47 @@ export const Diagram: React.FC = () => {
         getLineStyle(relationship)
       )
       .on("click", function (event, d) {
+        if (userInfo?.role !== "Urban Planner") {
+          alert("You do not have permission to update relationships.");
+          return;
+        }
+      
         const dropdownContainer = document.createElement("div");
         dropdownContainer.id = "dropdown-container";
         dropdownContainer.style.position = "absolute";
         dropdownContainer.style.left = `${event.pageX}px`;
         dropdownContainer.style.top = `${event.pageY}px`;
         document.body.appendChild(dropdownContainer);
-    
+      
         const root = ReactDOM.createRoot(dropdownContainer);
-    
-        const onRelationshipChange = (rel) => {
-          d.relationship = rel; // Aggiorna il tipo di relazione
-          d3.select(this) // Aggiorna lo stile della linea
-            .attr("stroke-dasharray", getLineStyle(rel));
-          root.unmount();
-          document.body.removeChild(dropdownContainer);
+      
+        const onRelationshipChange = async (rel : string) => {
+          try {
+            d.relationship = rel; // Aggiorna il dato localmente
+            d3.select(this) // Aggiorna lo stile della linea
+              .attr("stroke-dasharray", getLineStyle(rel));
+      
+            // Chiamata API per aggiornare il link sul server
+            await API.updateLink(d.id, d.sourceNode.id, d.targetNode.id, rel);
+            console.log(d.id);
+      
+            alert("Relationship updated successfully!");
+          } catch (error) {
+            console.error("Failed to update relationship:", error);
+            alert("An error occurred while updating the relationship.");
+          } finally {
+            root.unmount();
+            document.body.removeChild(dropdownContainer);
+          }
         };
-    
+      
         root.render(
           <Dropdown show={true}>
             <Dropdown.Toggle variant="secondary" id="dropdown-basic">
               Update Relationship
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              {["Direct Consequence", "Collateral consequence", "Projection", "Update"].map((rel) => (
+              {["Direct consequence", "Collateral consequence", "Projection", "Update"].map((rel) => (
                 <Dropdown.Item key={rel} onClick={() => onRelationshipChange(rel)}>
                   {rel}
                 </Dropdown.Item>
@@ -595,7 +617,7 @@ export const Diagram: React.FC = () => {
             </Dropdown.Menu>
           </Dropdown>
         );
-    
+      
         const removeDropdown = () => {
           if (document.body.contains(dropdownContainer)) {
             root.unmount();
@@ -603,9 +625,10 @@ export const Diagram: React.FC = () => {
             document.removeEventListener("click", removeDropdown);
           }
         };
-    
+      
         setTimeout(() => document.addEventListener("click", removeDropdown), 10);
       });
+      
 
 
     // Clustering logic
