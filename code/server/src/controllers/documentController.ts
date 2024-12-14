@@ -251,6 +251,12 @@ class DocumentController {
     }
 
     async updateDocument(documentData: DocumentEditData, documentGeoData: DocumentGeoData): Promise<boolean> {
+        if(documentData.issuanceDate) {
+            let actualParsedDate: Date = await this.dao.getParsedDate(documentData.documentID);
+            if(this.helper.isValidDate(documentData.issuanceDate, actualParsedDate.toISOString().split("T")[0]))
+                documentData.parsedDate = actualParsedDate;
+        }
+
         if(this.helper.isAssignedToKiruna(documentGeoData)) 
             return await this.helper.nodeAssignedToKiruna(documentData, documentGeoData, this.dao, Modality.UPDATE);
 
