@@ -370,7 +370,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       className: isHighlighted ? "custom-icon highlighted" : "custom-icon",
       iconSize: isHighlighted ? [42, 42] : [40, 40],
       iconAnchor: [15, 15],
-      popupAnchor: [0, -15],
+      /*popupAnchor: [0, -15],*/
     });
   };
   const handleMoreClick = (doc: Document | KirunaDocument) => {
@@ -459,23 +459,23 @@ const MapComponent: React.FC<MapComponentProps> = ({
                             lat: doc.latitude,
                             lng: doc.longitude,
                           });
-                          /*handleMoreClick(doc);*/
                         },
                       }
                     : {
                         click: () => {
                           setTempHighlightedDocumentId(doc.id);
                           handleDocumentHover(doc);
+                          handleMoreClick(doc);
                         },
                         mouseover: () => handleDocumentHover(doc),
                         mouseout: () => {
-                          if (tempHighlightedDocumentId !== doc.id)
+                          if (tempHighlightedDocumentId === null)
                             handleDocumentLeave();
                         },
                       }
                 }
               >
-                <Popup>
+                {/*<Popup>
                   <b>{doc.title}</b>
                   <br />
                   Type: {doc.type}
@@ -490,7 +490,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
                       More
                     </div>
                   )}
-                </Popup>
+                </Popup>*/}
               </Marker>
             ))}
         </MarkerClusterGroup>

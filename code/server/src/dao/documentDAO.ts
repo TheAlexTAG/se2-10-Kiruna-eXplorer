@@ -499,6 +499,20 @@ class DocumentDAO {
             await conn?.release();
         }
     }
+
+    async getParsedDate(documentID: number): Promise<Date> {
+        let conn;
+        try {
+            conn = await db.getConnection();
+            const sql = `SELECT parsedDate FROM document WHERE documentID = ?`
+            const result = await conn.query(sql, [documentID]);
+            return new Date(new Date(result[0].parsedDate).getTime() - (new Date(result[0].parsedDate).getTimezoneOffset() * 60000));
+        } catch(err: any) {
+            throw new InternalServerError();
+        } finally {
+            await conn?.release();
+        }
+    }
 }
 
 export { DocumentDAO };
