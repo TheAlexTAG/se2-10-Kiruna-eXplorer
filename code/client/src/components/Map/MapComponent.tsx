@@ -40,6 +40,12 @@ import KirunaDocs from "./KirunaDocs/KirunaDocs";
 import { PiBird } from "react-icons/pi";
 import { IoDocumentOutline, IoDocumentSharp } from "react-icons/io5";
 
+declare module "leaflet" {
+  interface MarkerOptions {
+    docId?: number;
+  }
+}
+
 export type Document = {
   id: number;
   title: string;
@@ -125,6 +131,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const [isSatelliteView, setIsSatelliteView] = useState(true);
   const [showDocs, setShowDocs] = useState(true);
   const [hoveredZoneId, setHoveredZoneId] = useState<number | null>(null);
+  const [selectedHoveredZoneId, setSelectedHoveredZoneId] = useState<
+    number | null
+  >(null);
 
   const defaultTileLayer = [
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -298,6 +307,25 @@ const MapComponent: React.FC<MapComponentProps> = ({
   console.log("zones is ", zones);
   console.log("custom area is ", customArea);
 
+  const renderSelectedHoveredZone = () => {
+    if (!selectedHoveredZoneId) return null;
+
+    const selectedHoveredZone = zones.find(
+      (zone) => zone.id === selectedHoveredZoneId
+    );
+    if (!selectedHoveredZone) return null;
+
+    return (
+      <Polygon
+        key={selectedHoveredZone.id}
+        positions={selectedHoveredZone.coordinates.coordinates[0].map(
+          ([lng, lat]) => [lat, lng]
+        )}
+        pathOptions={{ color: "yellow", fillOpacity: 0.5 }}
+      />
+    );
+  };
+
   const renderHoveredZone = () => {
     if (!hoveredZoneId) return null;
 
@@ -312,7 +340,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
           lng,
         ])}
         pathOptions={{
-          color: "orange", // Highlight color for hovered zone
+          color: "orange",
           fillOpacity: 0.5,
         }}
       />
@@ -374,9 +402,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
     });
   };
   const handleMoreClick = (doc: Document | KirunaDocument) => {
-    setSelectedDocument(doc);
-    setHighlightedDocumentId(doc.id);
-    setTempHighlightedDocumentId(doc.id);
+    if (selectionMode === null || selectionMode === undefined) {
+      setSelectedHoveredZoneId(doc.zoneID);
+      setSelectedDocument(doc);
+      setHighlightedDocumentId(doc.id);
+      setTempHighlightedDocumentId(doc.id);
+    }
   };
 
   const handleOpenKirunaModal = () => {
@@ -391,6 +422,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   console.log("Test - highlighted documetn id ", highlightedDocumentId);
   console.log("Test - selectedDocument is ", selectedDocument);
   console.log("Test - selectionMode is ", selectionMode);
+
   const handleDocumentHover = (doc: Document | KirunaDocument) => {
     setHoveredZoneId(doc.zoneID);
   };
@@ -398,6 +430,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const handleDocumentLeave = () => {
     setHoveredZoneId(null);
   };
+  const markerRefs = useRef<Record<number, L.Marker>>({});
 
   return (
     <div>
@@ -435,9 +468,34 @@ const MapComponent: React.FC<MapComponentProps> = ({
         )}
         {/*@ts-ignore*/}
         <MarkerClusterGroup
+          key={tempHighlightedDocumentId}
           spiderfyOnMaxZoom={true} // Keep spiderfying behavior
           zoomToBoundsOnClick={true} // Allow zoom on cluster click
           showCoverageOnHover={false} // Disable coverage hover
+          iconCreateFunction={(cluster) => {
+            const childMarkers = cluster.getAllChildMarkers();
+            console.log("childmarkers are: ", childMarkers);
+            const containsHighlightedDoc = childMarkers.some((marker) => {
+              console.log("temp high is ", tempHighlightedDocumentId);
+              console.log("temp mark option id is ", marker.options.docId);
+              return marker.options.docId === tempHighlightedDocumentId;
+            });
+            console.log("containshigghlighteddoc: ", containsHighlightedDoc);
+            const className = containsHighlightedDoc
+              ? "hotspot-cluster-icon"
+              : "custom-cluster-icon";
+            const size =
+              childMarkers.length < 10
+                ? "small-cluster"
+                : childMarkers.length < 50
+                ? "medium-cluster"
+                : "large-cluster";
+            return L.divIcon({
+              html: `<div class="${className} ${size}">${childMarkers.length}</div>`,
+              className: "",
+              iconSize: L.point(40, 40, true),
+            });
+          }}
         >
           {/*for now we ignore MarkerClusterGroup type error, since everything works*/}
           {showDocs &&
@@ -453,7 +511,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
                   selectionMode === "point" && setTempCoordinates
                     ? {
                         click: () => {
-                          //setHighlightedDocumentId(doc.id);
                           setTempHighlightedDocumentId(doc.id);
                           setTempCoordinates({
                             lat: doc.latitude,
@@ -464,16 +521,25 @@ const MapComponent: React.FC<MapComponentProps> = ({
                     : {
                         click: () => {
                           setTempHighlightedDocumentId(doc.id);
-                          handleDocumentHover(doc);
                           handleMoreClick(doc);
                         },
                         mouseover: () => handleDocumentHover(doc),
                         mouseout: () => {
+                          console.log(
+                            "temphighlight on out is ",
+                            tempHighlightedDocumentId
+                          );
                           if (tempHighlightedDocumentId === null)
                             handleDocumentLeave();
                         },
                       }
                 }
+                ref={(markerInstance) => {
+                  if (markerInstance) {
+                    markerRefs.current[doc.id] = markerInstance;
+                    markerInstance.options.docId = doc.id;
+                  }
+                }}
               >
                 {/*<Popup>
                   <b>{doc.title}</b>
@@ -532,6 +598,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         {renderZones()}
         {renderCustomPolygon()}
         {renderHoveredZone()}
+        {renderSelectedHoveredZone()}
       </MapContainer>
       {selectedDocument && (
         <DocumentCard
