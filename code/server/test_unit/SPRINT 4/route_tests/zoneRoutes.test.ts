@@ -8,9 +8,7 @@ import { InternalServerError } from "../../../src/errors/link_docError"
 import {ErrorHandler} from "../../../src/helper"
 import { Utilities } from "../../../src/utilities"
 import { Geometry } from "geojson"
-import { geometry } from "@turf/helpers";
-
-const wellknown = require('wellknown');
+import { validationResult } from 'express-validator';
 
 jest.mock("../../../src/controllers/zoneController")
 jest.mock("../../../src/utilities")
@@ -24,7 +22,18 @@ describe("Route zone unit tests", () => {
     describe("GET /api/zones", () => {
 
         test("It should return the list of all zones", async () => {
-            const coord: Geometry = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const coord: Geometry = {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [20.065539, 67.888850],
+                    [20.065539, 67.807310],
+                    [20.381416, 67.807310],
+                    [20.381416, 67.888850],
+                    [20.065539, 67.888850]
+                  ]
+                ]
+            };
             const zone1: Zone = new Zone(1, coord);
             const zone2: Zone = new Zone(2, coord);
             const zone3: Zone = new Zone(3, coord);
@@ -49,10 +58,27 @@ describe("Route zone unit tests", () => {
 
     describe("GET /api/document/zone/:id", () => {
 
-        test("It should return the zone specified", async () => {
-            const coord: Geometry = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
-            const zone: Zone = new Zone(1, coord);
+        jest.mock('express-validator', () => ({
+            validationResult: jest.fn(),
+        }));
 
+        test("It should return the zone specified", async () => {
+            const coord: Geometry = {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [20.065539, 67.888850],
+                    [20.065539, 67.807310],
+                    [20.381416, 67.807310],
+                    [20.381416, 67.888850],
+                    [20.065539, 67.888850]
+                  ]
+                ]
+              };
+            const zone: Zone = new Zone(1, coord);
+            require('express-validator').validationResult.mockReturnValue({
+                isEmpty: () => true,
+            });
             jest.spyOn(ZoneController.prototype, "getZone").mockResolvedValueOnce(zone);
 
             const response = await request(app).get("/api/document/zone/1");
@@ -62,10 +88,24 @@ describe("Route zone unit tests", () => {
             expect(ZoneController.prototype.getZone).toHaveBeenCalledWith(1);
         })
 
+        
         test("It should return 422 status if the parameter is not an integer", async () => {
-            const coord: Geometry = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const coord: Geometry = {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [20.065539, 67.888850],
+                    [20.065539, 67.807310],
+                    [20.381416, 67.807310],
+                    [20.381416, 67.888850],
+                    [20.065539, 67.888850]
+                  ]
+                ]
+              };
             const zone: Zone = new Zone(1, coord);
-
+            require('express-validator').validationResult.mockReturnValue({
+                isEmpty: () => false,
+            });
             jest.spyOn(ZoneController.prototype, "getZone").mockResolvedValueOnce(zone);
 
             const response = await request(app).get("/api/document/zone/uno");
@@ -75,6 +115,9 @@ describe("Route zone unit tests", () => {
         })
 
         test("It should fail and return 500 status if the controller's method returns a InternalServerError", async () => {
+            require('express-validator').validationResult.mockReturnValue({
+                isEmpty: () => true,
+            });
             jest.spyOn(ZoneController.prototype, "getZone").mockRejectedValue(new InternalServerError(''));
 
             const response = await request(app).get("/api/document/zone/1");
@@ -85,16 +128,41 @@ describe("Route zone unit tests", () => {
         })
     })
 
+    
     describe("PUT /api/zone/:id", () => {
+
+        jest.mock('express-validator', () => ({
+            validationResult: jest.fn(),
+        }));
 
         test("It should update the zone specified with new coordinates", async () => {
             const coordinates: number[][] = [ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]];
-            const geo: Geometry= geometry("Polygon", [coordinates]);
+            const geo: Geometry= {
+                type: "Polygon",
+                coordinates: [
+                  [
+                    [67.8600, 20.2250],
+                    [67.8600, 20.2300],
+                    [67.8550, 20.2350],
+                    [67.8500, 20.2300],
+                    [67.8500, 20.2200],
+                    [67.8550, 20.2150],
+                    [67.8600, 20.2250]
+                  ]
+                ]
+              }
+            const previous: Geometry = {
+                type: 'Polygon',
+                coordinates: [coordinates
+                ]
+              };
+            const zone: Zone = new Zone(1, previous);
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
-                            return next();
-                        })
-            const coord: Geometry = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
-            const zone: Zone = new Zone(1, coord);
+                return next();
+            })
+            require('express-validator').validationResult.mockReturnValue({
+                isEmpty: () => true,
+            });
             jest.spyOn(ZoneController.prototype, "getZone").mockResolvedValueOnce(zone);
             jest.spyOn(require('@turf/helpers'), 'geometry').mockReturnValue(geo);
             jest.spyOn(ZoneController.prototype, "modifyZone").mockResolvedValueOnce(true);
@@ -123,6 +191,9 @@ describe("Route zone unit tests", () => {
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
                 return next();
             })
+            require('express-validator').validationResult.mockReturnValue({
+                isEmpty: () => false,
+            });
 
             const response = await request(app).put("/api/zone/uno").send({coordinates: coordinates});
 
@@ -136,6 +207,9 @@ describe("Route zone unit tests", () => {
                 return next();
             })
             jest.spyOn(ZoneController.prototype, "getZone").mockRejectedValue(new ZoneError);
+            require('express-validator').validationResult.mockReturnValue({
+                isEmpty: () => false,
+            });
 
             const response = await request(app).put("/api/zone/1").send({coordinates: coordinates});
 
@@ -147,9 +221,23 @@ describe("Route zone unit tests", () => {
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
                 return next();
             })
-            const coord: Geometry = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
-            const zone: Zone = new Zone(1, coord);
+            const previous: Geometry = {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [20.065539, 67.888850],
+                    [20.065539, 67.807310],
+                    [20.381416, 67.807310],
+                    [20.381416, 67.888850],
+                    [20.065539, 67.888850]
+                  ]
+                ]
+              };
+            const zone: Zone = new Zone(1, previous);
             jest.spyOn(ZoneController.prototype, "getZone").mockResolvedValueOnce(zone);
+            require('express-validator').validationResult.mockReturnValue({
+                isEmpty: () => false,
+            });
 
             const response1 = await request(app).put("/api/zone/1").send({coordinates: 3});
             const response2 = await request(app).put("/api/zone/1").send({coordinates: [1,2,3]});
@@ -167,14 +255,30 @@ describe("Route zone unit tests", () => {
 
         test("It should fail and return 500 status if the controller's method returns a InternalServerError", async () => {
             const coordinates: number[][] = [ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]];
-            const geo: Geometry= geometry("Polygon", [coordinates]);
-
-            const coord: Geometry = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
-            const zone: Zone = new Zone(1, coord);
+            const geo: Geometry= {
+                type: "Polygon",
+                coordinates: [coordinates]
+              };
+            const previous: Geometry = {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [20.065539, 67.888850],
+                    [20.065539, 67.807310],
+                    [20.381416, 67.807310],
+                    [20.381416, 67.888850],
+                    [20.065539, 67.888850]
+                  ]
+                ]
+              };
+            const zone: Zone = new Zone(1, previous);
             jest.spyOn(ZoneController.prototype, "getZone").mockResolvedValueOnce(zone);
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
                 return next();
             })
+            require('express-validator').validationResult.mockReturnValue({
+                isEmpty: () => true,
+            });
             jest.spyOn(require('@turf/helpers'), 'geometry').mockReturnValue(geo);
             jest.spyOn(ZoneController.prototype, "modifyZone").mockRejectedValue(new InternalServerError(''));
 
@@ -187,15 +291,31 @@ describe("Route zone unit tests", () => {
 
         test("It should fail and return 422 status if the controller's method returns a generic error", async () => {
             const coordinates: number[][] = [ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]];
-            const geo: Geometry= geometry("Polygon", [coordinates]);
-
-            const coord: Geometry = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
-            const zone: Zone = new Zone(1, coord);
+            const geo: Geometry= {
+                type: "Polygon",
+                coordinates: [coordinates]
+              };
+            const previous: Geometry = {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [20.065539, 67.888850],
+                    [20.065539, 67.807310],
+                    [20.381416, 67.807310],
+                    [20.381416, 67.888850],
+                    [20.065539, 67.888850]
+                  ]
+                ]
+              };
+            const zone: Zone = new Zone(1, previous);
             jest.spyOn(ZoneController.prototype, "getZone").mockResolvedValueOnce(zone);
             
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
                 return next();
             })
+            require('express-validator').validationResult.mockReturnValue({
+                isEmpty: () => true,
+            });
             jest.spyOn(require('@turf/helpers'), 'geometry').mockReturnValue(geo);
             jest.spyOn(ZoneController.prototype, "modifyZone").mockRejectedValue(new Error);
 
@@ -208,15 +328,31 @@ describe("Route zone unit tests", () => {
 
         test("It should fail and return 422 status if the controller's method returns a database error", async () => {
             const coordinates: number[][] = [ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]];
-            const geo: Geometry= geometry("Polygon", [coordinates]);
-
-            const coord: Geometry = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
-            const zone: Zone = new Zone(1, coord);
+            const geo: Geometry= {
+                type: "Polygon",
+                coordinates: [coordinates]
+              };
+            const previous: Geometry = {
+                type: 'Polygon',
+                coordinates: [
+                  [
+                    [20.065539, 67.888850],
+                    [20.065539, 67.807310],
+                    [20.381416, 67.807310],
+                    [20.381416, 67.888850],
+                    [20.065539, 67.888850]
+                  ]
+                ]
+              };
+            const zone: Zone = new Zone(1, previous);
             jest.spyOn(ZoneController.prototype, "getZone").mockResolvedValueOnce(zone);
             
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
                 return next();
             })
+            require('express-validator').validationResult.mockReturnValue({
+                isEmpty: () => true,
+            });
             jest.spyOn(require('@turf/helpers'), 'geometry').mockReturnValue(geo);
             jest.spyOn(ZoneController.prototype, "modifyZone").mockRejectedValue(new Error('Database error'));
 

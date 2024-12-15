@@ -5,7 +5,7 @@ import {Zone} from "../../../src/components/zone"
 import {InsertZoneError, ModifyZoneError, ZoneError} from "../../../src/errors/zoneError"
 import {WrongGeoreferenceUpdateError} from "../../../src/errors/documentErrors"
 import { InternalServerError } from "../../../src/errors/link_docError";
-import { geometry } from "@turf/helpers";
+import { Geometry } from "geojson";
 
 const wellknown = require('wellknown');
 
@@ -40,7 +40,18 @@ describe("ZoneDAO test unit", () => {
     
         test("It should create the Zone object", async () => {
             const coordinates: string = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
-            const parsedGeo = wellknown.parse(coordinates); 
+            const parsedGeo: Geometry = {
+                "type": "Polygon",
+                "coordinates": [
+                  [
+                    [20.065539, 67.88885],
+                    [20.065539, 67.80731],
+                    [20.381416, 67.80731],
+                    [20.381416, 67.88885],
+                    [20.065539, 67.88885]
+                  ]
+                ]
+              };               
             const zone: Zone = new Zone(1, parsedGeo);
             jest.spyOn(wellknown, 'parse').mockReturnValue(parsedGeo);
 
@@ -64,7 +75,18 @@ describe("ZoneDAO test unit", () => {
         jest.mock("../../../src/dao/zoneDAO")
     
         test("It should get a specific zone", async () => {
-            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const coord: Geometry = {
+                "type": "Polygon",
+                "coordinates": [
+                  [
+                    [20.065539, 67.88885],
+                    [20.065539, 67.80731],
+                    [20.381416, 67.80731],
+                    [20.381416, 67.88885],
+                    [20.065539, 67.88885]
+                  ]
+                ]
+              };     
             const zone: Zone = new Zone(1, coord); 
 
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
@@ -103,7 +125,7 @@ describe("ZoneDAO test unit", () => {
     describe("zoneExistsCoord", () => {
     
         test("It should return true if coordinates are already saved", async () => {
-            const coord = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
+            const coord: string = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'query').mockResolvedValue([{count: 1}]);
             jest.spyOn(connMock, 'release');
@@ -113,7 +135,7 @@ describe("ZoneDAO test unit", () => {
         });
 
         test("It should return false if there is no zone with these coordinates", async () => {
-            const coord = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
+            const coord: string = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'query').mockResolvedValue([{count: 0}]);
             jest.spyOn(connMock, 'release');
@@ -123,7 +145,7 @@ describe("ZoneDAO test unit", () => {
         });
 
         test("It should return an InternalServerError if the db call fails", async () => {
-            const coord = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
+            const coord: string = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'query').mockRejectedValue(new Error('Database error'));
             jest.spyOn(connMock, 'release');
@@ -132,7 +154,7 @@ describe("ZoneDAO test unit", () => {
         });
 
         test("It should return an InternalServerError if the db call returns a generic error", async () => {
-            const coord = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
+            const coord: string = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'query').mockRejectedValue(new Error());
             jest.spyOn(connMock, 'release');
@@ -147,7 +169,18 @@ describe("ZoneDAO test unit", () => {
         jest.mock("../../../src/dao/zoneDAO")
 
         test("It should get all zone", async () => {
-            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const coord: Geometry = {
+                "type": "Polygon",
+                "coordinates": [
+                  [
+                    [20.065539, 67.88885],
+                    [20.065539, 67.80731],
+                    [20.381416, 67.80731],
+                    [20.381416, 67.88885],
+                    [20.065539, 67.88885]
+                  ]
+                ]
+              };     
             const zone1: Zone = new Zone(1, coord);
             const zone2: Zone = new Zone(2, coord);
             const zone3: Zone = new Zone(3, coord);
@@ -194,7 +227,7 @@ describe("ZoneDAO test unit", () => {
     describe("modifyZone", () => {
 
         test("It should update the coordinates of a zone", async () => {
-            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const coord: string = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'beginTransaction');
             jest.spyOn(connMock, 'query').mockResolvedValueOnce({affectedRows: 1});
@@ -208,7 +241,7 @@ describe("ZoneDAO test unit", () => {
         });
 
         test("It should return ModifyZoneError if there is no such zone", async () => {
-            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const coord: string = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'beginTransaction');
             jest.spyOn(connMock, 'query').mockResolvedValueOnce({affectedRows: 0});
@@ -220,8 +253,21 @@ describe("ZoneDAO test unit", () => {
             expect(connMock.rollback).toHaveBeenCalled();
         });
 
+        test("It should return WrongGeoreferenceUpdateError if changed rows are not specified", async () => {
+            const coord: string = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
+            jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
+            jest.spyOn(connMock, 'beginTransaction');
+            jest.spyOn(connMock, 'query').mockResolvedValueOnce({affectedRows: 1});
+            jest.spyOn(connMock, 'query').mockResolvedValueOnce(null);
+            jest.spyOn(connMock, 'commit');
+            jest.spyOn(connMock, 'release');
+
+            await expect(zoneDAO.modifyZone(1, coord, 20.2234775, 67.848080)).rejects.toThrow(WrongGeoreferenceUpdateError);
+            expect(connMock.rollback).toHaveBeenCalled();
+        });
+
         test("It should return WrongGeoreferenceUpdateError if there are no document related to this zone", async () => {
-            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const coord: string = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'beginTransaction');
             jest.spyOn(connMock, 'query').mockResolvedValueOnce({affectedRows: 1});
@@ -234,7 +280,7 @@ describe("ZoneDAO test unit", () => {
         });
 
         test("It should return an InternalServerError if the db call fails", async () => {
-            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const coord: string = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'beginTransaction');
             jest.spyOn(connMock, 'query').mockRejectedValue(new Error('Database error'));
@@ -246,7 +292,7 @@ describe("ZoneDAO test unit", () => {
         });
 
         test("It should return an InternalServerError if the db call returns a generic error", async () => {
-            const coord = wellknown.parse('POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))');
+            const coord: string = 'POLYGON((20.065539 67.888850, 20.065539 67.807310, 20.381416 67.807310, 20.381416 67.888850, 20.065539 67.888850))';
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'beginTransaction');
             jest.spyOn(connMock, 'query').mockRejectedValue(new Error());
