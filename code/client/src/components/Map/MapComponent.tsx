@@ -223,9 +223,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const PointClickHandler: React.FC = () => {
     useMapEvent("click", (e) => {
       setSelectedDocument(null);
-      //setHighlightedDocumentId(null);
       setTempHighlightedDocumentId(null);
+      setSelectedHoveredZoneId(null);
       handleDocumentLeave();
+
       if (setTempCoordinates) {
         if (selectionMode === "point") {
           setTempCoordinates({ lat: null, lng: null });
@@ -321,10 +322,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
         positions={selectedHoveredZone.coordinates.coordinates[0].map(
           ([lng, lat]) => [lat, lng]
         )}
-        pathOptions={{ color: "yellow", fillOpacity: 0.5 }}
+        pathOptions={{ color: "red", fillOpacity: 0.5 }}
       />
     );
   };
+
+  console.log("hovered zone id is", hoveredZoneId);
+  const miao = zones.find((zone) => zone.id === hoveredZoneId);
+  console.log("miao is ", miao);
 
   const renderHoveredZone = () => {
     if (!hoveredZoneId) return null;
@@ -340,7 +345,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
           lng,
         ])}
         pathOptions={{
-          color: "orange",
+          color: "pink",
           fillOpacity: 0.5,
         }}
       />
@@ -407,6 +412,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       setSelectedDocument(doc);
       setHighlightedDocumentId(doc.id);
       setTempHighlightedDocumentId(doc.id);
+      setHoveredZoneId(null);
     }
   };
 
@@ -424,12 +430,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
   console.log("Test - selectionMode is ", selectionMode);
 
   const handleDocumentHover = (doc: Document | KirunaDocument) => {
-    setHoveredZoneId(doc.zoneID);
+    if (selectedHoveredZoneId !== doc.zoneID) setHoveredZoneId(doc.zoneID);
   };
 
   const handleDocumentLeave = () => {
     setHoveredZoneId(null);
   };
+
   const markerRefs = useRef<Record<number, L.Marker>>({});
 
   return (
@@ -525,12 +532,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
                         },
                         mouseover: () => handleDocumentHover(doc),
                         mouseout: () => {
-                          console.log(
-                            "temphighlight on out is ",
-                            tempHighlightedDocumentId
-                          );
-                          if (tempHighlightedDocumentId === null)
-                            handleDocumentLeave();
+                          handleDocumentLeave();
                         },
                       }
                 }
