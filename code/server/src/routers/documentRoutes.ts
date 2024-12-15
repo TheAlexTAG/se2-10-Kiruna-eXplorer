@@ -23,7 +23,13 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({storage: storage});
+const upload = multer({
+    storage: storage,
+    limits: {
+        files: 5, 
+        fileSize: 10 * 1024 * 1024
+    }
+});
 
 class DocumentRoutesHelper {
     parseDate (dateStr: string): Date {
