@@ -15,7 +15,6 @@ import { DocumentCard } from "../DocumentCard/DocumentCard";
 import L from "leaflet";
 import { Dropdown, Button, ButtonGroup } from "react-bootstrap";
 import ReactDOM from "react-dom";
-
 interface IconProps {
   width?: string | number;
   height?: string | number;
@@ -689,7 +688,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     return () => {
       svg.on(".zoom", null); // Pulisce lo zoom quando il componente si smonta
     };
-  }, [nodes, isZoomEnabled]);
+  }, [nodes, isZoomEnabled, selectedDocument]);
 
   // Funzione per lo zoom in
   const handleZoomIn = () => {
