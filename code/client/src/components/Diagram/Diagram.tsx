@@ -93,6 +93,10 @@ const legendData = [
 ];
 
 const getColor = (stakeholder: string) => {
+  // Verifica se ci sono più stakeholder separati da virgole
+  if (stakeholder.includes(",")) {
+    return "#1D2D7A"; 
+  }
   switch (stakeholder) {
     case "LKAB":
       return "#000000";
@@ -104,10 +108,8 @@ const getColor = (stakeholder: string) => {
       return "#A9A9A9";
     case "Citizens":
       return "#87CEEB";
-    case "Others":
-      return "#5F9EA0";
     default:
-      return "#1D2D7A";
+      return "#5F9EA0";
   }
 };
 
@@ -238,8 +240,6 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
     const height = 750;
     const margin = { top: 20, right: 300, bottom: 200, left: 100 };
 
-    const startDate = new Date(2004, 0, 1);
-    const endDate = new Date(2025, 0, 1);
     const newYDomain = [
       "Concept",
       "Text",
@@ -249,14 +249,20 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
       "Blueprints/effects",
       "",
     ];
+
+    const newXDomain = [
+      d3.min(nodes.map((node: Node) => node.parsedDate)),  // Data minima
+      d3.max(nodes.map((node: Node) => node.parsedDate)),  // Data massima
+    ];
     
     const yScale = d3
       .scalePoint()
       .domain(newYDomain as Iterable<string>)
       .range([margin.top, height - margin.bottom]);
+      
     const xScale = d3
       .scaleTime()
-      .domain([startDate, endDate])
+      .domain(newXDomain as Iterable<Date>)
       .range([margin.left, width - margin.right]);
 
     const svg = d3
@@ -266,8 +272,11 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
 
     svg.selectAll("*").remove();
 
+    // Creazione del gruppo radice per lo zoom
+    const rootGroup = svg.append("g").attr("class", "root-group");
+
     // Add grid
-    const gridGroup = svg
+    const gridGroup = rootGroup
       .append("g")
       .attr("class", "grid")
       .attr("transform", `translate(${margin.left + 150}, 0)`);
@@ -304,7 +313,7 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
       .attr("opacity", 0.5);
 
     // Add legend
-    const legendGroup = svg
+    const legendGroup = rootGroup
       .append("g")
       .attr("transform", `translate(${margin.left - 75}, ${margin.top})`);
 
@@ -427,7 +436,7 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
         currentY += 20;
       });
 
-    const graphGroup = svg
+    const graphGroup = rootGroup
       .append("g")
       .attr("transform", `translate(${margin.left + 150}, 0)`);
 
@@ -655,7 +664,7 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
           cluster.x =
             (cluster.x * (cluster.nodes.length - 1) + x) / cluster.nodes.length;
           cluster.y =
-            (cluster.y * (cluster.nodes.length - 1) + y) / cluster.nodes.length;
+            (cluster.y * (cluster.nodes.length - 1) + y!) / cluster.nodes.length;
           addedToCluster = true;
         }
       });
@@ -682,7 +691,7 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
       clusterNodes.forEach((node) => {
         graphGroup
           .selectAll(`g.node`)
-          .filter((d) => d.id === node.id)
+          .filter((d) => (d as Node).id === node.id)
           .style("visibility", "hidden");
       });
 
@@ -721,11 +730,26 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
         clusterNodes.forEach((node) => {
           graphGroup
             .selectAll("g.node")
-            .filter((d) => d.id === node.id)
+            .filter((d) => (d as Node).id === node.id)
             .style("visibility", "visible");
         });
       });
   });
+
+  // aggiungi funzionalità di zoom
+  const offset = 50;
+
+  const zoom = d3.zoom()
+    .scaleExtent([0.5, 5]) // Valori minimo (0.5) e massimo (5) di scala
+    .translateExtent([
+      [0, 0],
+      [width + offset, height + offset],
+    ]) // Limita la traslazione all'interno del grafico
+    .on("zoom", (event) => {
+      rootGroup.attr("transform", event.transform);
+    });
+
+  svg.call(zoom);
 
   }, [nodes]);
 
