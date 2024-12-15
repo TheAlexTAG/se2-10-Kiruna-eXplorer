@@ -13,7 +13,7 @@ import DocDefaultIcon from "../../assets/icons/doc-default-icon";
 import API from "../../API/API";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
 import L from "leaflet";
-import { Dropdown } from "react-bootstrap";
+import { Dropdown, Button, ButtonGroup } from "react-bootstrap";
 import ReactDOM from "react-dom";
 
 interface IconProps {
@@ -206,6 +206,8 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
+  const [isZoomEnabled, setIsZoomEnabled] = useState(false);
+  const zoomBehavior = useRef<d3.ZoomBehavior<Element, unknown> | null>(null); // Ref per il comportamento dello zoom
 
   const getIconByType = (type: string) => {
     const iconUrls: { [key: string]: string } = {
@@ -658,109 +660,12 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         );
       });
 
-    // Clustering logic
-    const clusterThreshold = 25;
-    const clusteredNodes: {
-      clusterId: number;
-      x: number;
-      y: number;
-      nodes: Node[];
-    }[] = [];
-
-    nodes.forEach((node) => {
-      const x = xScale(parseDate(node.issuanceDate));
-      const y = yScale(node.scale);
-
-      // Cerca se il nodo può essere raggruppato in un cluster esistente
-      let addedToCluster = false;
-
-      clusteredNodes.forEach((cluster) => {
-        const distance = Math.sqrt(
-          (x - cluster.x) ** 2 + (y! - cluster.y) ** 2
-        );
-        if (distance < clusterThreshold) {
-          cluster.nodes.push(node);
-          cluster.x =
-            (cluster.x * (cluster.nodes.length - 1) + x) / cluster.nodes.length;
-          cluster.y =
-            (cluster.y * (cluster.nodes.length - 1) + y!) /
-            cluster.nodes.length;
-          addedToCluster = true;
-        }
-      });
-
-      if (!addedToCluster) {
-        clusteredNodes.push({
-          clusterId: clusteredNodes.length,
-          x,
-          y,
-          nodes: [node],
-        });
-      }
-    });
-
-    const filteredClusters = clusteredNodes.filter(
-      (cluster) => cluster.nodes.length > 1
-    );
-
-    // Disegna i cluster
-    filteredClusters.forEach((cluster) => {
-      const { x, y, nodes: clusterNodes } = cluster;
-
-      // Nascondi i nodi che appartengono al cluster
-      clusterNodes.forEach((node) => {
-        graphGroup
-          .selectAll(`g.node`)
-          .filter((d) => (d as Node).id === node.id)
-          .style("visibility", "hidden");
-      });
-
-      // Gruppo del cluster
-      const clusterGroup = graphGroup
-        .append("g")
-        .attr("class", "cluster-group")
-        .attr("transform", `translate(${x}, ${y})`)
-        .style("cursor", "pointer");
-
-      // Disegna il cerchio del cluster
-      const clusterCircle = clusterGroup
-        .append("circle")
-        .attr("r", 15)
-        .attr("fill", "#3182CE")
-        .attr("opacity", 0.8)
-        .classed("cluster", true);
-
-      // Etichetta del cluster
-      const clusterLabel = clusterGroup
-        .append("text")
-        .attr("y", 4) // Offset verticale per centrare rispetto al cerchio
-        .attr("text-anchor", "middle")
-        .attr("font-size", 12)
-        .attr("fill", "white")
-        .text(clusterNodes.length)
-        .classed("cluster-label", true);
-
-      // Evento click sul gruppo
-      clusterGroup.on("click", () => {
-        // Rendi invisibili sia il cerchio che l'etichetta
-        clusterCircle.style("visibility", "hidden");
-        clusterLabel.style("visibility", "hidden");
-
-        clusterNodes.forEach((node) => {
-          graphGroup
-            .selectAll("g.node")
-            .filter((d) => (d as Node).id === node.id)
-            .style("visibility", "visible");
-        });
-      });
-    });
-
     // aggiungi funzionalità di zoom
     const offset = 50;
 
     const zoom = d3
       .zoom()
-      .scaleExtent([0.5, 5]) // Valori minimo (0.5) e massimo (5) di scala
+      .scaleExtent([0.75, 5])
       .translateExtent([
         [0, 0],
         [width + offset, height + offset],
@@ -769,11 +674,60 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         rootGroup.attr("transform", event.transform);
       });
 
-    svg.call(zoom);
-  }, [nodes, selectedDocument]);
+    zoomBehavior.current = zoom; // Salva il comportamento dello zoom nella ref
 
+    // Rimuovi lo zoom inizialmente
+    svg.on(".zoom", null);
+
+    // Applica o rimuovi lo zoom in base allo stato
+    if (isZoomEnabled) {
+      svg.call(zoom);
+    } else {
+      svg.on(".zoom", null);
+    }
+
+    return () => {
+      svg.on(".zoom", null); // Pulisce lo zoom quando il componente si smonta
+    };
+  }, [nodes, isZoomEnabled]);
+
+  // Funzione per lo zoom in
+  const handleZoomIn = () => {
+    if (!svgRef.current || !zoomBehavior.current || !isZoomEnabled) return;
+    const svg = d3.select(svgRef.current);
+    svg.transition().duration(300).call(zoomBehavior.current.scaleBy, 1.5);
+  };
+
+  // Funzione per lo zoom out
+  const handleZoomOut = () => {
+    if (!svgRef.current || !zoomBehavior.current || !isZoomEnabled) return;
+    const svg = d3.select(svgRef.current);
+    svg.transition().duration(300).call(zoomBehavior.current.scaleBy, 0.75);
+  };
   return (
     <>
+      <ButtonGroup className="mb-3">
+        <Button
+          variant={isZoomEnabled ? "outline-secondary" : "outline-light"}
+          onClick={() => setIsZoomEnabled(!isZoomEnabled)}
+        >
+          {isZoomEnabled ? "Disable Zoom" : "Enable Zoom"}
+        </Button>
+        <Button
+          variant="outline-primary"
+          onClick={handleZoomIn}
+          disabled={!isZoomEnabled}
+        >
+          Zoom In
+        </Button>
+        <Button
+          variant="outline-danger"
+          onClick={handleZoomOut}
+          disabled={!isZoomEnabled}
+        >
+          Zoom Out
+        </Button>
+      </ButtonGroup>
       <svg ref={svgRef}></svg>
       {selectedDocument && (
         <DocumentCard
