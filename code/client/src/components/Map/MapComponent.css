@@ -149,26 +149,71 @@
   transition: transform 0.2s ease;
 }
 
+.custom-icon:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
 .custom-icon.highlighted {
   background-color: rgb(184, 181, 28);
   border: 1px solid gold;
   box-shadow: 0px 10px 8px rgba(0, 0, 0, 0.5);
+  height: 42px;
+  width: 42px;
 }
 
 .custom-icon-border {
   background: none;
 }
 
-.custom-icon-png {
-  background-color: #fff;
-  border-radius: 50%;
-  padding: 10px;
-  cursor: pointer;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 40px;
-  width: 40px;
-  transition: transform 0.2s ease;
+.maptooltip:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.custom-popup {
+  background-color: #333; /* Match your tooltip background */
+  color: #fff; /* Match your tooltip text color */
+  text-align: center;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 12px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+  opacity: 1; /* Ensure popup is visible */
+  z-index: 1001; /* Ensure proper stacking */
+}
+
+.leaflet-popup-content-wrapper {
+  background: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  color: inherit !important;
+  background: none !important;
+  text-align: inherit;
+  font-size: inherit !important;
+  visibility: visible !important;
+}
+
+.leaflet-popup-tip {
+  display: none !important;
+}
+.custom-tooltip {
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+  z-index: 2000;
 }
