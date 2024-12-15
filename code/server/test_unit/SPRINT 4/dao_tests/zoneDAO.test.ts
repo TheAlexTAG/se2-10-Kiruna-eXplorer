@@ -2,12 +2,11 @@ import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals
 import db from "../../../src/db/db"
 import {ZoneDAO} from "../../../src/dao/zoneDAO"
 import {Zone} from "../../../src/components/zone"
-import {InsertZoneError, ModifyZoneError, ZoneError} from "../../../src/errors/zoneError"
+import {ModifyZoneError, ZoneError} from "../../../src/errors/zoneError"
 import {WrongGeoreferenceUpdateError} from "../../../src/errors/documentErrors"
 import { InternalServerError } from "../../../src/errors/link_docError";
 import { Geometry } from "geojson";
-
-const wellknown = require('wellknown');
+import wellknown, { GeoJSONGeometryOrNull } from 'wellknown';
 
 jest.mock("../../../src/db/db.ts")
 
@@ -52,8 +51,7 @@ describe("ZoneDAO test unit", () => {
                   ]
                 ]
               };               
-            const zone: Zone = new Zone(1, parsedGeo);
-            jest.spyOn(wellknown, 'parse').mockReturnValue(parsedGeo);
+            jest.spyOn(wellknown, 'parse').mockReturnValue(parsedGeo as GeoJSONGeometryOrNull);
 
             const result = ZoneDAO.createZone(1, coordinates);
 
