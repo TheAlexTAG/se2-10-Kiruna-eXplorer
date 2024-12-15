@@ -13,8 +13,8 @@ import DocDefaultIcon from "../../assets/icons/doc-default-icon";
 import API from "../../API/API";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
 import L from "leaflet";
-import { Dropdown } from 'react-bootstrap';
-import ReactDOM from "react-dom"
+import { Dropdown } from "react-bootstrap";
+import ReactDOM from "react-dom";
 
 interface IconProps {
   width?: string | number;
@@ -34,7 +34,7 @@ type Node = {
   type: string;
   iconComponent: React.FC<IconProps>;
   connections: number;
-  links: { linkID: number, documentID: number; relationship: string }[];
+  links: { linkID: number; documentID: number; relationship: string }[];
   attachment: [];
   resource: [];
   parsedScale: number;
@@ -95,7 +95,7 @@ const legendData = [
 const getColor = (stakeholder: string) => {
   // Verifica se ci sono più stakeholder separati da virgole
   if (stakeholder.includes(",")) {
-    return "#1D2D7A"; 
+    return "#1D2D7A";
   }
   switch (stakeholder) {
     case "LKAB":
@@ -194,7 +194,7 @@ const fetchDocuments = async (): Promise<Node[]> => {
     parsedScale: parseScale(doc.scale),
     parsedDate: parseDate(doc.issuanceDate),
     pages: doc.pages,
-    language: doc.language
+    language: doc.language,
   }));
 };
 
@@ -202,7 +202,7 @@ interface userProps {
   userInfo: { username: string; role: string } | null;
 }
 
-export const Diagram: React.FC<userProps> = ({userInfo}) => {
+export const Diagram: React.FC<userProps> = ({ userInfo }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
@@ -251,15 +251,15 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
     ];
 
     const newXDomain = [
-      d3.min(nodes.map((node: Node) => node.parsedDate)),  // Data minima
-      d3.max(nodes.map((node: Node) => node.parsedDate)),  // Data massima
+      d3.min(nodes.map((node: Node) => node.parsedDate)), // Data minima
+      d3.max(nodes.map((node: Node) => node.parsedDate)), // Data massima
     ];
-    
+
     const yScale = d3
       .scalePoint()
       .domain(newYDomain as Iterable<string>)
       .range([margin.top, height - margin.bottom]);
-      
+
     const xScale = d3
       .scaleTime()
       .domain(newXDomain as Iterable<Date>)
@@ -484,18 +484,27 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
         const node = d3.select(this);
 
         node
-          .append("g")
+          .append("foreignObject")
+          .attr("x", -20)
+          .attr("y", -20)
+          .attr("width", 50)
+          .attr("height", 50)
           .html(
-            ReactDOMServer.renderToStaticMarkup(
-              <d.iconComponent
-                width="25px"
-                height="25px"
-                color={getColor(d.stakeholders)}
-              />
-            )
-          )
-          .attr("transform", "translate(-10, -10)");
-
+            (d) =>
+              `<div class="${
+                selectedDocument?.id === d.id
+                  ? "custom-icon highlighted"
+                  : "custom-icon"
+              }">
+      ${ReactDOMServer.renderToStaticMarkup(
+        <d.iconComponent
+          width="25px"
+          height="25px"
+          color={getColor(d.stakeholders)}
+        />
+      )}
+    </div>`
+          );
         node
           .append("rect")
           .attr("x", -20) // Un po' più grande rispetto all'icona
@@ -582,26 +591,26 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
           alert("You do not have permission to update relationships.");
           return;
         }
-      
+
         const dropdownContainer = document.createElement("div");
         dropdownContainer.id = "dropdown-container";
         dropdownContainer.style.position = "absolute";
         dropdownContainer.style.left = `${event.pageX}px`;
         dropdownContainer.style.top = `${event.pageY}px`;
         document.body.appendChild(dropdownContainer);
-      
+
         const root = ReactDOM.createRoot(dropdownContainer);
-      
-        const onRelationshipChange = async (rel : string) => {
+
+        const onRelationshipChange = async (rel: string) => {
           try {
             d.relationship = rel; // Aggiorna il dato localmente
             d3.select(this) // Aggiorna lo stile della linea
               .attr("stroke-dasharray", getLineStyle(rel));
-      
+
             // Chiamata API per aggiornare il link sul server
             await API.updateLink(d.id, d.sourceNode.id, d.targetNode.id, rel);
             console.log(d.id);
-      
+
             alert("Relationship updated successfully!");
           } catch (error) {
             console.error("Failed to update relationship:", error);
@@ -611,22 +620,30 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
             document.body.removeChild(dropdownContainer);
           }
         };
-      
+
         root.render(
           <Dropdown show={true}>
             <Dropdown.Toggle variant="secondary" id="dropdown-basic">
               Update Relationship
             </Dropdown.Toggle>
             <Dropdown.Menu>
-              {["Direct consequence", "Collateral consequence", "Projection", "Update"].map((rel) => (
-                <Dropdown.Item key={rel} onClick={() => onRelationshipChange(rel)}>
+              {[
+                "Direct consequence",
+                "Collateral consequence",
+                "Projection",
+                "Update",
+              ].map((rel) => (
+                <Dropdown.Item
+                  key={rel}
+                  onClick={() => onRelationshipChange(rel)}
+                >
                   {rel}
                 </Dropdown.Item>
               ))}
             </Dropdown.Menu>
           </Dropdown>
         );
-      
+
         const removeDropdown = () => {
           if (document.body.contains(dropdownContainer)) {
             root.unmount();
@@ -634,11 +651,12 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
             document.removeEventListener("click", removeDropdown);
           }
         };
-      
-        setTimeout(() => document.addEventListener("click", removeDropdown), 10);
-      });
-      
 
+        setTimeout(
+          () => document.addEventListener("click", removeDropdown),
+          10
+        );
+      });
 
     // Clustering logic
     const clusterThreshold = 25;
@@ -649,7 +667,6 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
       nodes: Node[];
     }[] = [];
 
-
     nodes.forEach((node) => {
       const x = xScale(parseDate(node.issuanceDate));
       const y = yScale(node.scale);
@@ -658,13 +675,16 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
       let addedToCluster = false;
 
       clusteredNodes.forEach((cluster) => {
-        const distance = Math.sqrt((x - cluster.x) ** 2 + (y! - cluster.y) ** 2);
+        const distance = Math.sqrt(
+          (x - cluster.x) ** 2 + (y! - cluster.y) ** 2
+        );
         if (distance < clusterThreshold) {
           cluster.nodes.push(node);
           cluster.x =
             (cluster.x * (cluster.nodes.length - 1) + x) / cluster.nodes.length;
           cluster.y =
-            (cluster.y * (cluster.nodes.length - 1) + y!) / cluster.nodes.length;
+            (cluster.y * (cluster.nodes.length - 1) + y!) /
+            cluster.nodes.length;
           addedToCluster = true;
         }
       });
@@ -722,7 +742,6 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
 
       // Evento click sul gruppo
       clusterGroup.on("click", () => {
-
         // Rendi invisibili sia il cerchio che l'etichetta
         clusterCircle.style("visibility", "hidden");
         clusterLabel.style("visibility", "hidden");
@@ -734,24 +753,24 @@ export const Diagram: React.FC<userProps> = ({userInfo}) => {
             .style("visibility", "visible");
         });
       });
-  });
-
-  // aggiungi funzionalità di zoom
-  const offset = 50;
-
-  const zoom = d3.zoom()
-    .scaleExtent([0.5, 5]) // Valori minimo (0.5) e massimo (5) di scala
-    .translateExtent([
-      [0, 0],
-      [width + offset, height + offset],
-    ]) // Limita la traslazione all'interno del grafico
-    .on("zoom", (event) => {
-      rootGroup.attr("transform", event.transform);
     });
 
-  svg.call(zoom);
+    // aggiungi funzionalità di zoom
+    const offset = 50;
 
-  }, [nodes]);
+    const zoom = d3
+      .zoom()
+      .scaleExtent([0.5, 5]) // Valori minimo (0.5) e massimo (5) di scala
+      .translateExtent([
+        [0, 0],
+        [width + offset, height + offset],
+      ]) // Limita la traslazione all'interno del grafico
+      .on("zoom", (event) => {
+        rootGroup.attr("transform", event.transform);
+      });
+
+    svg.call(zoom);
+  }, [nodes, selectedDocument]);
 
   return (
     <>

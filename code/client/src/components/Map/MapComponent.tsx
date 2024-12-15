@@ -327,10 +327,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     );
   };
 
-  console.log("hovered zone id is", hoveredZoneId);
-  const miao = zones.find((zone) => zone.id === hoveredZoneId);
-  console.log("miao is ", miao);
-
   const renderHoveredZone = () => {
     if (!hoveredZoneId) return null;
 
@@ -385,21 +381,26 @@ const MapComponent: React.FC<MapComponentProps> = ({
       </FeatureGroup>
     );
   };
+  const iconSize = 20;
 
   const getIconByType = (type: string, isHighlighted: boolean) => {
     const iconComponents: { [key: string]: JSX.Element } = {
-      Agreement: <AgreementIcon width={30} height={30} />,
-      Conflict: <ConflictIcon width={30} height={30} />,
-      Consultation: <ConsultationIcon width={30} height={30} />,
-      "Material effect": <MaterialEffectIcon width={30} height={30} />,
-      "Technical doc.": <TechnicalIcon width={30} height={30} />,
-      "Design doc.": <DesignIcon width={30} height={30} />,
-      "Prescriptive doc.": <PrescriptiveIcon width={30} height={30} />,
-      default: <PrescriptiveIcon width={30} height={30} />,
+      Agreement: <AgreementIcon width={iconSize} height={iconSize} />,
+      Conflict: <ConflictIcon width={iconSize} height={iconSize} />,
+      Consultation: <ConsultationIcon width={iconSize} height={iconSize} />,
+      "Material effect": (
+        <MaterialEffectIcon width={iconSize} height={iconSize} />
+      ),
+      "Technical doc.": <TechnicalIcon width={iconSize} height={iconSize} />,
+      "Design doc.": <DesignIcon width={iconSize} height={iconSize} />,
+      "Prescriptive doc.": (
+        <PrescriptiveIcon width={iconSize} height={iconSize} />
+      ),
+      default: <PrescriptiveIcon width={iconSize} height={iconSize} />,
     };
     const selectedIcon = iconComponents[type] || iconComponents.default;
     return L.divIcon({
-      html: ReactDOMServer.renderToString(selectedIcon),
+      html: `<div>${ReactDOMServer.renderToString(selectedIcon)}</div>`,
       className: isHighlighted ? "custom-icon highlighted" : "custom-icon",
       iconSize: isHighlighted ? [42, 42] : [40, 40],
       iconAnchor: [15, 15],
@@ -530,9 +531,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
                           setTempHighlightedDocumentId(doc.id);
                           handleMoreClick(doc);
                         },
-                        mouseover: () => handleDocumentHover(doc),
-                        mouseout: () => {
+                        mouseover: (e) => {
+                          e.target.openPopup();
+                          handleDocumentHover(doc);
+                        },
+                        mouseout: (e) => {
                           handleDocumentLeave();
+                          e.target.closePopup(); /*just a guess lol*/
                         },
                       }
                 }
@@ -543,22 +548,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
                   }
                 }}
               >
-                {/*<Popup>
-                  <b>{doc.title}</b>
-                  <br />
-                  Type: {doc.type}
-                  <br />
-                  {selectionMode ? (
-                    ""
-                  ) : (
-                    <div
-                      className="moreBtn"
-                      onClick={() => handleMoreClick(doc)}
-                    >
-                      More
-                    </div>
-                  )}
-                </Popup>*/}
+                <Popup className="custom-popup" offset={[0, -20]}>
+                  <div className="custom-tooltip">
+                    <b>{doc.title}</b>
+                  </div>
+                </Popup>
               </Marker>
             ))}
         </MarkerClusterGroup>
