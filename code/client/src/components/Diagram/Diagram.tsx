@@ -15,6 +15,7 @@ import { DocumentCard } from "../DocumentCard/DocumentCard";
 import L from "leaflet";
 import { Dropdown, Button, ButtonGroup } from "react-bootstrap";
 import ReactDOM from "react-dom";
+
 interface IconProps {
   width?: string | number;
   height?: string | number;
@@ -38,6 +39,8 @@ type Node = {
   resource: [];
   parsedScale: number;
   parsedDate: Date;
+  x: number;
+  y: number;
 };
 
 // Legend Data
@@ -441,13 +444,15 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       .append("g")
       .attr("transform", `translate(${margin.left + 150}, 0)`);
 
-    const xAxis = graphGroup
+    //Asse X  
+    graphGroup
       .append("g")
       .attr("transform", `translate(0,${height - margin.bottom})`)
       .call(d3.axisBottom(xScale).ticks(20))
       .attr("font-size", "12px");
 
-    const yAxis = graphGroup
+    //Asse Y
+    graphGroup
       .append("g")
       .attr("transform", `translate(${margin.left},0)`)
       .call(
@@ -468,75 +473,90 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       ...d,
     }));
 
-    graphGroup
-      .selectAll("g.node")
-      .data(nodeData)
-      .enter()
-      .append("g")
-      .attr("class", "node")
-      .attr(
-        "transform",
-        (d) =>
-          `translate(${xScale(d.parsedDate)}, ${yScale(
-            d.parsedScale as unknown as string
-          )})`
+    // Crea la simulazione della forza per posizionare i nodi
+    const simulation = d3
+      .forceSimulation(nodeData)
+      .force(
+        "x",
+        d3.forceX((d) => xScale(d.parsedDate)).strength(1)
+      ) // Forza verso la posizione x basata su xScale
+      .force(
+        "y",
+        d3.forceY((d) => yScale(d.parsedScale)).strength(1)
+      ) // Forza verso la posizione y basata su yScale
+      .force(
+        "collision",
+        d3.forceCollide(25) // Distanza minima tra i nodi (raggio di collisione)
       )
-      .each(function (d) {
-        const node = d3.select(this);
+      .stop(); // Ferma la simulazione inizialmente
 
-        node
-          .append("foreignObject")
-          .attr("x", -20)
-          .attr("y", -20)
-          .attr("width", 50)
-          .attr("height", 50)
-          .html(
-            (d) =>
-              `<div class="${
-                selectedDocument?.id === d.id
-                  ? "custom-icon highlighted"
-                  : "custom-icon"
-              }">
-      ${ReactDOMServer.renderToStaticMarkup(
-        <d.iconComponent
-          width="25px"
-          height="25px"
-          color={getColor(d.stakeholders)}
-        />
-      )}
-    </div>`
-          );
-        node
-          .append("rect")
-          .attr("x", -20) // Un po' più grande rispetto all'icona
-          .attr("y", -20) // Un po' più grande rispetto all'icona
-          .attr("width", 40) // Aumenta la larghezza per l'area di hover
-          .attr("height", 40) // Aumenta l'altezza per l'area di hover
-          .attr("fill", "transparent"); // Rendi il rettangolo invisibile
+    // Esegui la simulazione per un determinato numero di iterazioni
+    for (let i = 0; i < 250; ++i) simulation.tick();
 
-        // Aggiungi il testo, inizialmente nascosto
-        node
-          .append("text")
-          .attr("x", 0)
-          .attr("y", 30)
-          .attr("text-anchor", "middle")
-          .attr("font-size", 10)
-          .style("visibility", "hidden")
-          .text(d.title);
+  graphGroup
+    .selectAll("g.node")
+    .data(nodeData)
+    .join("g")
+    .attr("class", "node")
+    .attr(
+      "transform",
+      (d) => `translate(${d.x}, ${d.y})` // Usa le coordinate calcolate dalla simulazione
+    )
+    .each(function (d) {
+      const node = d3.select(this);
 
-        // Gestisci gli eventi di hover per ogni nodo
-        node
-          .on("mouseover", function () {
-            d3.select(this).select("text").style("visibility", "visible"); // Mostra il testo quando hover
-          })
-          .on("mouseout", function () {
-            d3.select(this).select("text").style("visibility", "hidden"); // Nascondi il testo quando il mouse esce
-          })
-          .on("click", function (event, d) {
-            setSelectedDocument(d);
-          });
-      });
+      node
+        .append("foreignObject")
+        .attr("x", -20)
+        .attr("y", -20)
+        .attr("width", 50)
+        .attr("height", 50)
+        .html(
+          (d) =>
+            `<div class="${
+              selectedDocument?.id === d.id
+                ? "custom-icon highlighted"
+                : "custom-icon"
+            }">
+        ${ReactDOMServer.renderToStaticMarkup(
+          <d.iconComponent
+            width="25px"
+            height="25px"
+            color={getColor(d.stakeholders)}
+          />
+        )}
+      </div>`
+        );
+      node
+        .append("rect")
+        .attr("x", -20)
+        .attr("y", -20)
+        .attr("width", 40)
+        .attr("height", 40)
+        .attr("fill", "transparent");
 
+      node
+        .append("text")
+        .attr("x", 0)
+        .attr("y", 30)
+        .attr("text-anchor", "middle")
+        .attr("font-size", 10)
+        .style("visibility", "hidden")
+        .text(d.title);
+
+      node
+        .on("mouseover", function () {
+          d3.select(this).select("text").style("visibility", "visible");
+        })
+        .on("mouseout", function () {
+          d3.select(this).select("text").style("visibility", "hidden");
+        })
+        .on("click", function (event, d) {
+          setSelectedDocument(d);
+        });
+    });
+
+    // Disegna i link tra i nodi
     const seenLinks = new Set();
     graphGroup
       .append("g")
@@ -569,10 +589,10 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       .append("path")
       .attr("d", ({ sourceNode, targetNode, index }) => {
         if (targetNode) {
-          const startX = xScale(sourceNode.parsedDate);
-          const startY = yScale(sourceNode.parsedScale as unknown as string);
-          const endX = xScale(targetNode.parsedDate);
-          const endY = yScale(targetNode.parsedScale as unknown as string);
+          const startX = sourceNode.x;
+          const startY = sourceNode.y;
+          const endX = targetNode.x;
+          const endY = targetNode.y;
 
           const controlX = (startX + endX) / 2;
           const controlY = (startY! + endY!) / 2 - 50 - index * 50;
