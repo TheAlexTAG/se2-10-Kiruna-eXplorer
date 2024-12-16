@@ -9,6 +9,7 @@ import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
 import TechnicalIcon from "../../assets/icons/technical-icon";
 import DesignIcon from "../../assets/icons/design-icon";
 import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
+import { useNavigate } from "react-router-dom";
 
 interface DocumentCardProps {
   cardInfo: any;
@@ -23,6 +24,7 @@ export const DocumentCard = ({
   setSelectedDocument,
   inDiagram,
 }: DocumentCardProps) => {
+  const navigate = useNavigate();
   const getIconByType = (type: string) => {
     const iconComponents: { [key: string]: JSX.Element } = {
       Agreement: <AgreementIcon width={60} height={60} />,
@@ -96,6 +98,18 @@ export const DocumentCard = ({
             <div className="my-1">
               {" "}
               <strong>Description:</strong> {cardInfo.description}
+            </div>
+            <div className="d-flex justify-content-end mt-3">
+              <Button
+                variant="primary"
+                onClick={() => {
+                  navigate("/diagram", {
+                    state: { selectedDocument: cardInfo },
+                  });
+                }}
+              >
+                Open in Diagram
+              </Button>
             </div>
             {((cardInfo.attachment && cardInfo.attachment.length > 0) ||
               (cardInfo.resource && cardInfo.resource.length > 0)) && (
