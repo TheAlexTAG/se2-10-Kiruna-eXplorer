@@ -47,39 +47,39 @@ type Node = {
 const legendData = [
   {
     label: "Design doc.",
-    icon: <DesignIcon width="15px" height="15px" color="black" />,
+    icon: <DesignIcon width="20px" height="20px" color="black" />,
   },
   {
     label: "Informative doc.",
-    icon: <InformativeIcon width="15px" height="15px" color="black" />,
+    icon: <InformativeIcon width="20px" height="20px" color="black" />,
   },
   {
     label: "Prescriptive doc.",
-    icon: <PrescriptiveIcon width="15px" height="15px" color="black" />,
+    icon: <PrescriptiveIcon width="20px" height="20px" color="black" />,
   },
   {
     label: "Technical doc.",
-    icon: <TechnicalIcon width="15px" height="15px" color="black" />,
+    icon: <TechnicalIcon width="20px" height="20px" color="black" />,
   },
   {
     label: "Agreement",
-    icon: <AgreementIcon width="15px" height="15px" color="black" />,
+    icon: <AgreementIcon width="20px" height="20px" color="black" />,
   },
   {
     label: "Conflict",
-    icon: <ConflictIcon width="15px" height="15px" color="black" />,
+    icon: <ConflictIcon width="20px" height="20px" color="black" />,
   },
   {
     label: "Consultation",
-    icon: <ConsultationIcon width="15px" height="15px" color="black" />,
+    icon: <ConsultationIcon width="20px" height="20px" color="black" />,
   },
   {
     label: "Material effects",
-    icon: <MaterialEffectIcon width="15px" height="15px" color="black" />,
+    icon: <MaterialEffectIcon width="20px" height="20px" color="black" />,
   },
   {
     label: "Default doc.",
-    icon: <DocDefaultIcon width="15px" height="15px" color="black" />,
+    icon: <DocDefaultIcon width="20px" height="20px" color="black" />,
   },
   { label: "LKAB", color: "#000000" },
   { label: "Municipality", color: "#B38676" },
@@ -176,7 +176,7 @@ const getIconComponent = (type: string): React.FC<IconProps> => {
 };
 
 const fetchDocuments = async (): Promise<Node[]> => {
-  const response = await API.getDocuments(); // Cambia l'endpoint se necessario
+  const response = await API.getDocuments(); 
 
   return response.map((doc: any) => ({
     id: doc.id,
@@ -240,11 +240,9 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
   useEffect(() => {
     if (nodes.length === 0) return;
 
-    const width = 1500;
-    const height = 750;
     const margin = { top: 20, right: 300, bottom: 200, left: 100 };
 
-    const newYDomain = [
+    const newYDomain = new Set([
       "Concept",
       "Text",
       ...nodes
@@ -252,12 +250,17 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         .sort((a: any, b: any) => b - a),
       "Blueprints/effects",
       "",
-    ];
+    ]);
 
     const newXDomain = [
       d3.timeYear.offset(d3.min(nodes.map((node: Node) => node.parsedDate))!, -1), // domain 1 year before the min date
       d3.timeYear.offset(d3.max(nodes.map((node: Node) => node.parsedDate))!, 1),  // domain 1 year after the max date
     ];
+
+    const numberOfYears = d3.timeYear.count(newXDomain[0], newXDomain[1]);
+
+    const width = Math.max(window.innerWidth, numberOfYears * 150 ); 
+    const height = Math.max(window.innerHeight, newYDomain.size * 125 ); 
 
     const yScale = d3
       .scalePoint()
@@ -268,6 +271,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       .scaleTime()
       .domain(newXDomain as Iterable<Date>)
       .range([margin.left, width - margin.right]);
+
 
     const svg = d3
       .select(svgRef.current)
@@ -283,7 +287,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     const gridGroup = rootGroup
       .append("g")
       .attr("class", "grid")
-      .attr("transform", `translate(${margin.left + 150}, 0)`);
+      .attr("transform", `translate(${margin.left + 225}, 0)`);
 
     // Horizontal grid lines
     gridGroup
@@ -301,7 +305,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       .attr("opacity", 0.5);
 
     // Vertical grid lines
-    const xTicks = xScale.ticks(20); // Ottieni i tick dall'asse temporale
+    const xTicks = xScale.ticks(20); 
     gridGroup
       .selectAll(".vertical-line")
       .data(xTicks)
@@ -329,7 +333,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       .text("Node types:")
       .attr("x", 0)
       .attr("y", 5)
-      .attr("font-size", 12)
+      .attr("font-size", 20)
       .attr("font-weight", "bold")
       .attr("alignment-baseline", "middle");
 
@@ -343,21 +347,21 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         legendItem
           .append("text")
           .text(item.label)
-          .attr("x", 190)
+          .attr("x", 275)
           .attr("y", 5)
-          .attr("font-size", 10)
+          .attr("font-size", 15)
           .attr("alignment-baseline", "middle")
           .attr("text-anchor", "end");
 
         legendItem
           .append("g")
           .html(ReactDOMServer.renderToStaticMarkup(item.icon))
-          .attr("transform", `translate(200, -5)`);
+          .attr("transform", `translate(285, -5)`);
 
-        currentY += 20; // Update Y position for next item
+        currentY += 25; // Update Y position for next item
       });
 
-    currentY += 20;
+    currentY += 25;
 
     // Stakeholders
     legendGroup
@@ -365,7 +369,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       .text("Stakeholders:")
       .attr("x", 0)
       .attr("y", currentY + 5)
-      .attr("font-size", 12)
+      .attr("font-size", 20)
       .attr("font-weight", "bold")
       .attr("alignment-baseline", "middle");
 
@@ -379,24 +383,24 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         legendItem
           .append("text")
           .text(item.label)
-          .attr("x", 190)
+          .attr("x", 275)
           .attr("y", 5)
-          .attr("font-size", 10)
+          .attr("font-size", 15)
           .attr("alignment-baseline", "middle")
           .attr("text-anchor", "end");
 
         legendItem
           .append("rect")
-          .attr("x", 200)
+          .attr("x", 285)
           .attr("y", -5)
-          .attr("width", 15)
-          .attr("height", 15)
+          .attr("width", 20)
+          .attr("height", 20)
           .attr("fill", item.color!);
 
-        currentY += 20;
+        currentY += 25;
       });
 
-    currentY += 20;
+    currentY += 25;
 
     // Connections
     legendGroup
@@ -404,7 +408,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       .text("Connections:")
       .attr("x", 0)
       .attr("y", currentY + 5)
-      .attr("font-size", 12)
+      .attr("font-size", 20)
       .attr("font-weight", "bold")
       .attr("alignment-baseline", "middle");
 
@@ -418,16 +422,16 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         legendItem
           .append("text")
           .text(item.label)
-          .attr("x", 190)
+          .attr("x", 275)
           .attr("y", 5)
-          .attr("font-size", 10)
+          .attr("font-size", 15)
           .attr("alignment-baseline", "middle")
           .attr("text-anchor", "end");
 
         legendItem
           .append("line")
-          .attr("x1", 200)
-          .attr("x2", 235)
+          .attr("x1", 285)
+          .attr("x2", 320)
           .attr("y1", 5)
           .attr("y2", 5)
           .attr("stroke", "black")
@@ -437,12 +441,12 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
             item.lineStyle === "solid" ? "" : item.lineStyle!
           );
 
-        currentY += 20;
+        currentY += 25;
       });
 
     const graphGroup = rootGroup
       .append("g")
-      .attr("transform", `translate(${margin.left + 150}, 0)`);
+      .attr("transform", `translate(${margin.left + 225}, 0)`);
 
     //Asse X  
     graphGroup
@@ -684,7 +688,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
     const zoom = d3
       .zoom()
-      .scaleExtent([0.75, 5])
+      .scaleExtent([0.75, 10])
       .translateExtent([
         [0, 0],
         [width + offset, height + offset],
