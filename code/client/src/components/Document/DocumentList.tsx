@@ -39,15 +39,15 @@ export const DocumentList = ({ userInfo }: userProps) => {
   });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
+  const pageSize = 10;
+  const [totalItems, setTotalItems] = useState(0);
   const handlePageChange = (pageNumber: number) => {
-    if (pageNumber >= 1 && pageNumber <= totalPages) {
-      setCurrentPage(pageNumber);
-    }
+    setCurrentPage(pageNumber);
   };
-  const totalPages = Math.ceil(filteredDocuments.length / itemsPerPage);
+  useEffect(() => {
+    fetchDocuments(currentPage);
+  }, [currentPage]);
+  const totalPages = Math.ceil(totalItems / pageSize);
   const paginationItems = [];
   for (let number = 1; number <= totalPages; number++) {
     paginationItems.push(
@@ -81,10 +81,11 @@ export const DocumentList = ({ userInfo }: userProps) => {
     "Material effect",
   ];
 
-  const fetchDocuments = async () => {
-    API.getDocuments().then((data) => {
-      setDocuments(data);
-      setFilteredDocuments(data);
+  const fetchDocuments = async (pageNumber: number) => {
+    API.getDocumentsWithPagination(pageNumber, pageSize).then((data) => {
+      setDocuments(data.documents);
+      setFilteredDocuments(data.documents);
+      setTotalItems(data.totalItems);
     });
   };
 
@@ -118,7 +119,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
   };
 
   useEffect(() => {
-    fetchDocuments();
+    fetchDocuments(currentPage);
   }, []);
 
   const handleFilterChange = (
@@ -195,7 +196,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
   const submitFiles = () => {
     API.addOriginalResource(document.id, files)
       .then(() => {
-        fetchDocuments();
+        fetchDocuments(currentPage);
         closeUploadingFile();
       })
       .catch((err) => {
@@ -398,63 +399,68 @@ export const DocumentList = ({ userInfo }: userProps) => {
             </tr>
           </thead>
           <tbody>
-            {filteredDocuments
-              .slice(startIndex, endIndex)
-              .map((document: any, index: number) => (
-                <tr key={index}>
-                  <td>{index + 1}</td>
-                  <td>{document.title ? document.title : "-"}</td>
-                  <td>{document.stakeholders ? document.stakeholders : "-"}</td>
-                  <td>{document.scale ? document.scale : "-"}</td>
-                  <td>{document.type ? document.type : "-"}</td>
-                  <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
-                  <td>{document.connections ? document.connections : "-"}</td>
-                  <td>{document.language ? document.language : "-"}</td>
-                  {userInfo?.role === "Urban Planner" && (
-                    <td>
-                      <DropdownButton
-                        variant="link-black"
-                        title={<i className="bi bi-three-dots-vertical"></i>}
-                      >
-                        <Dropdown.Item>
-                          <LinkingDocumentsModal
-                            currentDocument={document}
-                            documents={documents}
-                            updateTable={fetchDocuments}
-                            setSuccessMessage={setSuccessMessage}
-                          />
-                        </Dropdown.Item>
-                        <Dropdown.Divider />
-                        <Dropdown.Item>
-                          <div
-                            className="p-2"
-                            onClick={() => handleEditClick(document)}
-                            style={{ color: "green" }}
-                          >
-                            <i className="bi bi-pencil-square"></i> Edit
-                            Document
-                          </div>
-                        </Dropdown.Item>
-                        <Dropdown.Divider />
-                        <Dropdown.Item>
-                          <div
-                            style={{ color: "#2d6efd" }}
-                            onClick={() => handleSelectDiv(document)}
-                            className="p-2"
-                          >
-                            <i className="bi bi-file-earmark-arrow-up-fill"></i>{" "}
-                            Upload Files
-                          </div>
-                        </Dropdown.Item>
-                      </DropdownButton>
-                    </td>
-                  )}
-                </tr>
-              ))}
+            {filteredDocuments.map((document: any, index: number) => (
+              <tr key={index}>
+                <td>{index + 1}</td>
+                <td>{document.title ? document.title : "-"}</td>
+                <td>{document.stakeholders ? document.stakeholders : "-"}</td>
+                <td>{document.scale ? document.scale : "-"}</td>
+                <td>{document.type ? document.type : "-"}</td>
+                <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
+                <td>{document.connections ? document.connections : "-"}</td>
+                <td>{document.language ? document.language : "-"}</td>
+                {userInfo?.role === "Urban Planner" && (
+                  <td>
+                    <DropdownButton
+                      variant="link-black"
+                      title={<i className="bi bi-three-dots-vertical"></i>}
+                    >
+                      <Dropdown.Item>
+                        <LinkingDocumentsModal
+                          currentDocument={document}
+                          documents={documents}
+                          updateTable={fetchDocuments}
+                          setSuccessMessage={setSuccessMessage}
+                        />
+                      </Dropdown.Item>
+                      <Dropdown.Divider />
+                      <Dropdown.Item>
+                        <div
+                          className="p-2"
+                          onClick={() => handleEditClick(document)}
+                          style={{ color: "green" }}
+                        >
+                          <i className="bi bi-pencil-square"></i> Edit Document
+                        </div>
+                      </Dropdown.Item>
+                      <Dropdown.Divider />
+                      <Dropdown.Item>
+                        <div
+                          style={{ color: "#2d6efd" }}
+                          onClick={() => handleSelectDiv(document)}
+                          className="p-2"
+                        >
+                          <i className="bi bi-file-earmark-arrow-up-fill"></i>{" "}
+                          Upload Files
+                        </div>
+                      </Dropdown.Item>
+                    </DropdownButton>
+                  </td>
+                )}
+              </tr>
+            ))}
           </tbody>
         </Table>
         <div className="d-flex justify-content-center ">
-          <Pagination data-bs-theme="dark">{paginationItems}</Pagination>
+          <Pagination data-bs-theme="dark">
+            <Pagination.Prev
+              onClick={() => handlePageChange(currentPage - 1)}
+            />
+            {paginationItems}
+            <Pagination.Next
+              onClick={() => handlePageChange(currentPage + 1)}
+            />
+          </Pagination>
         </div>
       </div>
 
