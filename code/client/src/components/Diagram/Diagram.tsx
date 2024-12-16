@@ -9,9 +9,12 @@ import InformativeIcon from "../../assets/icons/informative-icon";
 import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
 import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
 import TechnicalIcon from "../../assets/icons/technical-icon";
+import DocDefaultIcon from "../../assets/icons/doc-default-icon";
 import API from "../../API/API";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
 import L from "leaflet";
+import { Dropdown, Button, ButtonGroup } from "react-bootstrap";
+import ReactDOM from "react-dom";
 
 interface IconProps {
   width?: string | number;
@@ -31,11 +34,13 @@ type Node = {
   type: string;
   iconComponent: React.FC<IconProps>;
   connections: number;
-  links: { documentID: number; relationship: string }[];
+  links: { linkID: number; documentID: number; relationship: string }[];
   attachment: [];
   resource: [];
   parsedScale: number;
   parsedDate: Date;
+  x: number;
+  y: number;
 };
 
 // Legend Data
@@ -72,6 +77,10 @@ const legendData = [
     label: "Material effects",
     icon: <MaterialEffectIcon width="15px" height="15px" color="black" />,
   },
+  {
+    label: "Default doc.",
+    icon: <DocDefaultIcon width="15px" height="15px" color="black" />,
+  },
   { label: "LKAB", color: "#000000" },
   { label: "Municipality", color: "#B38676" },
   { label: "Regional authority", color: "#A42121" },
@@ -86,6 +95,10 @@ const legendData = [
 ];
 
 const getColor = (stakeholder: string) => {
+  // Verifica se ci sono più stakeholder separati da virgole
+  if (stakeholder.includes(",")) {
+    return "#1D2D7A";
+  }
   switch (stakeholder) {
     case "LKAB":
       return "#000000";
@@ -97,10 +110,8 @@ const getColor = (stakeholder: string) => {
       return "#A9A9A9";
     case "Citizens":
       return "#87CEEB";
-    case "Others":
-      return "#5F9EA0";
     default:
-      return "#1D2D7A";
+      return "#5F9EA0";
   }
 };
 
@@ -118,7 +129,7 @@ const parseDate = (dateStr: string): Date => {
   }
 };
 
-const parseScale = (scale: string): Number | String => {
+const parseScale = (scale: string): number | string => {
   if (scale.split(":")[0] != "1") return scale;
   const parts = scale.split(":");
   const numericValue = parseInt(parts[1].replace(/[.,]/g, ""), 10);
@@ -160,7 +171,7 @@ const getIconComponent = (type: string): React.FC<IconProps> => {
     case "Material effect":
       return MaterialEffectIcon;
     default:
-      return DesignIcon; // Fallback
+      return DocDefaultIcon; // Fallback
   }
 };
 
@@ -185,14 +196,20 @@ const fetchDocuments = async (): Promise<Node[]> => {
     parsedScale: parseScale(doc.scale),
     parsedDate: parseDate(doc.issuanceDate),
     pages: doc.pages,
-    language: doc.language
+    language: doc.language,
   }));
 };
 
-export const Diagram: React.FC = () => {
+interface userProps {
+  userInfo: { username: string; role: string } | null;
+}
+
+export const Diagram: React.FC<userProps> = ({ userInfo }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
+  const [isZoomEnabled, setIsZoomEnabled] = useState(false);
+  const zoomBehavior = useRef<d3.ZoomBehavior<Element, unknown> | null>(null); // Ref per il comportamento dello zoom
 
   const getIconByType = (type: string) => {
     const iconUrls: { [key: string]: string } = {
@@ -227,8 +244,6 @@ export const Diagram: React.FC = () => {
     const height = 750;
     const margin = { top: 20, right: 300, bottom: 200, left: 100 };
 
-    const startDate = new Date(2004, 0, 1);
-    const endDate = new Date(2025, 0, 1);
     const newYDomain = [
       "Concept",
       "Text",
@@ -239,13 +254,19 @@ export const Diagram: React.FC = () => {
       "",
     ];
 
+    const newXDomain = [
+      d3.timeYear.offset(d3.min(nodes.map((node: Node) => node.parsedDate))!, -1), // domain 1 year before the min date
+      d3.timeYear.offset(d3.max(nodes.map((node: Node) => node.parsedDate))!, 1),  // domain 1 year after the max date
+    ];
+
     const yScale = d3
       .scalePoint()
       .domain(newYDomain as Iterable<string>)
       .range([margin.top, height - margin.bottom]);
+
     const xScale = d3
       .scaleTime()
-      .domain([startDate, endDate])
+      .domain(newXDomain as Iterable<Date>)
       .range([margin.left, width - margin.right]);
 
     const svg = d3
@@ -255,8 +276,11 @@ export const Diagram: React.FC = () => {
 
     svg.selectAll("*").remove();
 
+    // Creazione del gruppo radice per lo zoom
+    const rootGroup = svg.append("g").attr("class", "root-group");
+
     // Add grid
-    const gridGroup = svg
+    const gridGroup = rootGroup
       .append("g")
       .attr("class", "grid")
       .attr("transform", `translate(${margin.left + 150}, 0)`);
@@ -293,7 +317,7 @@ export const Diagram: React.FC = () => {
       .attr("opacity", 0.5);
 
     // Add legend
-    const legendGroup = svg
+    const legendGroup = rootGroup
       .append("g")
       .attr("transform", `translate(${margin.left - 75}, ${margin.top})`);
 
@@ -416,16 +440,18 @@ export const Diagram: React.FC = () => {
         currentY += 20;
       });
 
-    const graphGroup = svg
+    const graphGroup = rootGroup
       .append("g")
       .attr("transform", `translate(${margin.left + 150}, 0)`);
 
+    //Asse X  
     graphGroup
       .append("g")
       .attr("transform", `translate(0,${height - margin.bottom})`)
       .call(d3.axisBottom(xScale).ticks(20))
       .attr("font-size", "12px");
 
+    //Asse Y
     graphGroup
       .append("g")
       .attr("transform", `translate(${margin.left},0)`)
@@ -447,66 +473,27 @@ export const Diagram: React.FC = () => {
       ...d,
     }));
 
-    graphGroup
-      .selectAll("g.node")
-      .data(nodeData)
-      .enter()
-      .append("g")
-      .attr("class", "node")
-      .attr(
-        "transform",
-        (d) =>
-          `translate(${xScale(d.parsedDate)}, ${yScale(
-            d.parsedScale as unknown as string
-          )})`
+    // Crea la simulazione della forza per posizionare i nodi
+    const simulation = d3
+      .forceSimulation(nodeData)
+      .force(
+        "x",
+        d3.forceX((d) => xScale(d.parsedDate)).strength(1)
+      ) // Forza verso la posizione x basata su xScale
+      .force(
+        "y",
+        d3.forceY((d) => yScale(d.parsedScale)).strength(1)
+      ) // Forza verso la posizione y basata su yScale
+      .force(
+        "collision",
+        d3.forceCollide(25) // Distanza minima tra i nodi (raggio di collisione)
       )
-      .each(function (d) {
-        const node = d3.select(this);
+      .stop(); // Ferma la simulazione inizialmente
 
-        node
-          .append("g")
-          .html(
-            ReactDOMServer.renderToStaticMarkup(
-              <d.iconComponent
-                width="25px"
-                height="25px"
-                color={getColor(d.stakeholders)}
-              />
-            )
-          )
-          .attr("transform", "translate(-10, -10)");
+    // Esegui la simulazione per un determinato numero di iterazioni
+    for (let i = 0; i < 250; ++i) simulation.tick();
 
-        node
-          .append("rect")
-          .attr("x", -20) // Un po' più grande rispetto all'icona
-          .attr("y", -20) // Un po' più grande rispetto all'icona
-          .attr("width", 40) // Aumenta la larghezza per l'area di hover
-          .attr("height", 40) // Aumenta l'altezza per l'area di hover
-          .attr("fill", "transparent"); // Rendi il rettangolo invisibile
-
-        // Aggiungi il testo, inizialmente nascosto
-        node
-          .append("text")
-          .attr("x", 0)
-          .attr("y", 30)
-          .attr("text-anchor", "middle")
-          .attr("font-size", 10)
-          .style("visibility", "hidden")
-          .text(d.title);
-
-        // Gestisci gli eventi di hover per ogni nodo
-        node
-          .on("mouseover", function () {
-            d3.select(this).select("text").style("visibility", "visible"); // Mostra il testo quando hover
-          })
-          .on("mouseout", function () {
-            d3.select(this).select("text").style("visibility", "hidden"); // Nascondi il testo quando il mouse esce
-          })
-          .on("click", function (event, d) {
-            setSelectedDocument(d);
-          });
-      });
-
+    // Disegna i link tra i nodi
     const seenLinks = new Set();
     graphGroup
       .append("g")
@@ -515,6 +502,7 @@ export const Diagram: React.FC = () => {
         nodeData.flatMap((sourceNode) =>
           sourceNode.links
             .map((link, index) => ({
+              id: link.linkID,
               sourceNode,
               targetNode: nodeData.find((node) => node.id === link.documentID),
               relationship: link.relationship,
@@ -522,13 +510,15 @@ export const Diagram: React.FC = () => {
             }))
             .filter(({ sourceNode, targetNode, relationship }) => {
               if (targetNode) {
-                const linkKey = [sourceNode.id, targetNode.id, relationship].sort().join("-");
+                const linkKey = [sourceNode.id, targetNode.id, relationship]
+                  .sort()
+                  .join("-");
                 if (seenLinks.has(linkKey)) {
-                  return false; 
+                  return false;
                 }
-                seenLinks.add(linkKey); 
+                seenLinks.add(linkKey);
               }
-              return true; 
+              return true;
             })
         )
       )
@@ -536,16 +526,14 @@ export const Diagram: React.FC = () => {
       .append("path")
       .attr("d", ({ sourceNode, targetNode, index }) => {
         if (targetNode) {
-          const startX = xScale(sourceNode.parsedDate);
-          const startY = yScale(sourceNode.parsedScale as unknown as string);
-          const endX = xScale(targetNode.parsedDate);
-          const endY = yScale(targetNode.parsedScale as unknown as string);
+          const startX = sourceNode.x;
+          const startY = sourceNode.y;
+          const endX = targetNode.x;
+          const endY = targetNode.y;
 
-          // Calcolo di un punto di controllo per la curva
-          const controlX = (startX + endX) / 2; // Punto medio sull'asse X
-          const controlY = (startY! + endY!) / 2 - 50 - index * 50; // Punto medio sull'asse Y con offset per separare le curve
+          const controlX = (startX + endX) / 2;
+          const controlY = (startY + endY) / 2 - 50 - index * 50;
 
-          // Genera una curva quadratica Bezier
           return `M${startX},${startY} Q${controlX},${controlY} ${endX},${endY}`;
         }
         return "";
@@ -555,108 +543,211 @@ export const Diagram: React.FC = () => {
       .attr("fill", "none")
       .attr("stroke-dasharray", ({ relationship }) =>
         getLineStyle(relationship)
-      );
-    /*
-          // Clustering logic
-    const clusterThreshold = 25;
-    const clusteredNodes: {
-      clusterId: number;
-      x: number;
-      y: number;
-      nodes: Node[];
-    }[] = [];
-
-    nodes.forEach((node) => {
-      const x = xScale(parseDate(node.issuanceDate));
-      const y = yScale(node.scale);
-
-      // Cerca se il nodo può essere raggruppato in un cluster esistente
-      let addedToCluster = false;
-
-      clusteredNodes.forEach((cluster) => {
-        const distance = Math.sqrt(
-          (x - cluster.x) ** 2 + (y! - cluster.y) ** 2
-        );
-        if (distance < clusterThreshold) {
-          cluster.nodes.push(node);
-          cluster.x =
-            (cluster.x * (cluster.nodes.length - 1) + x) / cluster.nodes.length;
-          cluster.y =
-            (cluster.y * (cluster.nodes.length - 1) + y!) /
-            cluster.nodes.length;
-          addedToCluster = true;
+      )
+      .on("click", function (event, d) {
+        if (userInfo?.role !== "Urban Planner") {
+          alert("You do not have permission to update relationships.");
+          return;
         }
+
+        const dropdownContainer = document.createElement("div");
+        dropdownContainer.id = "dropdown-container";
+        dropdownContainer.style.position = "absolute";
+        dropdownContainer.style.left = `${event.pageX}px`;
+        dropdownContainer.style.top = `${event.pageY}px`;
+        document.body.appendChild(dropdownContainer);
+
+        const root = ReactDOM.createRoot(dropdownContainer);
+
+        const onRelationshipChange = async (rel: string) => {
+          try {
+              d.relationship = rel; // Aggiorna il dato localmente
+              // Chiamata API per aggiornare il link sul server
+              await API.updateLink(d.id, d.sourceNode.id, d.targetNode.id, rel);
+
+              d3.select(this) // Aggiorna lo stile della linea
+                .attr("stroke-dasharray", getLineStyle(rel));
+
+              alert("Relationship updated successfully!");
+          } catch (error) {
+            console.error("Failed to update relationship:", error);
+            alert("An error occurred while updating the relationship.");
+          } finally {
+            root.unmount();
+            document.body.removeChild(dropdownContainer);
+          }
+        };
+
+        root.render(
+          <Dropdown show={true}>
+            <Dropdown.Toggle variant="secondary" id="dropdown-basic">
+              Update Relationship
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              {[
+                "Direct consequence",
+                "Collateral consequence",
+                "Projection",
+                "Update",
+              ].map((rel) => (
+                <Dropdown.Item
+                  key={rel}
+                  onClick={() => onRelationshipChange(rel)}
+                >
+                  {rel}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+        );
+
+        const removeDropdown = () => {
+          if (document.body.contains(dropdownContainer)) {
+            root.unmount();
+            document.body.removeChild(dropdownContainer);
+            document.removeEventListener("click", removeDropdown);
+          }
+        };
+
+        setTimeout(
+          () => document.addEventListener("click", removeDropdown),
+          10
+        );
       });
 
-      if (!addedToCluster) {
-        clusteredNodes.push({
-          clusterId: clusteredNodes.length,
-          x,
-          y,
-          nodes: [node],
+    // Disegna i nodi
+    graphGroup
+    .selectAll("g.node")
+    .data(nodeData)
+    .join("g")
+    .attr("class", "node")
+    .attr(
+      "transform",
+      (d) => `translate(${d.x}, ${d.y})` // Usa le coordinate calcolate dalla simulazione
+    )
+    .each(function (d) {
+      const node = d3.select(this);
+
+      node
+        .append("foreignObject")
+        .attr("x", -20)
+        .attr("y", -20)
+        .attr("width", 50)
+        .attr("height", 50)
+        .html(
+          (d) =>
+            `<div class="${
+              selectedDocument?.id === d.id
+                ? "custom-icon highlighted"
+                : "custom-icon"
+            }">
+        ${ReactDOMServer.renderToStaticMarkup(
+          <d.iconComponent
+            width="25px"
+            height="25px"
+            color={getColor(d.stakeholders)}
+          />
+        )}
+      </div>`
+        );
+      node
+        .append("rect")
+        .attr("x", -20)
+        .attr("y", -20)
+        .attr("width", 40)
+        .attr("height", 40)
+        .attr("fill", "transparent");
+
+      node
+        .append("text")
+        .attr("x", 0)
+        .attr("y", 30)
+        .attr("text-anchor", "middle")
+        .attr("font-size", 10)
+        .style("visibility", "hidden")
+        .text(d.title);
+
+      node
+        .on("mouseover", function () {
+          d3.select(this).select("text").style("visibility", "visible");
+        })
+        .on("mouseout", function () {
+          d3.select(this).select("text").style("visibility", "hidden");
+        })
+        .on("click", function (event, d) {
+          setSelectedDocument(d);
         });
-      }
     });
 
-    const filteredClusters = clusteredNodes.filter(
-      (cluster) => cluster.nodes.length > 1
-    );
+    // aggiungi funzionalità di zoom
+    const offset = 50;
 
-    // Disegna i cluster
-    filteredClusters.forEach((cluster) => {
-      const { x, y, nodes: clusterNodes } = cluster;
-
-      // Nascondi i nodi che appartengono al cluster
-      clusterNodes.forEach((node) => {
-        graphGroup
-          .selectAll(`g.node`)
-          .filter((d) => d.id === node.id)
-          .style("visibility", "hidden");
+    const zoom = d3
+      .zoom()
+      .scaleExtent([0.75, 5])
+      .translateExtent([
+        [0, 0],
+        [width + offset, height + offset],
+      ]) // Limita la traslazione all'interno del grafico
+      .on("zoom", (event) => {
+        rootGroup.attr("transform", event.transform);
       });
 
-      // Disegna il cerchio del cluster
-      const clusterCircle = graphGroup
-        .append("circle")
-        .attr("cx", x)
-        .attr("cy", y)
-        .attr("r", 15)
-        .attr("fill", "#3182CE")
-        .attr("opacity", 0.8)
-        .style("cursor", "pointer")
-        .classed("cluster", true);
+    zoomBehavior.current = zoom; // Salva il comportamento dello zoom nella ref
 
-      // Etichetta del cluster
-      const clusterLabel = graphGroup
-        .append("text")
-        .attr("x", x)
-        .attr("y", y + 4)
-        .attr("text-anchor", "middle")
-        .attr("font-size", 12)
-        .attr("fill", "white")
-        .text(clusterNodes.length)
-        .classed("cluster-label", true);
+    // Rimuovi lo zoom inizialmente
+    svg.on(".zoom", null);
 
-      // Evento click sul cluster
-      clusterCircle.on("click", () => {
-        // Rimuove il cerchio del cluster e la sua etichetta
-        clusterCircle.remove();
-        clusterLabel.remove();
+    // Applica o rimuovi lo zoom in base allo stato
+    if (isZoomEnabled) {
+      svg.call(zoom);
+    } else {
+      svg.on(".zoom", null);
+    }
 
-        // Mostra i nodi appartenenti al cluster
-        clusterNodes.forEach((node) => {
-          xScale(parseDate(node.issuanceDate));
-          yScale(node.scale);
-          graphGroup
-            .selectAll("g.node")
-            .filter((d) => d.id === node.id)
-            .style("visibility", "visible");
-        });
-      });
-    });*/
-  }, [nodes]);
+    return () => {
+      svg.on(".zoom", null); // Pulisce lo zoom quando il componente si smonta
+    };
+  }, [nodes, isZoomEnabled, selectedDocument]);
+
+  // Funzione per lo zoom in
+  const handleZoomIn = () => {
+    if (!svgRef.current || !zoomBehavior.current || !isZoomEnabled) return;
+    const svg = d3.select(svgRef.current);
+    svg.transition().duration(300).call(zoomBehavior.current.scaleBy, 1.5);
+  };
+
+  // Funzione per lo zoom out
+  const handleZoomOut = () => {
+    if (!svgRef.current || !zoomBehavior.current || !isZoomEnabled) return;
+    const svg = d3.select(svgRef.current);
+    svg.transition().duration(300).call(zoomBehavior.current.scaleBy, 0.75);
+  };
 
   return (
     <>
+      <ButtonGroup className="mb-3">
+        <Button
+          variant={isZoomEnabled ? "outline-secondary" : "outline-light"}
+          onClick={() => setIsZoomEnabled(!isZoomEnabled)}
+        >
+          {isZoomEnabled ? "Disable Zoom" : "Enable Zoom"}
+        </Button>
+        <Button
+          variant="outline-primary"
+          onClick={handleZoomIn}
+          disabled={!isZoomEnabled}
+        >
+          Zoom In
+        </Button>
+        <Button
+          variant="outline-danger"
+          onClick={handleZoomOut}
+          disabled={!isZoomEnabled}
+        >
+          Zoom Out
+        </Button>
+      </ButtonGroup>
       <svg ref={svgRef}></svg>
       {selectedDocument && (
         <DocumentCard

@@ -49,7 +49,6 @@ const currentUser = async () => {
 };
 
 const createDocumentNode = async (documentData: any) => {
-  console.log(documentData);
   try {
     const response = await fetch(`${SERVER_URL}/document`, {
       method: "POST",
@@ -92,7 +91,7 @@ const getZones = async () => {
     throw new Error(errorData.message || "Failed to get zones");
   }
   const data = await response.json();
-  console.log("my datazones api is ", data);
+  // console.log("my datazones api is ", data);
 
   return data;
 };
@@ -137,24 +136,26 @@ const connectDocuments = async (
   return await response.json();
 };
 
-const updateGeoreference = async (
+const updateDocument = async (
   documentID: number,
   zoneID: number | null,
   longitude: number | null,
-  latitude: number | null
+  latitude: number | null,
+  stakeholders: string | null,
+  scale: string | null
 ) => {
-  console.log(documentID, zoneID, longitude, latitude);
+  // console.log(documentID, zoneID, longitude, latitude);
   const response = await fetch(`${SERVER_URL}/document/${documentID}`, {
     method: "PUT",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ zoneID, longitude, latitude }),
+    body: JSON.stringify({ zoneID, longitude, latitude, stakeholders, scale }),
   });
 
   if (!response.ok) {
-    console.log("response is ", response);
+    // console.log("response is ", response);
     const errorData = await response.json();
     console.error("Error updating georeference:", errorData);
     throw new Error(errorData.error || "Failed to update georeference");
@@ -221,7 +222,7 @@ const createZone = async (coordinates: any) => {
     });
     if (response.ok) {
       const zoneId = await response.json();
-      console.log("zone id is , ", zoneId);
+      // console.log("zone id is , ", zoneId);
       return zoneId;
     } else {
       const errDetails = await response.json();
@@ -245,12 +246,6 @@ const addOriginalResource = async (documentID: number, myFiles: File[]) => {
     for (let i = 0; i < myFiles.length; i++) {
       formData.append("files", myFiles[i]);
     }
-    // myFiles.forEach((file,) => {
-    //   files.append(`files`, file); // Use a key to group files
-    // });
-
-    console.log("Form data is ", formData);
-
     const response = await fetch(`${SERVER_URL}/resource/${documentID}`, {
       method: "POST",
       credentials: "include", // Ensures cookies are included if needed
@@ -263,8 +258,6 @@ const addOriginalResource = async (documentID: number, myFiles: File[]) => {
     }
 
     const data = await response.json();
-    console.log("Files uploaded successfully:", data);
-
     return data; // Return the response data for further use
   } catch (error) {
     console.error("An error occurred while adding original resource:", error);
@@ -307,6 +300,49 @@ const handleDownloadResource = async (id: number, fileName: string) => {
   }
 };
 
+const getStakeholders = async () => {
+  const response = await fetch(`${SERVER_URL}/stakeholders`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error getting stakeholders:", errorData);
+    throw new Error(errorData.message || "Failed to get stakeholders");
+  }
+
+  return await response.json();
+};
+
+const updateLink = async (
+  linkID: number,
+  firstDoc: number,
+  secondDoc: number,
+  relationship: string
+) => {
+  const response = await fetch(`${SERVER_URL}/link/${linkID}`, {
+    method: "PUT",
+    credentials: "include", 
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ firstDoc, secondDoc, relationship }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error updating link:", errorData);
+    throw new Error(errorData.error || "Failed to update link");
+  }
+
+  return await response.json();
+};
+
+
 const API = {
   login,
   logout,
@@ -315,10 +351,12 @@ const API = {
   getZones,
   getDocuments,
   connectDocuments,
-  updateGeoreference,
+  updateDocument,
   filterDocuments,
   createZone,
   addOriginalResource,
   handleDownloadResource,
+  getStakeholders,
+  updateLink,
 };
 export default API;

@@ -70,7 +70,7 @@ export const TopBar = ({ user, logout }: TopBarProps) => {
         <>
           {user ? (
             <a
-              className="home-logout-btn text-danger"
+              className="home-logout-btn"
               style={{ cursor: "pointer" }}
               onClick={logout}
             >

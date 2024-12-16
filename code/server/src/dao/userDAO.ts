@@ -56,7 +56,7 @@ class UserDAO {
             const spy= await this.verifyPassword(password, result[0].salt, result[0].password);
             
             return spy ? new User(+DOMPurify.sanitize(result[0].userID), DOMPurify.sanitize(result[0].username), DOMPurify.sanitize(result[0].role) as Role) : false;
-        } catch(err) {
+        } catch(err: any) {
             throw err;
         } finally {
             await conn?.release();

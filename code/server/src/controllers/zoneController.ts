@@ -7,7 +7,7 @@ import { Kiruna } from "../utilities";
 import wellknown from 'wellknown';
 
 class ZoneController{
-    private dao: ZoneDAO;
+    private readonly dao: ZoneDAO;
 
     constructor(){
         this.dao= new ZoneDAO();

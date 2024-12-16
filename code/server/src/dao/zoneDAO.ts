@@ -33,7 +33,7 @@ class ZoneDAO {
             return ZoneDAO.createZone(+DOMPurify.sanitize(result[0].zoneID), DOMPurify.sanitize(result[0].coordinates));
         } catch (err: any) {
             if(err instanceof ZoneError) throw err;
-            throw new InternalServerError(err.message ? err.message : "Error with the server!");
+            throw new InternalServerError();
         } finally {
             if (conn) {
                 await conn.release();      
@@ -47,9 +47,9 @@ class ZoneDAO {
             conn = await db.getConnection();
             const sql = "SELECT COUNT(*) AS count FROM zone WHERE coordinates = ?"
             const result = await conn.query(sql, [coordinates]);
-            return Number(result[0].count)? true : false;
+            return Boolean(result[0].count);
         } catch(err: any) {
-            throw new InternalServerError(err.message? err.message : "");
+            throw new InternalServerError();
         } finally {
             if (conn) {
                 await conn.release();      
@@ -73,7 +73,7 @@ class ZoneDAO {
             if(err instanceof ZoneError){
                 throw err;
             }
-            throw new InternalServerError(err.message ? err.message : "Error with the server!");
+            throw new InternalServerError();
         }
         finally {
             if (conn) {
@@ -95,7 +95,7 @@ class ZoneDAO {
             }
 
             const documentsUpdate= await conn.query("update document set latitude=?, longitude=? where zoneID=?", [lat, long, zoneID]);
-            if(!documentsUpdate || !documentsUpdate.affectedRows){
+            if(!documentsUpdate?.affectedRows){
                 throw new WrongGeoreferenceUpdateError();
             }
             
@@ -109,7 +109,7 @@ class ZoneDAO {
             if(err instanceof ModifyZoneError || err instanceof WrongGeoreferenceUpdateError){
                 throw err;
             }
-            throw new InternalServerError(err.message ? err.message : "Error with the server!");
+            throw new InternalServerError();
         }
         finally {
             if (conn) {

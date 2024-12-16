@@ -10,13 +10,13 @@ import {
 } from "react-bootstrap";
 import API from "../../API/API";
 import "./NewDocument.css";
-import Select, { MultiValue } from "react-select";
 import { Feature, MultiPolygon } from "geojson";
 import { CoordinatesOutOfBoundsError } from "../../errors/general";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format, parse } from "date-fns";
 import GeoReferenceComponent from "../GeoreferenceComponent/GeoreferenceComponent";
+import CustomSelectBox from "./CustomSelectBox/CustomSelectBox";
 
 interface NewDocumentProps {
   userInfo: { username: string; role: string };
@@ -98,14 +98,27 @@ const NewDocument: React.FC<NewDocumentProps> = ({
     label: string;
   };
 
-  const stakeholderOptions: OptionType[] = [
+  const staticStakeholderOptions: OptionType[] = [
     { value: "LKAB", label: "LKAB" },
     { value: "Municipality", label: "Municipalty" },
     { value: "Regional authority", label: "Regional authority" },
     { value: "Architecture firms", label: "Architecture firms" },
     { value: "Citizens", label: "Citizens" },
     { value: "Kiruna kommun", label: "Kiruna kommun" },
-    { value: "Others", label: "Others" },
+    // { value: "Others", label: "Others" },
+  ];
+  const [stakeholderOptions, setStakeholderOptions] = useState<OptionType[]>(
+    []
+  );
+
+  const scaleOptions: OptionType[] = [
+    { value: "Blueprints/effects", label: "Blueprints/effects" },
+    { value: "1:1,000", label: "1:1,000" },
+    { value: "1:5,000", label: "1:5,000" },
+    { value: "1:10,000", label: "1:10,000" },
+    { value: "1:100,000", label: "1:100,000" },
+    { value: "Concept", label: "Concept" },
+    { value: "Text", label: "Text" },
   ];
 
   const [tempCoordinates, setTempCoordinates] = useState<{
@@ -190,6 +203,13 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   };
 
   useEffect(() => {
+
+    const validateDate = (date : string) => {
+      // Regex per i formati DD/MM/YYYY, MM/YYYY o YYYY
+      const dateRegex = /^(?:\d{2}\/\d{2}\/\d{4}|\d{2}\/\d{4}|\d{4})$/;
+      return dateRegex.test(date);
+    };
+
     const realSubmit = async () => {
       setIsReady(false);
       const documentData = {
@@ -208,6 +228,12 @@ const NewDocument: React.FC<NewDocumentProps> = ({
         coordinates,
       };
 
+      // Validazione del formato della data
+      if (!validateDate(issuanceDate)) {
+        setErrorMessage("Invalid date format! Please use DD/MM/YYYY, MM/YYYY or YYYY.");
+        return;
+      } 
+
       try {
         await API.createDocumentNode(documentData);
         updateTable();
@@ -219,7 +245,8 @@ const NewDocument: React.FC<NewDocumentProps> = ({
         console.error("Error during creation of document:", error);
         if (CoordinatesOutOfBoundsError) {
           setErrorMessage("Enter the coordinates inside the zone");
-        } else {
+        }
+        else {
           setErrorMessage("An error occurred while creating the document");
         }
       }
@@ -256,17 +283,36 @@ const NewDocument: React.FC<NewDocumentProps> = ({
     setShowMapModal(false);
   };
 
-  console.log("in newdoc tempcustom is", tempCustom);
-  console.log("in newdoc custom is", customArea);
-
-  const handleStakeholderSelect = (
-    selectedStakeholders: MultiValue<OptionType>
-  ) => {
+  const handleStakeholderSelect = (selectedStakeholders: any) => {
     const valuesString = [...selectedStakeholders]
       .map((option) => option.value)
       .join(", ");
     setStakeholders(valuesString);
   };
+
+  const handleScaleSelect = (selectedScale: any) => {
+    const scalePattern = /^1:\d{1,3}(?:,\d{3})*$/;
+
+    if (selectedScale) {
+      if (scalePattern.test(selectedScale.label)) {
+        setScale(selectedScale.label);
+        setErrorMessage(null);
+      } else if (
+        selectedScale.label === "Blueprints/effects" ||
+        selectedScale.label === "Concept" ||
+        selectedScale.label === "Text"
+      ) {
+        setScale(selectedScale.label);
+        setErrorMessage(null);
+      } else {
+        setScale("");
+        setErrorMessage(
+          "Invalid format. Please enter the scale as '1:1,000' or select a valid option."
+        );
+      }
+    }
+  };
+
   const handleZoneSelect = (zoneId: number | null) => {
     setTempZoneId(zoneId);
     if (zoneId !== null) {
@@ -319,7 +365,6 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   };
 
   const [demoVar, setDemoVar] = useState<string>("");
-  console.log("Test - tempCustom is ", tempCustom);
   const handleMockFill = (i: string) => {
     setTitle(`Demo title ${i}`);
     setDescription(`Demo description ${i}`);
@@ -358,6 +403,18 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       window.removeEventListener("keydown", globalKeyboardWatcher);
     };
   }, [isFocused]);
+  useEffect(() => {
+    API.getStakeholders().then((res: any) => {
+      const customStakeholders = res.map((stakeholder: any) => ({
+        value: stakeholder,
+        label: stakeholder,
+      }));
+      setStakeholderOptions([
+        ...staticStakeholderOptions,
+        ...customStakeholders,
+      ]);
+    });
+  }, [show]);
   return (
     <div
       className="document-container"
@@ -417,14 +474,19 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
               <Form.Group as={Col} controlId="formStakeholders">
                 <Form.Label className="main-text">Stakeholders*</Form.Label>
-                <Select
+                <CustomSelectBox
+                  options={stakeholderOptions}
+                  handleSelect={handleStakeholderSelect}
+                  isMulti={true}
+                />
+                {/* <Select
                   options={stakeholderOptions}
                   isMulti={true}
                   onChange={handleStakeholderSelect}
                   placeholder="Select Stakeholders"
                   className="custom-input"
                 />
-                <input type="hidden" name="stakeholders" value={stakeholders} />
+                <input type="hidden" name="stakeholders" value={stakeholders} /> */}
                 {fieldErrors.stakeholders && (
                   <div className="text-danger">
                     <i className="bi bi-x-circle-fill text-danger"></i> This
@@ -519,7 +581,13 @@ const NewDocument: React.FC<NewDocumentProps> = ({
             <Row className="mb-3">
               <Form.Group as={Col} controlId="formScale">
                 <Form.Label className="main-text">Scale*</Form.Label>
-                <Form.Select
+                <CustomSelectBox
+                  options={scaleOptions}
+                  handleSelect={handleScaleSelect}
+                  isMulti={false}
+                  value={null}
+                />
+                {/* <Form.Select
                   value={scale ?? ""}
                   onChange={(e) => setScale(e.target.value)}
                 >
@@ -531,7 +599,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
                   <option value="1:100,000">1:100,000</option>
                   <option value="Concept">Concept</option>
                   <option value="Text">Text</option>
-                </Form.Select>
+                </Form.Select> */}
                 {fieldErrors.scale && (
                   <div className="text-danger">
                     <i className="bi bi-x-circle-fill text-danger"></i> This

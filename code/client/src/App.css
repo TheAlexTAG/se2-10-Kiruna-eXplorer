@@ -34,7 +34,7 @@
 
 .custom-input input {
   border-radius: 8px;
-  color: whitesmoke;
+  color: whitesmoke !important;
   border-right: none;
 }
 .custom-input input::placeholder {

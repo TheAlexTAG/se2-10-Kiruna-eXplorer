@@ -52,22 +52,32 @@
 .custom-input > div:first-of-type {
   background-color: #212529;
   border: 1px solid #495057;
+  color: whitesmoke !important;
 }
 .custom-input > div:nth-of-type(2) {
-  background-color: #495057;
+  background-color: #717171;
   border: 1px solid #495057;
   color: whitesmoke;
 }
 .custom-input > div:nth-of-type(2) > div > div:active,
-.custom-input > div:nth-of-type(2) > div > div:hover {
+.custom-input > div:nth-of-type(2) > div > div:hover,
+.custom-input > div:nth-of-type(2) > div > div {
   /* background-color: #495057 !important; */
   color: black;
 }
 
+.custom-input div:first-child > div > div > svg {
+  /* background-color: #495057 !important; */
+  color: red;
+}
 .custom-date-picker .react-datepicker-wrapper {
   opacity: 0;
 }
 
 .new-doc .modal-dialog {
   max-width: 1000px;
+}
+
+[class*="css-"][class*="-singleValue"] {
+  color: whitesmoke;
 }

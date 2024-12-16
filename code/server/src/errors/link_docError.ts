@@ -34,4 +34,22 @@ class InternalServerError extends Error {
     }
 }
 
-export {LinkError, DocumentsError, InternalServerError};
+class ModifyLinkError extends Error{
+    code: number;
+
+    constructor() {
+        super("Error when editing the link")
+        this.code = 409;
+    }
+}
+
+class LinkNotFoundError extends Error {
+    code: number
+
+    constructor() {
+        super('Error with link! Link not found.');
+        this.code = 404;
+    }
+}
+
+export {LinkError,DocumentsError,InternalServerError,ModifyLinkError,LinkNotFoundError};
