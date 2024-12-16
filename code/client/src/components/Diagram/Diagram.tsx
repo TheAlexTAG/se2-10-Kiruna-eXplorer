@@ -15,6 +15,7 @@ import { DocumentCard } from "../DocumentCard/DocumentCard";
 import L from "leaflet";
 import { Dropdown, Button, ButtonGroup } from "react-bootstrap";
 import ReactDOM from "react-dom";
+import { useLocation } from "react-router-dom";
 
 interface IconProps {
   width?: string | number;
@@ -176,7 +177,7 @@ const getIconComponent = (type: string): React.FC<IconProps> => {
 };
 
 const fetchDocuments = async (): Promise<Node[]> => {
-  const response = await API.getDocuments(); 
+  const response = await API.getDocuments();
 
   return response.map((doc: any) => ({
     id: doc.id,
@@ -205,11 +206,20 @@ interface userProps {
 }
 
 export const Diagram: React.FC<userProps> = ({ userInfo }) => {
+  const location = useLocation();
   const svgRef = useRef<SVGSVGElement | null>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
   const [isZoomEnabled, setIsZoomEnabled] = useState(false);
   const zoomBehavior = useRef<d3.ZoomBehavior<Element, unknown> | null>(null); // Ref per il comportamento dello zoom
+
+  useEffect(() => {
+    if (location.state?.selectedDocument) {
+      setIsZoomEnabled(true);
+      const document = location.state.selectedDocument;
+      setSelectedDocument(document);
+    }
+  }, [location.state]);
 
   const getIconByType = (type: string) => {
     const iconUrls: { [key: string]: string } = {
@@ -253,14 +263,20 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     ]);
 
     const newXDomain = [
-      d3.timeYear.offset(d3.min(nodes.map((node: Node) => node.parsedDate))!, -1), // domain 1 year before the min date
-      d3.timeYear.offset(d3.max(nodes.map((node: Node) => node.parsedDate))!, 1),  // domain 1 year after the max date
+      d3.timeYear.offset(
+        d3.min(nodes.map((node: Node) => node.parsedDate))!,
+        -1
+      ), // domain 1 year before the min date
+      d3.timeYear.offset(
+        d3.max(nodes.map((node: Node) => node.parsedDate))!,
+        1
+      ), // domain 1 year after the max date
     ];
 
     const numberOfYears = d3.timeYear.count(newXDomain[0], newXDomain[1]);
 
-    const width = Math.max(window.innerWidth, numberOfYears * 150 ); 
-    const height = Math.max(window.innerHeight, newYDomain.size * 125 ); 
+    const width = Math.max(window.innerWidth, numberOfYears * 150);
+    const height = Math.max(window.innerHeight, newYDomain.size * 125);
 
     const yScale = d3
       .scalePoint()
@@ -272,11 +288,12 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       .domain(newXDomain as Iterable<Date>)
       .range([margin.left, width - margin.right]);
 
-
     const svg = d3
       .select(svgRef.current)
       .attr("viewBox", `0 0 ${width} ${height}`)
       .style("background", "#f9f9f9");
+
+    const currentTransform = d3.zoomTransform(svg.node());
 
     svg.selectAll("*").remove();
 
@@ -305,7 +322,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       .attr("opacity", 0.5);
 
     // Vertical grid lines
-    const xTicks = xScale.ticks(20); 
+    const xTicks = xScale.ticks(20);
     gridGroup
       .selectAll(".vertical-line")
       .data(xTicks)
@@ -448,7 +465,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       .append("g")
       .attr("transform", `translate(${margin.left + 225}, 0)`);
 
-    //Asse X  
+    //Asse X
     graphGroup
       .append("g")
       .attr("transform", `translate(0,${height - margin.bottom})`)
@@ -480,14 +497,8 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     // Crea la simulazione della forza per posizionare i nodi
     const simulation = d3
       .forceSimulation(nodeData)
-      .force(
-        "x",
-        d3.forceX((d) => xScale(d.parsedDate)).strength(1)
-      ) // Forza verso la posizione x basata su xScale
-      .force(
-        "y",
-        d3.forceY((d) => yScale(d.parsedScale)).strength(1)
-      ) // Forza verso la posizione y basata su yScale
+      .force("x", d3.forceX((d) => xScale(d.parsedDate)).strength(1)) // Forza verso la posizione x basata su xScale
+      .force("y", d3.forceY((d) => yScale(d.parsedScale)).strength(1)) // Forza verso la posizione y basata su yScale
       .force(
         "collision",
         d3.forceCollide(25) // Distanza minima tra i nodi (raggio di collisione)
@@ -565,14 +576,14 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
         const onRelationshipChange = async (rel: string) => {
           try {
-              d.relationship = rel; // Aggiorna il dato localmente
-              // Chiamata API per aggiornare il link sul server
-              await API.updateLink(d.id, d.sourceNode.id, d.targetNode.id, rel);
+            d.relationship = rel; // Aggiorna il dato localmente
+            // Chiamata API per aggiornare il link sul server
+            await API.updateLink(d.id, d.sourceNode.id, d.targetNode.id, rel);
 
-              d3.select(this) // Aggiorna lo stile della linea
-                .attr("stroke-dasharray", getLineStyle(rel));
+            d3.select(this) // Aggiorna lo stile della linea
+              .attr("stroke-dasharray", getLineStyle(rel));
 
-              alert("Relationship updated successfully!");
+            alert("Relationship updated successfully!");
           } catch (error) {
             console.error("Failed to update relationship:", error);
             alert("An error occurred while updating the relationship.");
@@ -621,30 +632,30 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
     // Disegna i nodi
     graphGroup
-    .selectAll("g.node")
-    .data(nodeData)
-    .join("g")
-    .attr("class", "node")
-    .attr(
-      "transform",
-      (d) => `translate(${d.x}, ${d.y})` // Usa le coordinate calcolate dalla simulazione
-    )
-    .each(function (d) {
-      const node = d3.select(this);
+      .selectAll("g.node")
+      .data(nodeData)
+      .join("g")
+      .attr("class", "node")
+      .attr(
+        "transform",
+        (d) => `translate(${d.x}, ${d.y})` // Usa le coordinate calcolate dalla simulazione
+      )
+      .each(function (d) {
+        const node = d3.select(this);
 
-      node
-        .append("foreignObject")
-        .attr("x", -20)
-        .attr("y", -20)
-        .attr("width", 50)
-        .attr("height", 50)
-        .html(
-          (d) =>
-            `<div class="${
-              selectedDocument?.id === d.id
-                ? "custom-icon highlighted"
-                : "custom-icon"
-            }">
+        node
+          .append("foreignObject")
+          .attr("x", -20)
+          .attr("y", -20)
+          .attr("width", 50)
+          .attr("height", 50)
+          .html(
+            (d) =>
+              `<div class="${
+                selectedDocument?.id === d.id
+                  ? "custom-icon highlighted"
+                  : "custom-icon"
+              }">
         ${ReactDOMServer.renderToStaticMarkup(
           <d.iconComponent
             width="25px"
@@ -653,35 +664,35 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
           />
         )}
       </div>`
-        );
-      node
-        .append("rect")
-        .attr("x", -20)
-        .attr("y", -20)
-        .attr("width", 40)
-        .attr("height", 40)
-        .attr("fill", "transparent");
+          );
+        node
+          .append("rect")
+          .attr("x", -20)
+          .attr("y", -20)
+          .attr("width", 40)
+          .attr("height", 40)
+          .attr("fill", "transparent");
 
-      node
-        .append("text")
-        .attr("x", 0)
-        .attr("y", 30)
-        .attr("text-anchor", "middle")
-        .attr("font-size", 10)
-        .style("visibility", "hidden")
-        .text(d.title);
+        node
+          .append("text")
+          .attr("x", 0)
+          .attr("y", 30)
+          .attr("text-anchor", "middle")
+          .attr("font-size", 10)
+          .style("visibility", "hidden")
+          .text(d.title);
 
-      node
-        .on("mouseover", function () {
-          d3.select(this).select("text").style("visibility", "visible");
-        })
-        .on("mouseout", function () {
-          d3.select(this).select("text").style("visibility", "hidden");
-        })
-        .on("click", function (event, d) {
-          setSelectedDocument(d);
-        });
-    });
+        node
+          .on("mouseover", function () {
+            d3.select(this).select("text").style("visibility", "visible");
+          })
+          .on("mouseout", function () {
+            d3.select(this).select("text").style("visibility", "hidden");
+          })
+          .on("click", function (event, d) {
+            setSelectedDocument(d);
+          });
+      });
 
     // aggiungi funzionalità di zoom
     const offset = 50;
@@ -699,14 +710,12 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
     zoomBehavior.current = zoom; // Salva il comportamento dello zoom nella ref
 
-    // Rimuovi lo zoom inizialmente
-    svg.on(".zoom", null);
-
     // Applica o rimuovi lo zoom in base allo stato
     if (isZoomEnabled) {
-      svg.call(zoom);
+      svg.call(zoomBehavior.current); // Attach zoom behavior
+      svg.call(zoomBehavior.current.transform, currentTransform); // Reapply saved transform
     } else {
-      svg.on(".zoom", null);
+      svg.on(".zoom", null); // Remove zoom behavior
     }
 
     return () => {
