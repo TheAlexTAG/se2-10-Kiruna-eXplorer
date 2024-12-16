@@ -255,8 +255,8 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     ];
 
     const newXDomain = [
-      d3.min(nodes.map((node: Node) => node.parsedDate)), // Data minima
-      d3.max(nodes.map((node: Node) => node.parsedDate)), // Data massima
+      d3.timeYear.offset(d3.min(nodes.map((node: Node) => node.parsedDate))!, -1), // domain 1 year before the min date
+      d3.timeYear.offset(d3.max(nodes.map((node: Node) => node.parsedDate))!, 1),  // domain 1 year after the max date
     ];
 
     const yScale = d3
@@ -493,7 +493,130 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     // Esegui la simulazione per un determinato numero di iterazioni
     for (let i = 0; i < 250; ++i) simulation.tick();
 
-  graphGroup
+    // Disegna i link tra i nodi
+    const seenLinks = new Set();
+    graphGroup
+      .append("g")
+      .selectAll("path")
+      .data(
+        nodeData.flatMap((sourceNode) =>
+          sourceNode.links
+            .map((link, index) => ({
+              id: link.linkID,
+              sourceNode,
+              targetNode: nodeData.find((node) => node.id === link.documentID),
+              relationship: link.relationship,
+              index,
+            }))
+            .filter(({ sourceNode, targetNode, relationship }) => {
+              if (targetNode) {
+                const linkKey = [sourceNode.id, targetNode.id, relationship]
+                  .sort()
+                  .join("-");
+                if (seenLinks.has(linkKey)) {
+                  return false;
+                }
+                seenLinks.add(linkKey);
+              }
+              return true;
+            })
+        )
+      )
+      .enter()
+      .append("path")
+      .attr("d", ({ sourceNode, targetNode, index }) => {
+        if (targetNode) {
+          const startX = sourceNode.x;
+          const startY = sourceNode.y;
+          const endX = targetNode.x;
+          const endY = targetNode.y;
+
+          const controlX = (startX + endX) / 2;
+          const controlY = (startY + endY) / 2 - 50 - index * 50;
+
+          return `M${startX},${startY} Q${controlX},${controlY} ${endX},${endY}`;
+        }
+        return "";
+      })
+      .attr("stroke", "black")
+      .attr("stroke-width", 2)
+      .attr("fill", "none")
+      .attr("stroke-dasharray", ({ relationship }) =>
+        getLineStyle(relationship)
+      )
+      .on("click", function (event, d) {
+        if (userInfo?.role !== "Urban Planner") {
+          alert("You do not have permission to update relationships.");
+          return;
+        }
+
+        const dropdownContainer = document.createElement("div");
+        dropdownContainer.id = "dropdown-container";
+        dropdownContainer.style.position = "absolute";
+        dropdownContainer.style.left = `${event.pageX}px`;
+        dropdownContainer.style.top = `${event.pageY}px`;
+        document.body.appendChild(dropdownContainer);
+
+        const root = ReactDOM.createRoot(dropdownContainer);
+
+        const onRelationshipChange = async (rel: string) => {
+          try {
+              d.relationship = rel; // Aggiorna il dato localmente
+              // Chiamata API per aggiornare il link sul server
+              await API.updateLink(d.id, d.sourceNode.id, d.targetNode.id, rel);
+
+              d3.select(this) // Aggiorna lo stile della linea
+                .attr("stroke-dasharray", getLineStyle(rel));
+
+              alert("Relationship updated successfully!");
+          } catch (error) {
+            console.error("Failed to update relationship:", error);
+            alert("An error occurred while updating the relationship.");
+          } finally {
+            root.unmount();
+            document.body.removeChild(dropdownContainer);
+          }
+        };
+
+        root.render(
+          <Dropdown show={true}>
+            <Dropdown.Toggle variant="secondary" id="dropdown-basic">
+              Update Relationship
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              {[
+                "Direct consequence",
+                "Collateral consequence",
+                "Projection",
+                "Update",
+              ].map((rel) => (
+                <Dropdown.Item
+                  key={rel}
+                  onClick={() => onRelationshipChange(rel)}
+                >
+                  {rel}
+                </Dropdown.Item>
+              ))}
+            </Dropdown.Menu>
+          </Dropdown>
+        );
+
+        const removeDropdown = () => {
+          if (document.body.contains(dropdownContainer)) {
+            root.unmount();
+            document.body.removeChild(dropdownContainer);
+            document.removeEventListener("click", removeDropdown);
+          }
+        };
+
+        setTimeout(
+          () => document.addEventListener("click", removeDropdown),
+          10
+        );
+      });
+
+    // Disegna i nodi
+    graphGroup
     .selectAll("g.node")
     .data(nodeData)
     .join("g")
@@ -556,129 +679,6 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         });
     });
 
-    // Disegna i link tra i nodi
-    const seenLinks = new Set();
-    graphGroup
-      .append("g")
-      .selectAll("path")
-      .data(
-        nodeData.flatMap((sourceNode) =>
-          sourceNode.links
-            .map((link, index) => ({
-              id: link.linkID,
-              sourceNode,
-              targetNode: nodeData.find((node) => node.id === link.documentID),
-              relationship: link.relationship,
-              index,
-            }))
-            .filter(({ sourceNode, targetNode, relationship }) => {
-              if (targetNode) {
-                const linkKey = [sourceNode.id, targetNode.id, relationship]
-                  .sort()
-                  .join("-");
-                if (seenLinks.has(linkKey)) {
-                  return false;
-                }
-                seenLinks.add(linkKey);
-              }
-              return true;
-            })
-        )
-      )
-      .enter()
-      .append("path")
-      .attr("d", ({ sourceNode, targetNode, index }) => {
-        if (targetNode) {
-          const startX = sourceNode.x;
-          const startY = sourceNode.y;
-          const endX = targetNode.x;
-          const endY = targetNode.y;
-
-          const controlX = (startX + endX) / 2;
-          const controlY = (startY! + endY!) / 2 - 50 - index * 50;
-
-          return `M${startX},${startY} Q${controlX},${controlY} ${endX},${endY}`;
-        }
-        return "";
-      })
-      .attr("stroke", "black")
-      .attr("stroke-width", 2)
-      .attr("fill", "none")
-      .attr("stroke-dasharray", ({ relationship }) =>
-        getLineStyle(relationship)
-      )
-      .on("click", function (event, d) {
-        if (userInfo?.role !== "Urban Planner") {
-          alert("You do not have permission to update relationships.");
-          return;
-        }
-
-        const dropdownContainer = document.createElement("div");
-        dropdownContainer.id = "dropdown-container";
-        dropdownContainer.style.position = "absolute";
-        dropdownContainer.style.left = `${event.pageX}px`;
-        dropdownContainer.style.top = `${event.pageY}px`;
-        document.body.appendChild(dropdownContainer);
-
-        const root = ReactDOM.createRoot(dropdownContainer);
-
-        const onRelationshipChange = async (rel: string) => {
-          try {
-            d.relationship = rel; // Aggiorna il dato localmente
-            d3.select(this) // Aggiorna lo stile della linea
-              .attr("stroke-dasharray", getLineStyle(rel));
-
-            // Chiamata API per aggiornare il link sul server
-            await API.updateLink(d.id, d.sourceNode.id, d.targetNode.id, rel);
-            console.log(d.id);
-
-            alert("Relationship updated successfully!");
-          } catch (error) {
-            console.error("Failed to update relationship:", error);
-            alert("An error occurred while updating the relationship.");
-          } finally {
-            root.unmount();
-            document.body.removeChild(dropdownContainer);
-          }
-        };
-
-        root.render(
-          <Dropdown show={true}>
-            <Dropdown.Toggle variant="secondary" id="dropdown-basic">
-              Update Relationship
-            </Dropdown.Toggle>
-            <Dropdown.Menu>
-              {[
-                "Direct consequence",
-                "Collateral consequence",
-                "Projection",
-                "Update",
-              ].map((rel) => (
-                <Dropdown.Item
-                  key={rel}
-                  onClick={() => onRelationshipChange(rel)}
-                >
-                  {rel}
-                </Dropdown.Item>
-              ))}
-            </Dropdown.Menu>
-          </Dropdown>
-        );
-
-        const removeDropdown = () => {
-          if (document.body.contains(dropdownContainer)) {
-            root.unmount();
-            document.body.removeChild(dropdownContainer);
-            document.removeEventListener("click", removeDropdown);
-          }
-        };
-
-        setTimeout(
-          () => document.addEventListener("click", removeDropdown),
-          10
-        );
-      });
-
     // aggiungi funzionalità di zoom
     const offset = 50;
 
@@ -723,6 +723,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     const svg = d3.select(svgRef.current);
     svg.transition().duration(300).call(zoomBehavior.current.scaleBy, 0.75);
   };
+
   return (
     <>
       <ButtonGroup className="mb-3">
