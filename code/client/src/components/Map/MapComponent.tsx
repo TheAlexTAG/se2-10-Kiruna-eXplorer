@@ -40,6 +40,8 @@ import KirunaDocs from "./KirunaDocs/KirunaDocs";
 import { PiBird } from "react-icons/pi";
 import { IoDocumentOutline, IoDocumentSharp } from "react-icons/io5";
 
+import { Button, InputGroup, Form } from "react-bootstrap";
+
 declare module "leaflet" {
   interface MarkerOptions {
     docId?: number;
@@ -135,6 +137,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
     number | null
   >(null);
 
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
+
+  useEffect(() => {
+    if (searchTerm.trim() === "") {
+      setFilteredDocuments(documents);
+    } else {
+      setFilteredDocuments(
+        documents.filter((doc) =>
+          doc.title.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+    }
+  }, [searchTerm, documents]);
+
   const defaultTileLayer = [
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     "&copy; OpenStreetMap contributors",
@@ -152,10 +169,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
         const kirunaDocs = data.filter(
           (doc: KirunaDocument) => doc.zoneID === 0
         );
+
         setKirunaDocuments(kirunaDocs);
-        setDocuments(
-          data.filter((doc: Document) => doc.latitude && doc.longitude)
+        const validDocs = data.filter(
+          (doc: Document) => doc.latitude && doc.longitude
         );
+        setDocuments(validDocs);
+        setFilteredDocuments(validDocs);
       } catch (err) {
         console.error("Error fetching documents: ", err);
       }
@@ -476,7 +496,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
         )}
         {/*@ts-ignore*/}
         <MarkerClusterGroup
-          key={tempHighlightedDocumentId}
+          key={`${tempHighlightedDocumentId}-${filteredDocuments
+            .map((doc) => doc.id)
+            .join(",")}`}
           spiderfyOnMaxZoom={true} // Keep spiderfying behavior
           zoomToBoundsOnClick={true} // Allow zoom on cluster click
           showCoverageOnHover={false} // Disable coverage hover
@@ -507,7 +529,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
         >
           {/*for now we ignore MarkerClusterGroup type error, since everything works*/}
           {showDocs &&
-            documents.map((doc) => (
+            filteredDocuments.map((doc) => (
               <Marker
                 key={doc.id}
                 position={[doc.latitude, doc.longitude]}
@@ -654,6 +676,25 @@ const MapComponent: React.FC<MapComponentProps> = ({
       </div>
       {!selectionMode && (
         <>
+          <InputGroup
+            style={{
+              position: "absolute",
+              top: "69px",
+              right: "10px",
+              zIndex: 1000,
+              width: "300px",
+            }}
+          >
+            <Form.Control
+              placeholder="Search documents..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Button variant="secondary" onClick={() => setSearchTerm("")}>
+              Clear
+            </Button>
+          </InputGroup>
+
           <div
             onClick={handleOpenKirunaModal}
             className="kiruna-doc-btn"

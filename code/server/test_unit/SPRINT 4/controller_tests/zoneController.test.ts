@@ -7,9 +7,7 @@ import { Geometry } from 'geojson';
 import { InternalServerError } from "../../../src/errors/link_docError";
 import { Kiruna } from "../../../src/utilities";
 import kiruna from "../../../src/kiruna.json"
-import { geometry } from "@turf/helpers";
 import { InvalidDocumentZoneError } from "../../../src/errors/documentErrors";
-import * as wellknown from 'wellknown';
 
 jest.mock("../../../src/dao/zoneDAO")
 

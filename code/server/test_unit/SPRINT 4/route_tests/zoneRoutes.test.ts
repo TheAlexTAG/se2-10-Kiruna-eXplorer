@@ -1,14 +1,12 @@
-import { describe, test, expect, beforeAll, afterEach, jest } from "@jest/globals"
+import { describe, test, expect, afterEach, jest } from "@jest/globals"
 import request from 'supertest'
 import { app } from "../../../index"
 import { ZoneController } from "../../../src/controllers/zoneController"
 import { Zone } from "../../../src/components/zone"
 import { ZoneError } from "../../../src/errors/zoneError"
 import { InternalServerError } from "../../../src/errors/link_docError"
-import {ErrorHandler} from "../../../src/helper"
 import { Utilities } from "../../../src/utilities"
 import { Geometry } from "geojson"
-import { validationResult } from 'express-validator';
 
 jest.mock("../../../src/controllers/zoneController")
 jest.mock("../../../src/utilities")
