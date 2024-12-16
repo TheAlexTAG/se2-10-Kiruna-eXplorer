@@ -142,9 +142,27 @@ class DocumentRoutes {
         this.app.put("/api/document/:id",
             param("id").isInt(),
             this.utilities.documentExists,
+            body("title").optional().isString().notEmpty(),
+            body("description").optional().isString().notEmpty(),
             body("zoneID").optional({nullable: true}).isInt(), // send only if the zone already exists, otherwise null, if kiruna set null
             body("latitude").optional({nullable:true}).isFloat(), //send only if the georeference is a point, otherwise null
             body("longitude").optional({nullable:true}).isFloat(), //send only if the georeference is a point, otherwise null
+            body("stakeholders").optional().isString().notEmpty(),
+            body("scale").optional()
+            .custom((value: string) => {
+                if(!this.utilities.isValidScale(value))
+                    throw new Error("Scale must be in the format '1:{number with thousand separator ,}' (e.g., '1:1,000') or one of 'Blueprints/effects', 'Concept', 'Text'");
+                return true;
+            }),
+            body("issuanceDate").optional().isString()
+            .custom((value: string) => {
+                if(!this.utilities.isValidDate(value)) 
+                    throw new Error("Invalid date format");
+                return true;
+            }),
+            body("type").optional().isString().notEmpty(),
+            body("language").optional({nullable:true}).isString(),
+            body("pages").optional({nullable:true}).isString(),
             body('coordinates').optional({nullable:true}).isArray(), //set only if the zone is new, otherwise null
             body("coordinates.*").optional({nullable:true}).isArray({ min: 2, max: 2}),
             body("coordinates.*.0").optional({nullable:true}).isFloat({ min: -180, max: 180 }),
@@ -323,4 +341,4 @@ class DocumentRoutes {
     }
 }
 
-export {DocumentRoutes};
+export {DocumentRoutes, DocumentRoutesHelper};

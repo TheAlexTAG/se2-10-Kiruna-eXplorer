@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "cross-env RUN_TYPE=test jest --verbose --testTimeout=30000 --detectOpenHandles --forceExit --runInBand --coverage --colors",
+    "test": "jest --verbose --testTimeout=30000 --forceExit --runInBand --coverage --colors",
     "dev": "nodemon --exec ts-node index.ts"
   },
   "author": "",
@@ -13,7 +13,6 @@
     "@turf/turf": "^7.1.0",
     "@types/wellknown": "^0.5.8",
     "cors": "^2.8.5",
-    "cross-env": "^7.0.3",
     "dayjs": "^1.11.13",
     "dompurify": "^3.1.7",
     "dotenv": "^16.4.5",
