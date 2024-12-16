@@ -32,39 +32,27 @@ const upload = multer({
 });
 
 class DocumentRoutesHelper {
-    parseDate (dateStr: string): Date {
+    parseDate(dateStr: string): Date {
         const ddmmyyyyPattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
         const mmyyyyPattern = /^(\d{2})\/(\d{4})$/;
         const yyyyPattern = /^(\d{4})$/;
       
-        const matchDDMMYYYY = RegExp(ddmmyyyyPattern).exec(dateStr);
+        const matchDDMMYYYY = ddmmyyyyPattern.exec(dateStr);
         if (matchDDMMYYYY) {
           const [, day, month, year] = matchDDMMYYYY;
-          const parsedDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-          if (parsedDate.toString() === "Invalid Date") {
-            throw new Error(`Invalid date: ${dateStr}`);
-          }
-          return parsedDate;
+          return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         }
       
-        const matchMMYYYY = RegExp(mmyyyyPattern).exec(dateStr);
+        const matchMMYYYY = mmyyyyPattern.exec(dateStr);
         if (matchMMYYYY) {
           const [, month, year] = matchMMYYYY;
-          const parsedDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-          if (parsedDate.toString() === "Invalid Date") {
-            throw new Error(`Invalid date: ${dateStr}`);
-          }
-          return parsedDate;
+          return new Date(parseInt(year), parseInt(month) - 1, 1);
         }
       
-        const matchYYYY = RegExp(yyyyPattern).exec(dateStr);
+        const matchYYYY = yyyyPattern.exec(dateStr);
         if (matchYYYY) {
           const [, year] = matchYYYY;
-          const parsedDate = new Date(parseInt(year), 0, 1);
-          if (parsedDate.toString() === "Invalid Date") {
-            throw new Error(`Invalid date: ${dateStr}`);
-          }
-          return parsedDate;
+          return new Date(parseInt(year), 0, 1);
         }
       
         throw new Error(`Invalid date format: ${dateStr}`);
