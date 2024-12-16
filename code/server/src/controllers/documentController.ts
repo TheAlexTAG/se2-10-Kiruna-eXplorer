@@ -329,4 +329,4 @@ class DocumentController {
 
 
 
-export {DocumentController}
+export {DocumentController, DocumentControllerHelper}

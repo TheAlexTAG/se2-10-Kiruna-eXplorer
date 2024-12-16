@@ -323,4 +323,4 @@ class DocumentRoutes {
     }
 }
 
-export {DocumentRoutes};
+export {DocumentRoutes, DocumentRoutesHelper};

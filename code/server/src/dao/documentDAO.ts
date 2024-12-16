@@ -515,4 +515,4 @@ class DocumentDAO {
     }
 }
 
-export { DocumentDAO };
+export { DocumentDAO, DocumentDaoHelper};
