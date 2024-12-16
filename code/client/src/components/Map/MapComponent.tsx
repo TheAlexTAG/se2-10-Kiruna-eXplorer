@@ -547,6 +547,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
                             lng: doc.longitude,
                           });
                         },
+                        mouseover: (e) => {
+                          e.target.openPopup();
+                        },
+                        mouseout: (e) => {
+                          e.target.closePopup();
+                        },
                       }
                     : {
                         click: () => {
