@@ -255,8 +255,8 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     ];
 
     const newXDomain = [
-      d3.min(nodes.map((node: Node) => node.parsedDate)), // Data minima
-      d3.max(nodes.map((node: Node) => node.parsedDate)), // Data massima
+      d3.timeYear.offset(d3.min(nodes.map((node: Node) => node.parsedDate))!, -1), // domain 1 year before the min date
+      d3.timeYear.offset(d3.max(nodes.map((node: Node) => node.parsedDate))!, 1),  // domain 1 year after the max date
     ];
 
     const yScale = d3

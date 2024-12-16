@@ -203,6 +203,13 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   };
 
   useEffect(() => {
+
+    const validateDate = (date : string) => {
+      // Regex per i formati DD/MM/YYYY, MM/YYYY o YYYY
+      const dateRegex = /^(?:\d{2}\/\d{2}\/\d{4}|\d{2}\/\d{4}|\d{4})$/;
+      return dateRegex.test(date);
+    };
+
     const realSubmit = async () => {
       setIsReady(false);
       const documentData = {
@@ -221,6 +228,12 @@ const NewDocument: React.FC<NewDocumentProps> = ({
         coordinates,
       };
 
+      // Validazione del formato della data
+      if (!validateDate(issuanceDate)) {
+        setErrorMessage("Invalid date format! Please use DD/MM/YYYY, MM/YYYY or YYYY.");
+        return;
+      } 
+
       try {
         await API.createDocumentNode(documentData);
         updateTable();
@@ -232,7 +245,8 @@ const NewDocument: React.FC<NewDocumentProps> = ({
         console.error("Error during creation of document:", error);
         if (CoordinatesOutOfBoundsError) {
           setErrorMessage("Enter the coordinates inside the zone");
-        } else {
+        }
+        else {
           setErrorMessage("An error occurred while creating the document");
         }
       }
