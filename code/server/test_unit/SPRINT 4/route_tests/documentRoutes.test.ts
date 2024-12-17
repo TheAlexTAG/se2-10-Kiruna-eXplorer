@@ -1057,11 +1057,12 @@ describe("Route document and helper unit test", () => {
                 return next();
             })
 
-            jest.spyOn(upload, 'array').mockImplementation((fieldName: any, maxCount: any) => {
-                return (req: any, res: any, next: any) => {
-                    req.files = ["1-test.txt", "1-test2.txt"];
-                    next();
-                };
+            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+                req.files = [
+                    { originalname: 'test.txt', buffer: Buffer.from('file content') },
+                    { originalname: 'test2.txt', buffer: Buffer.from('file content') }
+                ];
+                next();
             });
 
             jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
@@ -1147,10 +1148,8 @@ describe("Route document and helper unit test", () => {
             jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
                 return next();
             })
-            jest.spyOn(upload, 'array').mockImplementation((fieldName: any, maxCount: any) => {
-                return (req: any, res: any, next: any) => {
-                    return new Error;
-                };
+            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+                return new Error();
             });
         
             const response = await request(app)
@@ -1171,11 +1170,9 @@ describe("Route document and helper unit test", () => {
             jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
                 return next();
             })
-            jest.spyOn(upload, 'array').mockImplementation((fieldName: any, maxCount: any) => {
-                return (req: any, res: any, next: any) => {
-                    req.files = [];
-                    next();
-                };
+            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+                req.files = [];
+                next();
             });
         
             const response = await request(app)
@@ -1210,13 +1207,11 @@ describe("Route document and helper unit test", () => {
             jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
                 return next();
             })
-            jest.spyOn(upload, 'array').mockImplementation((fieldName: any, maxCount: any) => {
-                return (req: any, res: any, next: any) => {
-                    req.files = [
-                        { originalname: 'test.txt', buffer: Buffer.from('file content') }
-                    ];
-                    next();
-                };
+            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+                req.files = [
+                    { originalname: 'test.txt', buffer: Buffer.from('file content') }
+                ];
+                next();
             });
             jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
         
@@ -1252,14 +1247,12 @@ describe("Route document and helper unit test", () => {
             jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
                 return next();
             })
-            jest.spyOn(upload, 'array').mockImplementation((fieldName: any, maxCount: any) => {
-                return (req: any, res: any, next: any) => {
-                    req.files = [
-                        { originalname: 'test.txt', buffer: Buffer.from('file content') },
-                        { originalname: 'test2.txt', buffer: Buffer.from('file content') }
-                    ];
-                    next();
-                };
+            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+                req.files = [
+                    { originalname: 'test.txt', buffer: Buffer.from('file content') },
+                    { originalname: 'test2.txt', buffer: Buffer.from('file content') }
+                ];
+                next();
             });
             jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
             jest.spyOn(DocumentController.prototype, 'addResource').mockRejectedValue(new Error());
@@ -1307,7 +1300,7 @@ describe("Route document and helper unit test", () => {
                 callback(null);
             });
         
-            const response = await request(app).get('/api/resource/download/1/test.txt');
+            await request(app).get('/api/resource/download/1/test.txt');
         });
 
         test("It should return 422 status if param is not correct", async () => {
