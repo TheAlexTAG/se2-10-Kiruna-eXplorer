@@ -113,6 +113,59 @@ const getDocuments = async () => {
 
   return await response.json();
 };
+const getDocument = async (id: number) => {
+  const response = await fetch(`${SERVER_URL}/document/${id}`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error getting documents:", errorData);
+    throw new Error(errorData.message || "Failed to get documents");
+  }
+
+  return await response.json();
+};
+const getDocumentsWithPagination = async (
+  pageNumber: number,
+  pageSize: number
+) => {
+  const queryParams = new URLSearchParams();
+
+  if (pageNumber !== undefined) {
+    queryParams.append("pageNumber", pageNumber.toString());
+  } else {
+    queryParams.append("pageNumber", "1");
+  }
+  if (pageSize !== undefined) {
+    queryParams.append("pageSize", pageSize.toString());
+  } else {
+    queryParams.append("pageSize", "10");
+  }
+
+  const response = await fetch(
+    `${SERVER_URL}/pagination/documents?${queryParams.toString()}`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error getting documents:", errorData);
+    throw new Error(errorData.message || "Failed to get documents");
+  }
+
+  return await response.json();
+};
 
 const connectDocuments = async (
   firstDoc: number,
@@ -326,7 +379,7 @@ const updateLink = async (
 ) => {
   const response = await fetch(`${SERVER_URL}/link/${linkID}`, {
     method: "PUT",
-    credentials: "include", 
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
@@ -342,7 +395,6 @@ const updateLink = async (
   return await response.json();
 };
 
-
 const API = {
   login,
   logout,
@@ -350,6 +402,8 @@ const API = {
   createDocumentNode,
   getZones,
   getDocuments,
+  getDocument,
+  getDocumentsWithPagination,
   connectDocuments,
   updateDocument,
   filterDocuments,

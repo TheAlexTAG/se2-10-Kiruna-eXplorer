@@ -11,7 +11,7 @@ interface EditDocumentProps {
   document: any;
   show: boolean;
   onHide: () => void;
-  updateTable: () => void;
+  updateTable: any;
 }
 
 export default function EditDocumentModal({
