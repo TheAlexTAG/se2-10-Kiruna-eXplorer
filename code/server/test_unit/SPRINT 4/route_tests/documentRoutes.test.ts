@@ -1,15 +1,15 @@
-import { describe, test, expect, beforeAll, beforeEach, afterEach, jest } from "@jest/globals"
+import { describe, test, expect, beforeAll, afterEach, jest } from "@jest/globals"
 import request from 'supertest'
 import { app } from "../../../index"
 import { DocumentController } from "../../../src/controllers/documentController"
 import { DocumentRoutesHelper, upload } from "../../../src/routers/documentRoutes"
 import { Document, DocumentData, DocumentGeoData } from "../../../src/components/document"
-import { WrongGeoreferenceError, CoordinatesOutOfBoundsError, DocumentNotFoundError } from "../../../src/errors/documentErrors"
-import { ZoneError, MissingKirunaZoneError, DatabaseConnectionError } from "../../../src/errors/zoneError"
+import { WrongGeoreferenceError, DocumentNotFoundError } from "../../../src/errors/documentErrors"
+import { DatabaseConnectionError } from "../../../src/errors/zoneError"
 import { Utilities } from "../../../src/utilities"
 import {ErrorHandler} from "../../../src/helper"
 import { InternalServerError } from "../../../src/errors/link_docError"
-import { Response, Express } from 'express';
+import { Response} from 'express';
 
 const wellknown = require('wellknown');
 const path = require('path');
