@@ -26,7 +26,10 @@ const storage = multer.diskStorage({
 const fileFilter = (req: any, file: any, cb: any) => {
     const allowedTypes = [
         'text/plain',    
-        'application/pdf'  
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.oasis.opendocument.text'
     ];
 
     if (allowedTypes.includes(file.mimetype)) {
@@ -39,11 +42,12 @@ const fileFilter = (req: any, file: any, cb: any) => {
 const upload = multer({
     storage: storage,
     limits: {
-        files: 5, 
+        files: 10, 
         fileSize: 10 * 1024 * 1024
     },
     fileFilter: fileFilter
 });
+
 
 class DocumentRoutesHelper {
     parseDate(dateStr: string): Date {
@@ -271,7 +275,6 @@ class DocumentRoutes {
         .then((response: boolean) => res.status(200).json(response))
         .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
         
-
         this.app.delete("/api/documents",
             this.utilities.isAdmin,
         (req: Request, res: any, next: any) => this.controller.deleteAllDocuments()
@@ -300,13 +303,17 @@ class DocumentRoutes {
                            validName = false;
                     });
                     if (!validName)
-                        return res.status(400).json({error: 'Invalid file name'});
+                        throw new Error('Invalid file name');
                     const names: string[] = files.map((f: any) => f.originalname);
                     const paths: string[] = files.map((f: any) => 'resources/'+document.id+'-'+f.originalname);
                     await this.controller.addResource(document.id, names, paths);
                     return res.status(200).json('Files saved successfully')
                 }
                 catch (err: any) {
+                    req.files.forEach((file: any) => {
+                        const filePath = path.resolve(file.path);
+                        fs.unlink(filePath, (unlinkErr: any) => {});
+                    });
                     res.status(err.code? err.code : 500).json({error: err.message});
                 }
             }
@@ -343,4 +350,4 @@ class DocumentRoutes {
     }
 }
 
-export {DocumentRoutes, DocumentRoutesHelper};
+export {DocumentRoutes, DocumentRoutesHelper, upload};
