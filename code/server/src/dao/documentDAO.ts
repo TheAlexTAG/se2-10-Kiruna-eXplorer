@@ -11,7 +11,13 @@ class DocumentDaoHelper {
         const conditions: string[] = [];
         const params: any[] = [];
         let sql = "";
-
+        if(filters.description != null) {
+            const keywords: string[] = filters.description.split(/,\s*/).filter((k: string) => k.trim() !== "");
+            keywords.forEach(keyword => {
+                conditions.push("d.description LIKE ?");
+                params.push(`%${keyword}%`);
+            });
+        }
         if (filters.zoneID != null) {
             if(filters.zoneID == 0) {
                 conditions.push("d.zoneID = ? AND d.latitude = ? AND d.longitude = ?");
