@@ -95,6 +95,7 @@ const legendData = [
   { label: "Update", lineStyle: "1,5,5,5" },
 ];
 
+
 const getColor = (stakeholder: string) => {
   // Verifica se ci sono più stakeholder separati da virgole
   if (stakeholder.includes(",")) {
@@ -117,17 +118,8 @@ const getColor = (stakeholder: string) => {
 };
 
 const parseDate = (dateStr: string): Date => {
-  const ddmmyyyy = d3.timeParse("%d/%m/%Y");
-  const mmyyyy = d3.timeParse("%m/%Y");
-  const yyyy = d3.timeParse("%Y");
-
-  if (ddmmyyyy(dateStr)) {
-    return ddmmyyyy(dateStr)!;
-  } else if (mmyyyy(dateStr)) {
-    return mmyyyy(dateStr)!;
-  } else {
-    return yyyy(dateStr)!;
-  }
+  const ddmmyyyy = d3.timeParse("%Y-%m-%d");
+  return ddmmyyyy(dateStr)!;
 };
 
 const parseScale = (scale: string): number | string => {
@@ -176,9 +168,26 @@ const getIconComponent = (type: string): React.FC<IconProps> => {
   }
 };
 
+function getDateRange(issuanceDate: string, parsedDate: Date): { min: number; max: number } {
+  if (issuanceDate.match(/^\d{4}$/)) {
+    // yyyy: Limita all'intero anno
+    const yearStart = new Date(parsedDate.getFullYear(), 0, 1).getTime();
+    const yearEnd = new Date(parsedDate.getFullYear() + 1, 0, 1).getTime();
+    return { min: yearStart, max: yearEnd };
+  } else if (issuanceDate.match(/^\d{2}\/\d{4}$/)) {
+    // mm/yyyy: Limita all'intero mese
+    const monthStart = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1).getTime();
+    const monthEnd = new Date(parsedDate.getFullYear(), parsedDate.getMonth() + 1, 1).getTime();
+    return { min: monthStart, max: monthEnd };
+  } else {
+    // Altri formati (dd/mm/yyyy o invalidi): Nessun range
+    return { min: parsedDate.getTime(), max: parsedDate.getTime() };
+  }
+}
+
 const fetchDocuments = async (): Promise<Node[]> => {
   const response = await API.getDocuments();
-
+  console.log(response);
   return response.map((doc: any) => ({
     id: doc.id,
     title: doc.title,
@@ -195,7 +204,7 @@ const fetchDocuments = async (): Promise<Node[]> => {
     attachment: doc.attachment,
     resource: doc.resource,
     parsedScale: parseScale(doc.scale),
-    parsedDate: parseDate(doc.issuanceDate),
+    parsedDate: parseDate(doc.parsedDate.split("T")[0]),
     pages: doc.pages,
     language: doc.language,
   }));
@@ -241,6 +250,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
   useEffect(() => {
     const loadData = async () => {
       const fetchedNodes = await fetchDocuments();
+      console.log(fetchedNodes);
       setNodes(fetchedNodes);
     };
 
@@ -644,8 +654,28 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         );
       });
 
+      const drag = d3.drag()
+  .on("start", function (event, d) {
+    d3.select(this).raise().classed("active", true);
+  })
+  .on("drag", function (event, d) {
+    const { min, max } = getDateRange(d.issuanceDate, d.parsedDate);
+
+    // Calcola la nuova posizione x solo se siamo in un range valido
+    if (min !== max) {
+      const newX = d.x + event.dx;
+
+      // Applica i limiti usando xScale per convertire il range temporale in pixel
+      d.x = Math.min(Math.max(newX, xScale(min)), xScale(max));
+      d3.select(this).attr("transform", `translate(${d.x}, ${d.y})`);
+    }
+  })
+  .on("end", function (event, d) {
+    d3.select(this).classed("active", false);
+  });
+
     // Disegna i nodi
-    graphGroup
+    const nodes_diag: any = graphGroup
       .selectAll("g.node")
       .data(nodeData)
       .join("g")
@@ -706,7 +736,9 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
           .on("click", function (event, d) {
             setSelectedDocument(d);
           });
-      });
+      })
+
+      nodes_diag.call(drag);
 
     // aggiungi funzionalità di zoom
     const offset = 50;
