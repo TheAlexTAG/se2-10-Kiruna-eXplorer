@@ -16,12 +16,14 @@ interface DocumentCardProps {
   setSelectedDocument: Dispatch<
     SetStateAction<Document | KirunaDocument | null>
   >;
+  handleMoreClick: any;
   inDiagram: boolean;
 }
 
 export const DocumentCard = ({
   cardInfo,
   setSelectedDocument,
+  handleMoreClick,
   inDiagram,
 }: DocumentCardProps) => {
   const location = useLocation();
@@ -42,7 +44,7 @@ export const DocumentCard = ({
 
   const handleChangeCardInfo = (documentID: number) => {
     API.getDocument(documentID).then((response) => {
-      setSelectedDocument(response);
+      handleMoreClick(response);
     });
   };
   return (

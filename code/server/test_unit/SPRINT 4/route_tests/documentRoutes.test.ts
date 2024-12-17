@@ -2,17 +2,16 @@ import { describe, test, expect, beforeAll, afterEach, jest } from "@jest/global
 import request from 'supertest'
 import { app } from "../../../index"
 import { DocumentController } from "../../../src/controllers/documentController"
-import { DocumentRoutesHelper } from "../../../src/routers/documentRoutes"
+import { DocumentRoutesHelper, upload } from "../../../src/routers/documentRoutes"
 import { Document, DocumentData, DocumentGeoData } from "../../../src/components/document"
-import { WrongGeoreferenceError, CoordinatesOutOfBoundsError, DocumentNotFoundError } from "../../../src/errors/documentErrors"
-import { ZoneError, MissingKirunaZoneError, DatabaseConnectionError } from "../../../src/errors/zoneError"
+import { WrongGeoreferenceError, DocumentNotFoundError } from "../../../src/errors/documentErrors"
+import { DatabaseConnectionError } from "../../../src/errors/zoneError"
 import { Utilities } from "../../../src/utilities"
 import {ErrorHandler} from "../../../src/helper"
 import { InternalServerError } from "../../../src/errors/link_docError"
-import { Response, Express } from 'express';
+import { Response} from 'express';
 
 const wellknown = require('wellknown');
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
@@ -21,7 +20,7 @@ jest.mock("../../../src/utilities")
 
 let documentHelper: DocumentRoutesHelper;
 
-describe("Route document helper unit test", () => {
+describe("Route document and helper unit test", () => {
 
     beforeAll(() => {
         documentHelper = new DocumentRoutesHelper();
@@ -51,16 +50,8 @@ describe("Route document helper unit test", () => {
         test('should throw an error for invalid date format', () => {
             expect(() => documentHelper.parseDate('2024/12/15')).toThrow('Invalid date format: 2024/12/15');
         });
-
     })
 
-})
-
-describe("Route document unit tests", () => {
-
-    afterEach(() => {
-        jest.resetAllMocks();
-    });
 
     describe("POST /api/document", () => {
 
@@ -520,7 +511,8 @@ describe("Route document unit tests", () => {
                 pages: "5"
             }
             const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
-            const document: Document = new Document(documentData, documentGeoData, 0, [], [], []);jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+            const document: Document = new Document(documentData, documentGeoData, 0, [], [], []);
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
                 return next();
             })
             jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
@@ -980,65 +972,416 @@ describe("Route document unit tests", () => {
     })
 
     describe("DELETE /api/documents", () => {
-            test("It should delete all documents", async () => {
-                jest.spyOn(Utilities.prototype, "isAdmin").mockImplementation((req, res, next) => {
-                    return next();
-                })
-                jest.spyOn(DocumentController.prototype, 'deleteAllDocuments').mockResolvedValue(true);
-    
-                const response = await request(app).delete("/api/documents");
-    
-                expect(response.status).toBe(200);
-                expect(response.body).toBeDefined();  
-            });
-    
-            test("It should delete all documents", async () => {
-                jest.spyOn(Utilities.prototype, "isAdmin").mockImplementation((req, res, next) => {
-                    return next();
-                })
-                jest.spyOn(DocumentController.prototype, 'deleteAllDocuments').mockResolvedValue(true);
-    
-                const response = await request(app).delete("/api/documents");
-    
-                expect(response.status).toBe(200);
-                expect(response.body).toBeDefined();  
-            });
-    
-            test("It should return a 401 code if user is not an admin", async () => {
-                jest.spyOn(Utilities.prototype, "isAdmin").mockImplementation((req, res, next) => {
-                    return res.status(401).json({ error: "User is not authorized"});
-                })
-    
-                const response = await request(app).delete("/api/documents");
-    
-                expect(response.status).toBe(401);
-                expect(DocumentController.prototype.deleteAllDocuments).not.toHaveBeenCalled();
-            });
-    
-            test("It should return 500 code if controller method returns a generic error", async () => {
-                jest.spyOn(Utilities.prototype, "isAdmin").mockImplementation((req, res, next) => {
-                    return next();
-                })
-                jest.spyOn(DocumentController.prototype, 'deleteAllDocuments').mockRejectedValue(new Error());
-    
-                const response = await request(app).delete("/api/documents");
-    
-                expect(response.status).toBe(500);
-            });
-    
-            test("It should return 500 code if controller method returns a specific error like InternalServerError", async () => {
-                jest.spyOn(Utilities.prototype, "isAdmin").mockImplementation((req, res, next) => {
-                    return next();
-                })
-                jest.spyOn(DocumentController.prototype, 'deleteAllDocuments').mockRejectedValue(new InternalServerError(''));
-    
-                const response = await request(app).delete("/api/documents");
-    
-                expect(response.status).toBe(500);
-            });
+        test("It should delete all documents", async () => {
+            jest.spyOn(Utilities.prototype, "isAdmin").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(DocumentController.prototype, 'deleteAllDocuments').mockResolvedValue(true);
+
+            const response = await request(app).delete("/api/documents");
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeDefined();  
         });
 
-         
+        test("It should delete all documents", async () => {
+            jest.spyOn(Utilities.prototype, "isAdmin").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(DocumentController.prototype, 'deleteAllDocuments').mockResolvedValue(true);
+
+            const response = await request(app).delete("/api/documents");
+
+            expect(response.status).toBe(200);
+            expect(response.body).toBeDefined();  
+        });
+
+        test("It should return a 401 code if user is not an admin", async () => {
+            jest.spyOn(Utilities.prototype, "isAdmin").mockImplementation((req, res, next) => {
+                return res.status(401).json({ error: "User is not authorized"});
+            })
+
+            const response = await request(app).delete("/api/documents");
+
+            expect(response.status).toBe(401);
+            expect(DocumentController.prototype.deleteAllDocuments).not.toHaveBeenCalled();
+        });
+
+        test("It should return 500 code if controller method returns a generic error", async () => {
+            jest.spyOn(Utilities.prototype, "isAdmin").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(DocumentController.prototype, 'deleteAllDocuments').mockRejectedValue(new Error());
+
+            const response = await request(app).delete("/api/documents");
+
+            expect(response.status).toBe(500);
+        });
+
+        test("It should return 500 code if controller method returns a specific error like InternalServerError", async () => {
+            jest.spyOn(Utilities.prototype, "isAdmin").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(DocumentController.prototype, 'deleteAllDocuments').mockRejectedValue(new InternalServerError(''));
+
+            const response = await request(app).delete("/api/documents");
+
+            expect(response.status).toBe(500);
+        });
+    });
+
+    describe("POST /api/resource/:documentID", () => {
+        
+        test("It should return 200 and confirm files are saved successfully when input is valid", async () => {
+            const documentData : DocumentData = {
+                documentID: 1,
+                title: "Documento 1",
+                description: "Descrizione 1",
+                stakeholders: "Stakeholders 1",
+                scale: "1:100",
+                issuanceDate: "01/01/2023",
+                parsedDate: new Date(2023, 0, 1),
+                type: "Report",
+                language: "it",
+                pages: "5"
+            }
+            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
+            const document: Document = new Document(documentData, documentGeoData, 0, [], [], []);
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
+                return next();
+            })
+
+            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+                req.files = [
+                    { originalname: 'test.txt', buffer: Buffer.from('file content') },
+                    { originalname: 'test2.txt', buffer: Buffer.from('file content') }
+                ];
+                next();
+            });
+
+            jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
+            jest.spyOn(DocumentController.prototype, 'addResource').mockResolvedValue(true);
+
+            const response = await request(app)
+                .post('/api/resource/1')
+                .attach("files", Buffer.from("file content"), { filename: "test.txt" })
+                .attach("files", Buffer.from("file content 2"), { filename: "test2.txt" });
+            
+            let filePath = path.resolve(__dirname, '../../../resources/1-test.txt');
+            fs.unlink(filePath, (err: any) => {});
+            filePath = path.resolve(__dirname, '../../../resources/1-test2.txt');
+            fs.unlink(filePath, (err: any) => {});
+            expect(response.status).toBe(200);
+            expect(DocumentController.prototype.addResource).toHaveBeenCalledWith(1, ["test.txt","test2.txt"], ["resources/1-test.txt","resources/1-test2.txt"]);
+        });
+
+        test("It should return 422 when documentID is not a number", async () => {
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return res.status(422);
+            })
+            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
+                return next();
+            })
+            const response = await request(app)
+                .post("/api/resource/abc")
+                .attach("files", Buffer.from("file content"), { filename: "test.txt" });
+        
+            expect(response.status).toBe(422);
+            expect(DocumentController.prototype.addResource).not.toHaveBeenCalled();
+        });
+
+        test("It should return 401 if user is not an up", async () => {
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
+                return res.status(401).json({ error: "User is not authorized"});
+            })
+            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
+                return next();
+            })
+        
+            const response = await request(app)
+                .post('/api/resource/1')
+                .attach("files", Buffer.from("file content"), { filename: "test.txt" })
+                .attach("files", Buffer.from("file content 2"), { filename: "test2.txt" });
+        
+            expect(response.status).toBe(401);
+            expect(DocumentController.prototype.addResource).not.toHaveBeenCalled();
+        });
+
+        test("It should return 404 when document is not found", async () => {
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
+                return res.status(404).json({ error: 'Document not found' });
+            })
+        
+            const response = await request(app)
+                .post('/api/resource/1')
+                .attach("files", Buffer.from("file content"), { filename: "test.txt" });
+        
+            expect(response.status).toBe(404);
+            expect(DocumentController.prototype.addResource).not.toHaveBeenCalled();
+        });
+
+        test("It should return 500 when file extension is not valid", async () => {
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+                return new Error();
+            });
+        
+            const response = await request(app)
+                .post('/api/resource/1')
+                .attach("files", Buffer.from("file content"), { filename: "image.png" });
+        
+            expect(response.status).toBe(500);
+            expect(DocumentController.prototype.addResource).not.toHaveBeenCalled();
+        });
+
+        test("It should return 422 when no files are uploaded", async () => {
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return res.status(422);
+            })
+            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+                req.files = [];
+                next();
+            });
+        
+            const response = await request(app)
+                .post('/api/resource/1')
+                .send();
+        
+            expect(response.status).toBe(422);
+            expect(DocumentController.prototype.addResource).not.toHaveBeenCalled();
+        });
+        
+        test("It should return 500 when file name is invalid", async () => {
+            const documentData : DocumentData = {
+                documentID: 1,
+                title: "Documento 1",
+                description: "Descrizione 1",
+                stakeholders: "Stakeholders 1",
+                scale: "1:100",
+                issuanceDate: "01/01/2023",
+                parsedDate: new Date(2023, 0, 1),
+                type: "Report",
+                language: "it",
+                pages: "5"
+            }
+            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
+            const document: Document = new Document(documentData, documentGeoData, 0, [], [{name:'test.txt', path: '1-test.txt'}], []);
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                    return next();
+                })
+            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+                req.files = [
+                    { originalname: 'test.txt', buffer: Buffer.from('file content') }
+                ];
+                next();
+            });
+            jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
+        
+            const response = await request(app)
+                .post('/api/resource/1')
+                .attach("files", Buffer.from("file content"), { filename: "test.txt" });
+        
+            expect(response.status).toBe(500);
+            expect(DocumentController.prototype.addResource).not.toHaveBeenCalled();
+        });
+        
+        test("It should return 500 status if it catch a generic error", async () => {
+            const documentData : DocumentData = {
+                documentID: 1,
+                title: "Documento 1",
+                description: "Descrizione 1",
+                stakeholders: "Stakeholders 1",
+                scale: "1:100",
+                issuanceDate: "01/01/2023",
+                parsedDate: new Date(2023, 0, 1),
+                type: "Report",
+                language: "it",
+                pages: "5"
+            }
+            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
+            const document: Document = new Document(documentData, documentGeoData, 0, [], [], []);
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+                req.files = [
+                    { originalname: 'test.txt', buffer: Buffer.from('file content') },
+                    { originalname: 'test2.txt', buffer: Buffer.from('file content') }
+                ];
+                next();
+            });
+            jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
+            jest.spyOn(DocumentController.prototype, 'addResource').mockRejectedValue(new Error());
+        
+            const response = await request(app)
+                .post('/api/resource/1')
+                .attach("files", Buffer.from("file content"), { filename: "test.txt" })
+                .attach("files", Buffer.from("file content 2"), { filename: "test2.txt" });
+        
+            expect(response.status).toBe(500);
+        });
+
+    })
+
+    describe("GET /api/resource/download/:documentID/:fileName", () => {
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn(),
+            download: jest.fn(),
+          } as unknown as Response;
+
+        test("It should download the requested file", async () => {
+            const documentData : DocumentData = {
+                documentID: 1,
+                title: "Documento 1",
+                description: "Descrizione 1",
+                stakeholders: "Stakeholders 1",
+                scale: "1:100",
+                issuanceDate: "01/01/2023",
+                parsedDate: new Date(2023, 0, 1),
+                type: "Report",
+                language: "it",
+                pages: "5"
+            }
+            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
+            const document: Document = new Document(documentData, documentGeoData, 0, [], [{name:'test.txt', path: '1-test.txt'}], []);
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
+            jest.spyOn(path, 'join').mockReturnValue('/code/server/resources/1/test.txt');
+            jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+            jest.spyOn(res, 'download').mockImplementation((path: any, filename: any, callback: any) => {
+                callback(null);
+            });
+        
+            await request(app).get('/api/resource/download/1/test.txt');
+        });
+
+        test("It should return 422 status if param is not correct", async () => {
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return res.status(422);
+            })
+        
+            const response = await request(app).get('/api/resource/download/uno/test.txt');
+        
+            expect(response.status).toBe(422);
+            expect(res.download).not.toHaveBeenCalled();
+        });
+
+        test("It should return 404 if file is not in db", async () => {
+            const documentData : DocumentData = {
+                documentID: 1,
+                title: "Documento 1",
+                description: "Descrizione 1",
+                stakeholders: "Stakeholders 1",
+                scale: "1:100",
+                issuanceDate: "01/01/2023",
+                parsedDate: new Date(2023, 0, 1),
+                type: "Report",
+                language: "it",
+                pages: "5"
+            }
+            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
+            const document: Document = new Document(documentData, documentGeoData, 0, [], [{name:'test2.txt', path: '1-test2.txt'}], []);
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
+            jest.spyOn(path, 'join').mockReturnValue('/code/server');
+            jest.spyOn(fs, 'existsSync').mockReturnValue(true);
+        
+            const response = await request(app).get('/api/resource/download/1/test.txt');
+        
+            expect(response.status).toBe(404);
+            expect(res.download).not.toHaveBeenCalled();
+        });
+
+        test("It should return 404 if file is not in resource directory", async () => {
+            const documentData : DocumentData = {
+                documentID: 1,
+                title: "Documento 1",
+                description: "Descrizione 1",
+                stakeholders: "Stakeholders 1",
+                scale: "1:100",
+                issuanceDate: "01/01/2023",
+                parsedDate: new Date(2023, 0, 1),
+                type: "Report",
+                language: "it",
+                pages: "5"
+            }
+            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
+            const document: Document = new Document(documentData, documentGeoData, 0, [], [{name:'test.txt', path: '1-test.txt'}], []);
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
+            jest.spyOn(path, 'join').mockReturnValue('/code/server/resources/1-test.txt');
+            jest.spyOn(fs, 'existsSync').mockReturnValue(false);
+        
+            const response = await request(app).get('/api/resource/download/1/test.txt');
+        
+            expect(response.status).toBe(404);
+            expect(res.download).not.toHaveBeenCalled();
+        });
+
+        test("It should return 500 if a generic error occurs", async () => {
+            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
+                return next();
+            })
+            jest.spyOn(DocumentController.prototype, 'getDocument').mockRejectedValue(new Error);
+        
+            const response = await request(app).get('/api/resource/download/1/test.txt');
+        
+            expect(response.status).toBe(500);
+            expect(res.download).not.toHaveBeenCalled();
+        });
+    })
 
 
 })

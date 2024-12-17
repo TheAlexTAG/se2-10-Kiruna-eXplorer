@@ -51,6 +51,7 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
   const [editControlKey, setEditControlKey] = useState(0);
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showDocs, setShowDocs] = useState(true);
 
   const clearCustomPolygon = () => {
     if (featureGroupRef.current) {
@@ -179,6 +180,8 @@ const GeoReferenceComponent: React.FC<GeoReferenceComponentProps> = ({
         setHighlightedDocumentId={setHighlightedDocumentId}
         tempHighlightedDocumentId={tempHighlightedDocumentId}
         setTempHighlightedDocumentId={setTempHighlightedDocumentId}
+        showDocs={showDocs}
+        setShowDocs={setShowDocs}
       />
     </div>
   );
