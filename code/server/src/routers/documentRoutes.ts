@@ -23,12 +23,26 @@ const storage = multer.diskStorage({
   }
 });
 
+const fileFilter = (req: any, file: any, cb: any) => {
+    const allowedTypes = [
+        'text/plain',    
+        'application/pdf'  
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Tipo di file non supportato, solo file testuali o PDF sono permessi'), false);
+    }
+};
+
 const upload = multer({
     storage: storage,
     limits: {
         files: 5, 
         fileSize: 10 * 1024 * 1024
-    }
+    },
+    fileFilter: fileFilter
 });
 
 class DocumentRoutesHelper {
@@ -39,20 +53,20 @@ class DocumentRoutesHelper {
 
         const matchDDMMYYYY = ddmmyyyyPattern.exec(dateStr);
         if (matchDDMMYYYY) {
-        const [, day, month, year] = matchDDMMYYYY;
-        return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          const [, day, month, year] = matchDDMMYYYY;
+          return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
         }
-
+      
         const matchMMYYYY = mmyyyyPattern.exec(dateStr);
         if (matchMMYYYY) {
-        const [, month, year] = matchMMYYYY;
-        return new Date(parseInt(year), parseInt(month) - 1, 1);
+          const [, month, year] = matchMMYYYY;
+          return new Date(parseInt(year), parseInt(month) - 1, 1);
         }
-
+      
         const matchYYYY = yyyyPattern.exec(dateStr);
         if (matchYYYY) {
-        const [, year] = matchYYYY;
-        return new Date(parseInt(year), 0, 1);
+          const [, year] = matchYYYY;
+          return new Date(parseInt(year), 0, 1);
         }
 
         throw new Error(`Invalid date format: ${dateStr}`);
