@@ -121,7 +121,7 @@ class DocumentDaoHelper {
 
         if(documentData.type) {
             conditions.push("type = ?");
-            params.push(documentData.title);
+            params.push(documentData.type);
         }
 
         if(conditions.length > 0) 
