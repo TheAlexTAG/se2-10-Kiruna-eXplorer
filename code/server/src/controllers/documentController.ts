@@ -287,6 +287,14 @@ class DocumentController {
     async getDocumentsWithPagination(filters: any, pageNumber: number, pageSize: number = 10): Promise<PaginatedDocs> {
         const documents = await this.dao.getDocsWithFilters(filters);
 
+        if(documents.length === 0) return {
+            documents: documents,
+            totalItems: 0,
+            itemsPerPage: pageSize,
+            currentPage: pageNumber,
+            totalPages: 0
+        }
+
         const startIndex = (pageNumber - 1) * pageSize;
         const endIndex = startIndex + pageSize;
         const totalPages = Math.ceil(documents.length / pageSize);
