@@ -225,6 +225,7 @@ class DocumentRoutes {
                     throw new Error("Invalid date format");
                 return true;
             }),
+            query("title").optional().isString(),
             query("type").optional().isString(),
             query("language").optional().isString(),
             query('description').optional().isString(),

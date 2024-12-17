@@ -11,6 +11,10 @@ class DocumentDaoHelper {
         const conditions: string[] = [];
         const params: any[] = [];
         let sql = "";
+        if(filters.title != null) {
+            conditions.push("d.title LIKE ?");
+            params.push(`%${filters.title}%`);
+        }
         if(filters.description != null) {
             const keywords: string[] = filters.description.split(/,\s*/).filter((k: string) => k.trim() !== "");
             keywords.forEach(keyword => {
