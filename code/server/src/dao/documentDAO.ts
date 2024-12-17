@@ -163,7 +163,6 @@ class DocumentDAO {
             if(documentGeoData.coordinates) {
                 await conn.beginTransaction();
                 const lastID = await this.helper.insertZone(documentGeoData.coordinates as string, conn);
-                if(!lastID) throw new InsertZoneError();
                 documentGeoData.zoneID = lastID;
             }
 
@@ -191,8 +190,7 @@ class DocumentDAO {
             return Number(result.insertId);
         } catch (err: any) {
             if(documentGeoData.coordinates) await conn?.rollback();
-            if(err instanceof ZoneError) throw err;
-            else throw new InternalServerError();
+            throw new InternalServerError();
         } finally {
             await conn?.release();
         }
