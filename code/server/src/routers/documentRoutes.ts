@@ -23,12 +23,26 @@ const storage = multer.diskStorage({
   }
 });
 
+const fileFilter = (req: any, file: any, cb: any) => {
+    const allowedTypes = [
+        'text/plain',    
+        'application/pdf'  
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Tipo di file non supportato, solo file testuali o PDF sono permessi'), false);
+    }
+};
+
 const upload = multer({
     storage: storage,
     limits: {
         files: 5, 
         fileSize: 10 * 1024 * 1024
-    }
+    },
+    fileFilter: fileFilter
 });
 
 class DocumentRoutesHelper {
@@ -36,7 +50,7 @@ class DocumentRoutesHelper {
         const ddmmyyyyPattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
         const mmyyyyPattern = /^(\d{2})\/(\d{4})$/;
         const yyyyPattern = /^(\d{4})$/;
-      
+
         const matchDDMMYYYY = ddmmyyyyPattern.exec(dateStr);
         if (matchDDMMYYYY) {
           const [, day, month, year] = matchDDMMYYYY;
@@ -54,9 +68,9 @@ class DocumentRoutesHelper {
           const [, year] = matchYYYY;
           return new Date(parseInt(year), 0, 1);
         }
-      
+
         throw new Error(`Invalid date format: ${dateStr}`);
-      }
+    }
 }
 
 class DocumentRoutes {
@@ -225,8 +239,10 @@ class DocumentRoutes {
                     throw new Error("Invalid date format");
                 return true;
             }),
+            query("title").optional().isString(),
             query("type").optional().isString(),
             query("language").optional().isString(),
+            query('description').optional().isString(),
             this.utilities.paginationCheck,
             this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => {

@@ -113,6 +113,23 @@ const getDocuments = async () => {
 
   return await response.json();
 };
+const getDocument = async (id: number) => {
+  const response = await fetch(`${SERVER_URL}/document/${id}`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error getting documents:", errorData);
+    throw new Error(errorData.message || "Failed to get documents");
+  }
+
+  return await response.json();
+};
 const getDocumentsWithPagination = async (
   pageNumber: number,
   pageSize: number
@@ -362,7 +379,7 @@ const updateLink = async (
 ) => {
   const response = await fetch(`${SERVER_URL}/link/${linkID}`, {
     method: "PUT",
-    credentials: "include", 
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
@@ -378,7 +395,6 @@ const updateLink = async (
   return await response.json();
 };
 
-
 const API = {
   login,
   logout,
@@ -386,6 +402,7 @@ const API = {
   createDocumentNode,
   getZones,
   getDocuments,
+  getDocument,
   getDocumentsWithPagination,
   connectDocuments,
   updateDocument,

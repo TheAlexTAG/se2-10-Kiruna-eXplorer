@@ -16,14 +16,12 @@ import API from "../../../API/API";
 import { LinkingDocumentDropdown } from "../LinkingDocumentDropdown/LinkingDocumentDropdown";
 
 interface documentsProps {
-  documents: any;
   currentDocument: any;
   updateTable: any;
   setSuccessMessage: any;
 }
 
 export const LinkingDocumentsModal = ({
-  documents,
   currentDocument,
   updateTable,
   setSuccessMessage,
@@ -33,6 +31,13 @@ export const LinkingDocumentsModal = ({
   const [tab, setTab] = useState(0);
   const [selectedItems, setSelectedItems] = useState<any>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [documents, setDocuments] = useState<any>([]);
+  useEffect(() => {
+    if (show)
+      API.getDocuments().then((res) => {
+        setDocuments(res);
+      });
+  }, [show]);
 
   const handleClose = () => {
     setShow(false);

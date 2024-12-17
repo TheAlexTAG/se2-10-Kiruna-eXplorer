@@ -18,11 +18,13 @@ import EditDocumentModal from "./EditDocuments/EditDocumentsModal";
 import NewDocument from "../NewDocument/NewDocument";
 import "./DocumentList.css";
 import "./OriginalResources/OriginalResourcesModal.css";
+import { useNavigate } from "react-router-dom";
 interface userProps {
   userInfo: { username: string; role: string } | null;
 }
 
 export const DocumentList = ({ userInfo }: userProps) => {
+  const navigate = useNavigate();
   const [documents, setDocuments] = useState([]);
   const [document, setDocument] = useState<any | null>(null);
   const [filteredDocuments, setFilteredDocuments] = useState([]);
@@ -82,7 +84,10 @@ export const DocumentList = ({ userInfo }: userProps) => {
   ];
 
   const fetchDocuments = async (pageNumber: number) => {
-    API.getDocumentsWithPagination(pageNumber, pageSize).then((data) => {
+    API.getDocumentsWithPagination(
+      pageNumber ? pageNumber : currentPage,
+      pageSize
+    ).then((data) => {
       setDocuments(data.documents);
       setFilteredDocuments(data.documents);
       setTotalItems(data.totalItems);
@@ -418,7 +423,6 @@ export const DocumentList = ({ userInfo }: userProps) => {
                       <Dropdown.Item>
                         <LinkingDocumentsModal
                           currentDocument={document}
-                          documents={documents}
                           updateTable={fetchDocuments}
                           setSuccessMessage={setSuccessMessage}
                         />
@@ -442,6 +446,34 @@ export const DocumentList = ({ userInfo }: userProps) => {
                         >
                           <i className="bi bi-file-earmark-arrow-up-fill"></i>{" "}
                           Upload Files
+                        </div>
+                      </Dropdown.Item>
+                      <Dropdown.Divider />
+                      <Dropdown.Item>
+                        <div
+                          style={{ color: "#2d6efd" }}
+                          className="p-2"
+                          onClick={() => {
+                            navigate("/diagram", {
+                              state: { selectedDocument: document },
+                            });
+                          }}
+                        >
+                          <i className="bi bi-diagram-3"></i> Open in Diagram
+                        </div>
+                      </Dropdown.Item>
+                      <Dropdown.Divider />
+                      <Dropdown.Item>
+                        <div
+                          style={{ color: "#2d6efd" }}
+                          className="p-2"
+                          onClick={() => {
+                            navigate("/map", {
+                              state: { selectedDocument: document },
+                            });
+                          }}
+                        >
+                          <i className="bi bi-geo-alt"></i> Open in Map
                         </div>
                       </Dropdown.Item>
                     </DropdownButton>
