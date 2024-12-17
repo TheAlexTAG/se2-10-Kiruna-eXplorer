@@ -25,6 +25,13 @@ async function testConnection(): Promise<void> {
     }
 }
 
+async function closeDbPool(): Promise<void> {
+    try {
+        await db.end();
+    } catch (err: any) {
+        console.error('Errore durante la chiusura del pool: ', err);
+    }
+}
 
 export default db;
-export {testConnection};
+export {testConnection, closeDbPool};
