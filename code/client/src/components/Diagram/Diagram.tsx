@@ -576,11 +576,10 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
         const onRelationshipChange = async (rel: string) => {
           try {
-            d.relationship = rel; // Aggiorna il dato localmente
-            // Chiamata API per aggiornare il link sul server
+            d.relationship = rel; 
             await API.updateLink(d.id, d.sourceNode.id, d.targetNode.id, rel);
 
-            d3.select(this) // Aggiorna lo stile della linea
+            d3.select(this)
               .attr("stroke-dasharray", getLineStyle(rel));
 
             alert("Relationship updated successfully!");
