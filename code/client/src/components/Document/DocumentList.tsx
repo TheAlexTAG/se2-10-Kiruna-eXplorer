@@ -84,7 +84,10 @@ export const DocumentList = ({ userInfo }: userProps) => {
   ];
 
   const fetchDocuments = async (pageNumber: number) => {
-    API.getDocumentsWithPagination(pageNumber, pageSize).then((data) => {
+    API.getDocumentsWithPagination(
+      pageNumber ? pageNumber : currentPage,
+      pageSize
+    ).then((data) => {
       setDocuments(data.documents);
       setFilteredDocuments(data.documents);
       setTotalItems(data.totalItems);
@@ -420,7 +423,6 @@ export const DocumentList = ({ userInfo }: userProps) => {
                       <Dropdown.Item>
                         <LinkingDocumentsModal
                           currentDocument={document}
-                          documents={documents}
                           updateTable={fetchDocuments}
                           setSuccessMessage={setSuccessMessage}
                         />
