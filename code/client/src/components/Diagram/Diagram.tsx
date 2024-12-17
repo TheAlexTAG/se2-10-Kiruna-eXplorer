@@ -255,9 +255,24 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     const newYDomain = new Set([
       "Concept",
       "Text",
-      ...nodes
-        .map((node: Node) => node.parsedScale)
-        .sort((a: any, b: any) => b - a),
+      ...[...new Set(nodes.map((node: Node) => node.parsedScale))]
+        .sort((a, b) => {
+          // Se entrambi sono "Blueprints/effects", mettili alla fine
+          if (a === "Blueprints/effects") return 1;
+          if (b === "Blueprints/effects") return -1;
+    
+          // Ordina numericamente in ordine decrescente
+          if (typeof a === 'number' && typeof b === 'number') {
+            return b - a;
+          }
+    
+          // Se uno è un numero e l'altro è una stringa, metti il numero prima
+          if (typeof a === 'number') return -1;
+          if (typeof b === 'number') return 1;
+    
+          // Se entrambi sono stringhe, ordina alfabeticamente (decrescente)
+          return String(b).localeCompare(String(a));
+        }),
       "Blueprints/effects",
       "",
     ]);
