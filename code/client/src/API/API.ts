@@ -289,6 +289,34 @@ const createZone = async (coordinates: any) => {
   }
 };
 
+const editZone = async (id: number, coordinates: any) => {
+  console.log("id is ", id, "while coordinates are ", coordinates);
+  try {
+    const response = await fetch(`${SERVER_URL}/zone/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ id, coordinates }),
+    });
+    if (response.ok) {
+      const res = await response.json();
+
+      return res;
+    } else {
+      const errDetails = await response.json();
+      console.log("errdetails is ", errDetails);
+      throw new Error(
+        errDetails.error ? errDetails.error : errDetails.error[0].msg
+      );
+    }
+  } catch (err) {
+    console.error("Error creating custom zone: ", err);
+    throw err;
+  }
+};
+
 const addOriginalResource = async (documentID: number, myFiles: File[]) => {
   try {
     if (!myFiles || myFiles.length === 0) {
@@ -408,6 +436,7 @@ const API = {
   updateDocument,
   filterDocuments,
   createZone,
+  editZone,
   addOriginalResource,
   handleDownloadResource,
   getStakeholders,

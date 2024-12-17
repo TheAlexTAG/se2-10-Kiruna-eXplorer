@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
-import Select from "react-select";
+
 import API from "../../../API/API";
 import "./EditDocumentsModal.css";
 import { Feature, MultiPolygon } from "geojson";
