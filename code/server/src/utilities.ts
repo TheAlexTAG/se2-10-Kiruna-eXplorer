@@ -75,7 +75,7 @@ class Utilities{
         }
     }
 
-    async paginationCheck(req: any, res: any, next: any) {
+    paginationCheck(req: any, res: any, next: any) {
         if(req.query.pageNumber && req.query.pageNumber > 0)
             return next();
         else res.status(422).json({error: "Page number missing or incorrect"});

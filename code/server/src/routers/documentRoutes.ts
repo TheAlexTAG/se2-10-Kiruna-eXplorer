@@ -23,12 +23,26 @@ const storage = multer.diskStorage({
   }
 });
 
+const fileFilter = (req: any, file: any, cb: any) => {
+    const allowedTypes = [
+        'text/plain',    
+        'application/pdf'  
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+    } else {
+        cb(new Error('Tipo di file non supportato, solo file testuali o PDF sono permessi'), false);
+    }
+};
+
 const upload = multer({
     storage: storage,
     limits: {
         files: 5, 
         fileSize: 10 * 1024 * 1024
-    }
+    },
+    fileFilter: fileFilter
 });
 
 class DocumentRoutesHelper {
