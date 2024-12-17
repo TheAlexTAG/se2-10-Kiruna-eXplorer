@@ -41,6 +41,7 @@ import { PiBird } from "react-icons/pi";
 import { IoDocumentOutline, IoDocumentSharp } from "react-icons/io5";
 
 import { Button, InputGroup, Form } from "react-bootstrap";
+import { useLocation } from "react-router-dom";
 
 declare module "leaflet" {
   interface MarkerOptions {
@@ -119,6 +120,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   tempHighlightedDocumentId,
   setTempHighlightedDocumentId,
 }) => {
+  const location = useLocation();
   const [kirunaDocuments, setKirunaDocuments] = useState<
     KirunaDocument[] | null
   >(null);
@@ -465,6 +467,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setHighlightedDocumentId(document.id);
     setTempHighlightedDocumentId(document.id);
   };
+  useEffect(() => {
+    if (location.state?.selectedDocument) {
+      const document = location.state.selectedDocument;
+      setSelectedDocument(document);
+      setHighlightedDocumentId(document.id);
+      setTempHighlightedDocumentId(document.id);
+    }
+  }, [location.state]);
   return (
     <div>
       <MapContainer

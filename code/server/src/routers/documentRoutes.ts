@@ -54,7 +54,7 @@ class DocumentRoutesHelper {
         const ddmmyyyyPattern = /^(\d{2})\/(\d{2})\/(\d{4})$/;
         const mmyyyyPattern = /^(\d{2})\/(\d{4})$/;
         const yyyyPattern = /^(\d{4})$/;
-      
+
         const matchDDMMYYYY = ddmmyyyyPattern.exec(dateStr);
         if (matchDDMMYYYY) {
           const [, day, month, year] = matchDDMMYYYY;
@@ -72,9 +72,9 @@ class DocumentRoutesHelper {
           const [, year] = matchYYYY;
           return new Date(parseInt(year), 0, 1);
         }
-      
+
         throw new Error(`Invalid date format: ${dateStr}`);
-      }
+    }
 }
 
 class DocumentRoutes {
@@ -243,8 +243,10 @@ class DocumentRoutes {
                     throw new Error("Invalid date format");
                 return true;
             }),
+            query("title").optional().isString(),
             query("type").optional().isString(),
             query("language").optional().isString(),
+            query('description').optional().isString(),
             this.utilities.paginationCheck,
             this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => {

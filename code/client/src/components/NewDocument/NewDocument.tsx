@@ -180,12 +180,18 @@ const NewDocument: React.FC<NewDocumentProps> = ({
     };
 
     setFieldErrors(errors);
-
-    if (Object.values(errors).some((hasError) => hasError)) {
-      setErrorMessage("One or more required field(s) are missing.");
+    if (!title) {
+      setErrorMessage("Title is required");
       return;
     }
-
+    if (!description) {
+      setErrorMessage("Description is required");
+      return;
+    }
+    if (!stakeholders) {
+      setErrorMessage("Stakeholders are required");
+      return;
+    }
     if (
       zoneID === null &&
       customArea === null &&
@@ -197,14 +203,31 @@ const NewDocument: React.FC<NewDocumentProps> = ({
       );
       return;
     }
+    if (!scale) {
+      setErrorMessage("Scale is required");
+      return;
+    }
+    if (!issuanceDate) {
+      setErrorMessage("Issuance date is required");
+      return;
+    }
+    if (!type) {
+      setErrorMessage("Type is required");
+      return;
+    }
+
+    // if (Object.values(errors).some((hasError) => hasError)) {
+    //   setErrorMessage("One or more required field(s) are missing.");
+    //   return;
+    // }
+
     setCoordinates(customArea);
     setErrorMessage(null);
     setIsReady(true);
   };
 
   useEffect(() => {
-
-    const validateDate = (date : string) => {
+    const validateDate = (date: string) => {
       // Regex per i formati DD/MM/YYYY, MM/YYYY o YYYY
       const dateRegex = /^(?:\d{2}\/\d{2}\/\d{4}|\d{2}\/\d{4}|\d{4})$/;
       return dateRegex.test(date);
@@ -230,9 +253,11 @@ const NewDocument: React.FC<NewDocumentProps> = ({
 
       // Validazione del formato della data
       if (!validateDate(issuanceDate)) {
-        setErrorMessage("Invalid date format! Please use DD/MM/YYYY, MM/YYYY or YYYY.");
+        setErrorMessage(
+          "Invalid date format! Please use DD/MM/YYYY, MM/YYYY or YYYY."
+        );
         return;
-      } 
+      }
 
       try {
         await API.createDocumentNode(documentData);
@@ -245,8 +270,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
         console.error("Error during creation of document:", error);
         if (CoordinatesOutOfBoundsError) {
           setErrorMessage("Enter the coordinates inside the zone");
-        }
-        else {
+        } else {
           setErrorMessage("An error occurred while creating the document");
         }
       }

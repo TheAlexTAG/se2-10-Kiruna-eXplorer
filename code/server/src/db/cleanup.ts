@@ -9,9 +9,9 @@ async function cleanup(): Promise<void> {
         const tables = await conn.query(`
             SELECT table_name
             FROM information_schema.tables
-            WHERE table_schema = DATABASE();
+            WHERE table_schema = DATABASE() AND table_name!= 'user';
           `)
-        console.log(tables);
+        //console.log(tables);
         for (const table of tables) {
             await conn.query(`DELETE FROM \`${table.table_name}\`;`);
         }
