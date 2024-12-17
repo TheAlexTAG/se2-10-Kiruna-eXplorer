@@ -38,6 +38,12 @@ export const DocumentCard = ({
     };
     return iconComponents[type] || iconComponents.default;
   };
+
+  const handleChangeCardInfo = (documentID: number) => {
+    API.getDocument(documentID).then((response) => {
+      setSelectedDocument(response);
+    });
+  };
   return (
     <>
       <div
@@ -111,6 +117,29 @@ export const DocumentCard = ({
                 Open in Diagram
               </Button>
             </div>
+            {cardInfo.links && cardInfo.links.length > 0 && (
+              <div>
+                <div>
+                  <strong>Links:</strong>
+                </div>
+                <div>
+                  {cardInfo.links.map((link: any, index: number) => (
+                    <div
+                      key={index}
+                      className="my-2"
+                      style={{ cursor: "pointer" }}
+                      onClick={() => handleChangeCardInfo(link.documentID)}
+                    >
+                      <i
+                        className="bi bi-link-45deg mx-1"
+                        style={{ color: "#5d5dff" }}
+                      ></i>
+                      {link.title}({link.relationship})
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             {((cardInfo.attachment && cardInfo.attachment.length > 0) ||
               (cardInfo.resource && cardInfo.resource.length > 0)) && (
               <div>

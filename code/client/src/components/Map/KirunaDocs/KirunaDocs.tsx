@@ -41,7 +41,7 @@ const KirunaDocs: React.FC<KirunaDocsProps> = ({
   };
 
   const res = getIconByType("Agreement");
-  console.log("res: ", res);
+  // console.log("res: ", res);
   return (
     <Modal show={show} onHide={onClose} centered size="lg">
       <Modal.Header closeButton>

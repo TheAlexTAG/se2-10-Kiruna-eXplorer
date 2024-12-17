@@ -165,7 +165,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     const fetchDocuments = async () => {
       try {
         const data = await API.getDocuments();
-        console.log("data is ", data);
+        // console.log("data is ", data);
         const kirunaDocs = data.filter(
           (doc: KirunaDocument) => doc.zoneID === 0
         );
@@ -231,15 +231,15 @@ const MapComponent: React.FC<MapComponentProps> = ({
   };
 
   const handleZoneClick = (zoneId: number | null) => {
-    console.log("ciao");
+    // console.log("ciao");
     if (setHighlightedZoneId && onZoneSelect && selectionMode === "zone") {
-      console.log("ciaone");
+      // console.log("ciaone");
       setHighlightedZoneId(zoneId);
       onZoneSelect(zoneId);
     }
   };
 
-  console.log("selection mode is ", selectionMode);
+  // console.log("selection mode is ", selectionMode);
   const PointClickHandler: React.FC = () => {
     useMapEvent("click", (e) => {
       setSelectedDocument(null);
@@ -297,13 +297,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
   };
 
   const renderCustomPolygon = () => {
-    console.log("helli", customArea);
+    // console.log("helli", customArea);
     if (selectionMode !== "custom" || !selectionMode) {
       return null;
     }
 
     if (customArea) {
-      console.log("hell");
+      // console.log("hell");
       return (
         <FeatureGroup>
           {zones
@@ -325,8 +325,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
       );
     }
   };
-  console.log("zones is ", zones);
-  console.log("custom area is ", customArea);
+  // console.log("zones is ", zones);
+  // console.log("custom area is ", customArea);
 
   const renderSelectedHoveredZone = () => {
     if (!selectedHoveredZoneId) return null;
@@ -444,11 +444,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setShowKirunaDocuments(true);
   };
 
-  console.log("Test - tempCoords are ", tempCoordinates);
-  console.log("Test - zone id is ", highlightedZoneId);
-  console.log("Test - highlighted documetn id ", highlightedDocumentId);
-  console.log("Test - selectedDocument is ", selectedDocument);
-  console.log("Test - selectionMode is ", selectionMode);
+  // console.log("Test - tempCoords are ", tempCoordinates);
+  // console.log("Test - zone id is ", highlightedZoneId);
+  // console.log("Test - highlighted documetn id ", highlightedDocumentId);
+  // console.log("Test - selectedDocument is ", selectedDocument);
+  // console.log("Test - selectionMode is ", selectionMode);
 
   const handleDocumentHover = (doc: Document | KirunaDocument) => {
     if (selectedHoveredZoneId !== doc.zoneID) setHoveredZoneId(doc.zoneID);
@@ -460,6 +460,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   const markerRefs = useRef<Record<number, L.Marker>>({});
 
+  const handleSelectedDocument = (document: any) => {
+    setSelectedDocument(document);
+    setHighlightedDocumentId(document.id);
+    setTempHighlightedDocumentId(document.id);
+  };
   return (
     <div>
       <MapContainer
@@ -504,13 +509,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
           showCoverageOnHover={false} // Disable coverage hover
           iconCreateFunction={(cluster) => {
             const childMarkers = cluster.getAllChildMarkers();
-            console.log("childmarkers are: ", childMarkers);
+            // console.log("childmarkers are: ", childMarkers);
             const containsHighlightedDoc = childMarkers.some((marker) => {
-              console.log("temp high is ", tempHighlightedDocumentId);
-              console.log("temp mark option id is ", marker.options.docId);
+              // console.log("temp high is ", tempHighlightedDocumentId);
+              // console.log("temp mark option id is ", marker.options.docId);
               return marker.options.docId === tempHighlightedDocumentId;
             });
-            console.log("containshigghlighteddoc: ", containsHighlightedDoc);
+            // console.log("containshigghlighteddoc: ", containsHighlightedDoc);
             const className = containsHighlightedDoc
               ? "hotspot-cluster-icon"
               : "custom-cluster-icon";
@@ -627,7 +632,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
       {selectedDocument && (
         <DocumentCard
           cardInfo={selectedDocument}
-          setSelectedDocument={setSelectedDocument}
+          setSelectedDocument={handleSelectedDocument}
           inDiagram={false}
         />
       )}
