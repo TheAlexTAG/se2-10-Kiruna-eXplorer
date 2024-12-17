@@ -32,17 +32,12 @@ class LinkDocumentController{
         
         for(let doc of other){
             const secondDoc: number= +DOMPurify.sanitize(doc.id);
-            /*if(firstDoc=== secondDoc || !await this.dao.checkDocuments(firstDoc, secondDoc)){
-                throw new DocumentsError(); 
-            }*/
+
             await this.checkDocuments(firstDoc,secondDoc);
 
             for(let rel of doc.relationship){
                 const relationship: Relationship= DOMPurify.sanitize(rel) as Relationship;
 
-                /*if(await this.dao.getLink(firstDoc,secondDoc, relationship)){
-                    throw new LinkError();
-                }*/
                 await this.checkLink(firstDoc,secondDoc, relationship);
                 firstDoc< secondDoc ? value.push([firstDoc,secondDoc,relationship]) : value.push([secondDoc,firstDoc,relationship]);
             }
@@ -50,15 +45,15 @@ class LinkDocumentController{
         return await this.dao.insertLink(value);
     } 
 
-    async modifyLink(id: number, firstDoc: number, secondDoc: number, relationship: string): Promise<LinkDocument>{
+    async modifyLink(id: number, mainDoc: number, otherDoc: number, relationship: string): Promise<LinkDocument>{
         if(!await this.dao.getLink(id)){
             throw new LinkNotFoundError();
         }
-        await this.checkDocuments(firstDoc,secondDoc);
+        await this.checkDocuments(mainDoc,otherDoc);
         const rel= relationship as Relationship;
-        await this.checkLink(firstDoc,secondDoc,rel);
+        await this.checkLink(mainDoc,otherDoc,rel);
 
-        const value: LinkDocument= firstDoc> secondDoc ? new LinkDocument(id,secondDoc,firstDoc,rel) : new LinkDocument(id,firstDoc,secondDoc,rel);
+        const value: LinkDocument= mainDoc> otherDoc ? new LinkDocument(id,otherDoc,mainDoc,rel) : new LinkDocument(id,mainDoc,otherDoc,rel);
         return await this.dao.modifyLink(value);
     } 
 }

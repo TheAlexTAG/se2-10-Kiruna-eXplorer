@@ -43,7 +43,7 @@ export const LinkingDocumentDropdown = ({
             <Col md={6}>
               <span className="main-text">{doc.title}</span>
             </Col>
-            <Col md={5} className="d-flex align-items-center">
+            <Col md={6} className="d-flex align-items-center">
               <Form>
                 <Form.Group>
                   <Select

@@ -9,7 +9,7 @@ import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
 import TechnicalIcon from "../../assets/icons/technical-icon";
 import DesignIcon from "../../assets/icons/design-icon";
 import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface DocumentCardProps {
   cardInfo: any;
@@ -24,6 +24,7 @@ export const DocumentCard = ({
   setSelectedDocument,
   inDiagram,
 }: DocumentCardProps) => {
+  const location = useLocation();
   const navigate = useNavigate();
   const getIconByType = (type: string) => {
     const iconComponents: { [key: string]: JSX.Element } = {
@@ -105,18 +106,6 @@ export const DocumentCard = ({
               {" "}
               <strong>Description:</strong> {cardInfo.description}
             </div>
-            <div className="d-flex justify-content-end mt-3">
-              <Button
-                variant="primary"
-                onClick={() => {
-                  navigate("/diagram", {
-                    state: { selectedDocument: cardInfo },
-                  });
-                }}
-              >
-                Open in Diagram
-              </Button>
-            </div>
             {cardInfo.links && cardInfo.links.length > 0 && (
               <div>
                 <div>
@@ -189,6 +178,34 @@ export const DocumentCard = ({
                       </div>
                     ))}
                 </>
+              )}
+            </div>
+            <div className="d-flex justify-content-end mt-3">
+              {location.pathname !== "/diagram" ? (
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    navigate("/diagram", {
+                      state: { selectedDocument: cardInfo },
+                    });
+                  }}
+                >
+                  Open in Diagram
+                </Button>
+              ) : (
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    const serializableCardInfo = JSON.parse(
+                      JSON.stringify(cardInfo)
+                    );
+                    navigate("/map", {
+                      state: { selectedDocument: serializableCardInfo },
+                    });
+                  }}
+                >
+                  Open in Map
+                </Button>
               )}
             </div>
           </div>
