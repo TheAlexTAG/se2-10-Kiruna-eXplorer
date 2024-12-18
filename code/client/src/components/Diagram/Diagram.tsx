@@ -169,12 +169,12 @@ const getIconComponent = (type: string): React.FC<IconProps> => {
 };
 
 function getDateRange(issuanceDate: string, parsedDate: Date): { min: number; max: number } {
-  if (issuanceDate.match(/^\d{4}$/)) {
+  if (RegExp(/^\d{4}$/).exec(issuanceDate)) {
     // yyyy: Limita all'intero anno
     const yearStart = new Date(parsedDate.getFullYear(), 0, 1).getTime();
     const yearEnd = new Date(parsedDate.getFullYear() + 1, 0, 1).getTime();
     return { min: yearStart, max: yearEnd };
-  } else if (issuanceDate.match(/^\d{2}\/\d{4}$/)) {
+  } else if (RegExp(/^\d{2}\/\d{4}$/).exec(issuanceDate)) {
     // mm/yyyy: Limita all'intero mese
     const monthStart = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1).getTime();
     const monthEnd = new Date(parsedDate.getFullYear(), parsedDate.getMonth() + 1, 1).getTime();
@@ -187,7 +187,6 @@ function getDateRange(issuanceDate: string, parsedDate: Date): { min: number; ma
 
 const fetchDocuments = async (): Promise<Node[]> => {
   const response = await API.getDocuments();
-  console.log(response);
   return response.map((doc: any) => ({
     id: doc.id,
     title: doc.title,
@@ -656,21 +655,24 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
       const drag = d3.drag()
   .on("start", function (event, d) {
+    simulation.alphaTarget(0.3);
     d3.select(this).raise().classed("active", true);
+    d.initialY = d.y;
   })
   .on("drag", function (event, d) {
     const { min, max } = getDateRange(d.issuanceDate, d.parsedDate);
-
-    // Calcola la nuova posizione x solo se siamo in un range valido
+    const yMin = d.initialY - 10;  // Limite inferiore per Y (5 pixel sopra)
+    const yMax = d.initialY + 10;
     if (min !== max) {
       const newX = d.x + event.dx;
-
-      // Applica i limiti usando xScale per convertire il range temporale in pixel
+      const newY = d.y + event.dy; 
       d.x = Math.min(Math.max(newX, xScale(min)), xScale(max));
+      d.y = Math.min(Math.max(newY, yMin), yMax);
       d3.select(this).attr("transform", `translate(${d.x}, ${d.y})`);
     }
   })
   .on("end", function (event, d) {
+    simulation.alphaTarget(0).restart()
     d3.select(this).classed("active", false);
   });
 
@@ -739,6 +741,11 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       })
 
       nodes_diag.call(drag);
+
+      simulation.nodes(nodeData).on("tick", function () {
+        nodes_diag
+          .attr("transform", (d) => `translate(${d.x}, ${d.y})`);
+      });
 
     // aggiungi funzionalità di zoom
     const offset = 50;
