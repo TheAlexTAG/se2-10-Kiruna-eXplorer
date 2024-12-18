@@ -5,7 +5,7 @@ import { app, server } from "../../index";
 import { LinkDocumentController } from "../../src/controllers/link_docController";
 import { closeDbPool } from "../../src/db/db";
 import {cleanup} from "../../src/db/cleanup";
-import { LinkDocument, Relationship } from "../../src/components/link_doc";
+import { Relationship } from "../../src/components/link_doc";
 
 const baseURL: string= "/api";
 let link_docController: LinkDocumentController;

@@ -1,10 +1,9 @@
 import { DocumentDAO, DocumentDaoHelper } from '../../../src/dao/documentDAO';
 import db from '../../../src/db/db';
-import { DocumentNotFoundError, DocumentUpdateError } from '../../../src/errors/documentErrors';
+import { DocumentNotFoundError } from '../../../src/errors/documentErrors';
 import { Document, DocumentData, DocumentGeoData } from '../../../src/components/document';
 import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
 import { InternalServerError } from '../../../src/errors/link_docError';
-import { InsertZoneError } from '../../../src/errors/zoneError';
 
 const wellknown = require('wellknown');
 
