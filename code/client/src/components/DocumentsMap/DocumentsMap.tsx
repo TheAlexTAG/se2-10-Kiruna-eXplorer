@@ -43,6 +43,8 @@ const DocumentsMap: React.FC = () => {
       {user && user.role === "Urban Planner" && (
         <>
           <div
+            tabIndex={0} // Makes the element focusable
+            role="button"
             className="manage-zones-btn"
             style={{
               position: "absolute",
@@ -51,6 +53,13 @@ const DocumentsMap: React.FC = () => {
               zIndex: 1000,
             }}
             onClick={handleManageZones}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                console.log("Clicked via keyboard");
+                event.preventDefault(); // Prevent scrolling on Space
+                event.currentTarget.click();
+              }
+            }}
           >
             {editMode ? <TbPencilX size={20} /> : <TbPencilPin size={20} />}
             <span className="tooltip">
