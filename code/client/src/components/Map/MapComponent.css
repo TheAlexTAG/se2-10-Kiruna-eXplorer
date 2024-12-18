@@ -217,3 +217,27 @@
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
   z-index: 2000;
 }
+
+/* Add pulsating yellow border effect to the Edit button */
+.leaflet-draw-toolbar a.leaflet-draw-edit-edit {
+  position: relative; /* Needed for positioning */
+  border: 2px solid #ffc107; /* Initial yellow border color */
+  border-radius: 5px;
+  animation: pulse-yellow-border 2s infinite; /* Apply pulsating animation */
+}
+
+/* Pulsating animation for yellow border */
+@keyframes pulse-yellow-border {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.8); /* Strong yellow glow */
+    border-color: rgba(255, 193, 7, 1); /* Solid yellow border */
+  }
+  50% {
+    box-shadow: 0 0 15px 5px rgba(255, 193, 7, 0.4); /* Expanded glow */
+    border-color: rgba(255, 193, 7, 0.6); /* Lighter yellow border */
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); /* Fade out glow */
+    border-color: rgba(255, 193, 7, 1); /* Reset to solid yellow */
+  }
+}

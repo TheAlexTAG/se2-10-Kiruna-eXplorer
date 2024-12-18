@@ -81,6 +81,43 @@
   height: 40px;
   transition: transform 0.2s ease;
 }
+.manage-zones-btn {
+  background-color: #fff;
+  border-radius: 50%;
+  padding: 10px;
+  cursor: pointer;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  transition: transform 0.2s ease;
+}
+.manage-zones-btn:hover {
+  transform: scale(1.1);
+}
+.manage-zones-btn:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.tooltip2 {
+  visibility: hidden;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 5px;
+  padding: 5px 10px;
+  position: absolute;
+  top: 55px;
+  right: 10px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  font-size: 12px;
+  z-index: 1001;
+  white-space: nowrap;
+}
 
 .map-toggle-btn:hover {
   transform: scale(1.1);

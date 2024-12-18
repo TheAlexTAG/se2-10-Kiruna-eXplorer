@@ -29,7 +29,7 @@ async function closeDbPool(): Promise<void> {
     try {
         await db.end();
     } catch (err: any) {
-        console.error('Errore durante la chiusura del pool: ', err);
+        console.error('Error during pool connection closing: ', err);
     }
 }
 

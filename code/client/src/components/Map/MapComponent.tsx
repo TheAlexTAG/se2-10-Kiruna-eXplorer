@@ -40,7 +40,7 @@ import KirunaDocs from "./KirunaDocs/KirunaDocs";
 import { PiBird } from "react-icons/pi";
 import { IoDocumentOutline, IoDocumentSharp } from "react-icons/io5";
 
-import { Button, InputGroup, Form } from "react-bootstrap";
+import { Button, InputGroup, Form, Modal } from "react-bootstrap";
 import { useLocation } from "react-router-dom";
 
 declare module "leaflet" {
@@ -89,6 +89,13 @@ interface MapComponentProps {
   setHighlightedDocumentId: Dispatch<SetStateAction<number | null>>;
   tempHighlightedDocumentId: number | null;
   setTempHighlightedDocumentId: Dispatch<SetStateAction<number | null>>;
+  editMode?: boolean;
+  selectedZoneId?: number | null;
+
+  editZoneActive?: boolean;
+
+  showDocs: boolean;
+  setShowDocs: Dispatch<SetStateAction<boolean>>;
 }
 
 type ZoneProps = {
@@ -119,6 +126,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
   setHighlightedDocumentId,
   tempHighlightedDocumentId,
   setTempHighlightedDocumentId,
+  editMode,
+  selectedZoneId,
+  editZoneActive,
+  setShowDocs,
+  showDocs,
 }) => {
   const location = useLocation();
   const [kirunaDocuments, setKirunaDocuments] = useState<
@@ -133,7 +145,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const featureGroupRef = useRef<L.FeatureGroup | null>(null);
   const [polygonExists, setPolygonExists] = useState(false);
   const [isSatelliteView, setIsSatelliteView] = useState(true);
-  const [showDocs, setShowDocs] = useState(true);
+
   const [hoveredZoneId, setHoveredZoneId] = useState<number | null>(null);
   const [selectedHoveredZoneId, setSelectedHoveredZoneId] = useState<
     number | null
@@ -141,6 +153,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
+  const [showAreYouSure, setShowAreYouSure] = useState(false);
+  const [editedPolygon, setEditedPolygon] =
+    useState<ZoneProps["coordinates"]["coordinates"][0]>();
+  /*useEffect(() => {
+    if (editMode) {
+    }
+  }, [editMode]);*/
 
   useEffect(() => {
     if (searchTerm.trim() === "") {
@@ -163,6 +182,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
     "Tiles &copy; Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community",
   ];
 
+  const fetchZones = async () => {
+    try {
+      const zonesData = await API.getZones();
+      setZones(zonesData as ZoneProps[]);
+      const kirunaZone = zonesData.find((zone: ZoneProps) => zone.id === 0);
+      if (kirunaZone) {
+        const boundary: Feature<MultiPolygon> = turf.multiPolygon(
+          kirunaZone.coordinates.coordinates
+        );
+        setKirunaBoundary(boundary);
+      }
+    } catch (err) {
+      console.error("Error fetching zones:", err);
+    }
+  };
   useEffect(() => {
     const fetchDocuments = async () => {
       try {
@@ -183,21 +217,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
       }
     };
 
-    const fetchZones = async () => {
-      try {
-        const zonesData = await API.getZones();
-        setZones(zonesData as ZoneProps[]);
-        const kirunaZone = zonesData.find((zone: ZoneProps) => zone.id === 0);
-        if (kirunaZone) {
-          const boundary: Feature<MultiPolygon> = turf.multiPolygon(
-            kirunaZone.coordinates.coordinates
-          );
-          setKirunaBoundary(boundary);
-        }
-      } catch (err) {
-        console.error("Error fetching zones:", err);
-      }
-    };
     fetchDocuments();
     fetchZones();
     setTempHighlightedDocumentId(highlightedDocumentId);
@@ -227,7 +246,61 @@ const MapComponent: React.FC<MapComponentProps> = ({
       }
     }
   };
+  const handleEdited = async (e: any) => {
+    const { layers } = e;
+    console.log("my geojson is ", e);
+    // Loop through edited layers
+    layers.eachLayer(async (layer: any) => {
+      const geoJson = layer.toGeoJSON();
 
+      const updatedPolygon = geoJson.geometry.coordinates[0];
+      console.log("new updated polygon is ", updatedPolygon);
+      const drawnPolygon: Feature<GeoJSONPolygon> = turf.polygon(
+        geoJson.geometry.coordinates
+      );
+      if (setErrorMessage) {
+        if (
+          (setTempCustom !== undefined || editMode) &&
+          kirunaBoundary &&
+          booleanWithin(drawnPolygon, kirunaBoundary)
+        ) {
+          setErrorMessage(null);
+          setPolygonExists(true);
+          if (setTempCustom) setTempCustom(updatedPolygon);
+          setEditedPolygon(updatedPolygon);
+        } else {
+          console.error("Polygon is outside the Kiruna boundary!");
+          setErrorMessage("Polygon is outside the Kiruna boundary!");
+          if (featureGroupRef.current) {
+            featureGroupRef.current.removeLayer(layer); // Remove invalid polygon
+          }
+        }
+      }
+      if (editMode && setShowAreYouSure) {
+        setShowAreYouSure(true);
+      }
+      /*try {
+        // Assuming API.updateZone takes a zone ID and updated polygon
+        const zoneId = layer.options.zoneId; // Ensure you set this when rendering polygons
+        await API.updateZone(zoneId, updatedPolygon);
+        console.log(`Zone ${zoneId} updated successfully!`);
+      } catch (error) {
+        console.error(`Error updating zone ${layer.options.zoneId}:`, error);
+      }*/
+    });
+  };
+  const handleUpdateZone = async () => {
+    console.log("selected zone id is ", selectedZoneId);
+    if (selectedZoneId) {
+      try {
+        const res = await API.editZone(selectedZoneId, editedPolygon);
+        console.log("res is ", res);
+        fetchZones();
+      } catch (err) {
+        console.error("Error updating zone: ", err);
+      }
+    }
+  };
   const handleDeleted = () => {
     if (clearCustomPolygon) clearCustomPolygon();
   };
@@ -395,6 +468,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
               }}
               eventHandlers={{
                 click: () => {
+                  if (editMode && onZoneSelect) {
+                    onZoneSelect(zone.id);
+                  }
                   handleZoneClick(zone.id);
                 },
               }}
@@ -429,12 +505,21 @@ const MapComponent: React.FC<MapComponentProps> = ({
       /*popupAnchor: [0, -15],*/
     });
   };
-  const handleMoreClick = (doc: Document | KirunaDocument) => {
+
+  /*Else part might not be necessary, but good for future use*/
+  const handleMoreClick = (doc: Document | KirunaDocument | null) => {
     if (selectionMode === null || selectionMode === undefined) {
-      setSelectedHoveredZoneId(doc.zoneID);
-      setSelectedDocument(doc);
-      setHighlightedDocumentId(doc.id);
-      setTempHighlightedDocumentId(doc.id);
+      if (doc) {
+        setSelectedHoveredZoneId(doc.zoneID);
+        setSelectedDocument(doc);
+        setHighlightedDocumentId(doc.id);
+        setTempHighlightedDocumentId(doc.id);
+      } else {
+        setSelectedHoveredZoneId(null);
+        setSelectedDocument(null);
+        setHighlightedDocumentId(null);
+        setTempHighlightedDocumentId(null);
+      }
       setHoveredZoneId(null);
     }
   };
@@ -462,17 +547,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
 
   const markerRefs = useRef<Record<number, L.Marker>>({});
 
-  const handleSelectedDocument = (document: any) => {
-    setSelectedDocument(document);
-    setHighlightedDocumentId(document.id);
-    setTempHighlightedDocumentId(document.id);
-  };
   useEffect(() => {
     if (location.state?.selectedDocument) {
       const document = location.state.selectedDocument;
-      setSelectedDocument(document);
-      setHighlightedDocumentId(document.id);
-      setTempHighlightedDocumentId(document.id);
+      handleMoreClick(document);
     }
   }, [location.state]);
   return (
@@ -617,6 +695,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
               position="topright"
               onCreated={handleCreated}
               onDeleted={handleDeleted}
+              onEdited={handleEdited}
               draw={{
                 rectangle: false,
                 circle: false,
@@ -634,6 +713,33 @@ const MapComponent: React.FC<MapComponentProps> = ({
             />
           </FeatureGroup>
         )}
+        {editZoneActive && (
+          <FeatureGroup ref={featureGroupRef}>
+            <EditControl
+              position="topleft"
+              onEdited={handleEdited}
+              draw={{
+                rectangle: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                polyline: false,
+                polygon: false,
+              }}
+              edit={{ remove: false }} // Prevent removing shapes
+            />
+            {zones
+              .filter((zone) => zone.id === selectedZoneId)
+              .map((zone) => (
+                <Polygon
+                  key={zone.id}
+                  positions={zone.coordinates.coordinates[0].map(
+                    ([lng, lat]) => [lat, lng]
+                  )}
+                />
+              ))}
+          </FeatureGroup>
+        )}
         {renderZones()}
         {renderCustomPolygon()}
         {renderHoveredZone()}
@@ -642,7 +748,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
       {selectedDocument && (
         <DocumentCard
           cardInfo={selectedDocument}
-          setSelectedDocument={handleSelectedDocument}
+          setSelectedDocument={setSelectedDocument}
+          handleMoreClick={handleMoreClick}
           inDiagram={false}
         />
       )}
@@ -721,8 +828,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
             className="kiruna-doc-btn"
             style={{
               position: "absolute",
-              top: "160px",
-              left: "10px",
+              top: "190px",
+              left: "7px",
               zIndex: 1000,
             }}
           >
@@ -735,6 +842,40 @@ const MapComponent: React.FC<MapComponentProps> = ({
             kirunaDocuments={kirunaDocuments}
             handleMoreClick={handleMoreClick}
           />
+          <Modal
+            show={showAreYouSure}
+            onHide={() => setShowAreYouSure(false)}
+            centered
+            backdrop="static" // Prevent closing by clicking outside
+          >
+            <Modal.Header closeButton>
+              <Modal.Title>Confirm Zone Modification</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <p>
+                Are you sure you want to modify this zone? Changes will be saved
+                and cannot be undone.
+              </p>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button
+                variant="secondary"
+                onClick={() => setShowAreYouSure(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={() => {
+                  setShowAreYouSure(false);
+                  handleUpdateZone();
+                  console.log("Zone modification confirmed");
+                }}
+              >
+                Confirm
+              </Button>
+            </Modal.Footer>
+          </Modal>
         </>
       )}
     </div>
