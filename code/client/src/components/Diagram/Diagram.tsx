@@ -16,6 +16,7 @@ import L from "leaflet";
 import { Dropdown, Button, ButtonGroup } from "react-bootstrap";
 import ReactDOM from "react-dom";
 import { useLocation } from "react-router-dom";
+import "./Diagram.css";
 
 interface IconProps {
   width?: string | number;
@@ -545,6 +546,19 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
     // Disegna i link tra i nodi
     const seenLinks = new Set();
+    const tooltip = d3
+      .select("body")
+      .append("div")
+      .attr("class", "tooltip")
+      .style("position", "absolute")
+      .style("visibility", "hidden")
+      .style("background", "rgba(0, 0, 0, 0.8)")
+      .style("color", "#fff")
+      .style("padding", "6px 8px")
+      .style("border-radius", "4px")
+      .style("font-size", "12px")
+      .style("pointer-events", "none")
+      .style("z-index", "1000");
     graphGroup
       .append("g")
       .selectAll("path")
@@ -588,12 +602,57 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         }
         return "";
       })
+      .attr("class", "my-line")
       .attr("stroke", "black")
       .attr("stroke-width", 2)
       .attr("fill", "none")
       .attr("stroke-dasharray", ({ relationship }) =>
         getLineStyle(relationship)
       )
+      .on("mouseover", function (event, d) {
+        d3.select(this)
+          .attr("stroke", "blue") // Change line color
+          .attr("stroke-width", 4); // Make the line thicker
+        // Create a tooltip container dynamically
+        const tooltipContainer = document.createElement("div");
+        tooltipContainer.id = "tooltip-container";
+        tooltipContainer.style.position = "absolute";
+        tooltipContainer.style.left = `${event.pageX + 10}px`; // Add offset for better visibility
+        tooltipContainer.style.top = `${event.pageY + 10}px`;
+        tooltipContainer.style.background = "rgba(0, 0, 0, 0.8)";
+        tooltipContainer.style.color = "#fff";
+        tooltipContainer.style.padding = "8px 12px";
+        tooltipContainer.style.borderRadius = "4px";
+        tooltipContainer.style.fontSize = "12px";
+        tooltipContainer.style.boxShadow = "0px 2px 4px rgba(0, 0, 0, 0.3)";
+        tooltipContainer.style.pointerEvents = "none"; // Prevent interaction
+        tooltipContainer.style.zIndex = "1000";
+
+        // Add text to the tooltip
+        tooltipContainer.innerText = `Connection Type: ${d.relationship}`;
+
+        // Append the tooltip to the body
+        document.body.appendChild(tooltipContainer);
+      })
+      .on("mousemove", function (event) {
+        // Dynamically update the tooltip position as the mouse moves
+        const tooltip = document.getElementById("tooltip-container");
+        if (tooltip) {
+          tooltip.style.left = `${event.pageX + 10}px`;
+          tooltip.style.top = `${event.pageY + 10}px`;
+        }
+      })
+      .on("mouseout", function () {
+        d3.select(this)
+          .attr("stroke", "black") // Reset line color
+          .attr("stroke-width", 2); // Reset line width
+        // Remove the tooltip when the mouse leaves the line
+        const tooltip = document.getElementById("tooltip-container");
+        if (tooltip) {
+          document.body.removeChild(tooltip);
+        }
+      })
+
       .on("click", function (event, d) {
         if (userInfo?.role !== "Urban Planner") {
           alert("You do not have permission to update relationships.");
