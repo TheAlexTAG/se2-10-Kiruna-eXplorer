@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeAll, afterEach, jest } from "@jest/globals"
+import { describe, test, expect, beforeAll, afterEach, jest, afterAll } from "@jest/globals"
 import request from 'supertest'
 import { app } from "../../../index"
 import { DocumentController } from "../../../src/controllers/documentController"
@@ -10,6 +10,8 @@ import { Utilities } from "../../../src/utilities"
 import {ErrorHandler} from "../../../src/helper"
 import { InternalServerError } from "../../../src/errors/link_docError"
 import { Response} from 'express';
+import { closeDbPool } from "../../../src/db/db";
+import { server } from "../../../index";
 
 const wellknown = require('wellknown');
 const path = require('path');
@@ -29,6 +31,11 @@ describe("Route document and helper unit test", () => {
     afterEach(() => {
         jest.resetAllMocks();
     });
+
+    afterAll(async () => {
+        server.close();
+        await closeDbPool();
+    })
 
     describe("parseDate", () => {
 

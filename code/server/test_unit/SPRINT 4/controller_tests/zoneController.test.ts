@@ -1,4 +1,4 @@
-import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
+import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@jest/globals";
 import {ZoneDAO} from "../../../src/dao/zoneDAO";
 import {ZoneController} from "../../../src/controllers/zoneController";
 import {Zone} from "../../../src/components/zone"
@@ -8,6 +8,8 @@ import { InternalServerError } from "../../../src/errors/link_docError";
 import { Kiruna } from "../../../src/utilities";
 import kiruna from "../../../src/kiruna.json"
 import { InvalidDocumentZoneError } from "../../../src/errors/documentErrors";
+import { closeDbPool } from "../../../src/db/db";
+import { server } from "../../../index";
 
 jest.mock("../../../src/dao/zoneDAO")
 
@@ -23,6 +25,10 @@ describe("Controller zone unit tests", () => {
         jest.resetAllMocks();
     });
 
+    afterAll(async () => {
+      server.close();
+      await closeDbPool();
+  })
 
     describe("getZone", () => {
     

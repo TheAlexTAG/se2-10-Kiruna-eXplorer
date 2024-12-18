@@ -1,4 +1,4 @@
-import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
+import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@jest/globals";
 import db from "../../../src/db/db"
 import {ZoneDAO} from "../../../src/dao/zoneDAO"
 import {Zone} from "../../../src/components/zone"
@@ -7,6 +7,8 @@ import {WrongGeoreferenceUpdateError} from "../../../src/errors/documentErrors"
 import { InternalServerError } from "../../../src/errors/link_docError";
 import { Geometry } from "geojson";
 import wellknown, { GeoJSONGeometryOrNull } from 'wellknown';
+import { closeDbPool } from "../../../src/db/db";
+import { server } from "../../../index";
 
 jest.mock("../../../src/db/db.ts")
 
@@ -30,6 +32,11 @@ describe("ZoneDAO test unit", () => {
     afterEach(() => {
         jest.resetAllMocks();
     });
+
+    afterAll(async () => {
+        server.close();
+        await closeDbPool();
+    })
 
     describe("createZone", () => {
 

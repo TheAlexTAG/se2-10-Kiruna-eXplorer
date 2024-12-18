@@ -1,4 +1,4 @@
-import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
+import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@jest/globals";
 import {DocumentDAO} from "../../../src/dao/documentDAO";
 import {DocumentController, DocumentControllerHelper} from "../../../src/controllers/documentController";
 import {CoordinatesOutOfBoundsError, WrongGeoreferenceError, InvalidPageNumberError, InvalidNewDateCoordinatesError} from "../../../src/errors/documentErrors"
@@ -10,6 +10,8 @@ import { InsertZoneError } from "../../../src/errors/zoneError";
 import wellknown from "wellknown"
 import { Zone } from "../../../src/components/zone";
 import { Document, DocumentData, DocumentGeoData } from "../../../src/components/document";
+import { closeDbPool } from "../../../src/db/db";
+import { server } from "../../../index";
 
 jest.mock("../../../src/dao/documentDAO")
 jest.mock("../../../src/dao/zoneDAO")
@@ -27,6 +29,11 @@ describe("Controller document and helper unit tests", () => {
     afterEach(() => {
         jest.resetAllMocks();
     });
+
+    afterAll(async () => {
+        server.close();
+        await closeDbPool();
+    })
 
     describe("checkCoordinatesValidity", () => {
 

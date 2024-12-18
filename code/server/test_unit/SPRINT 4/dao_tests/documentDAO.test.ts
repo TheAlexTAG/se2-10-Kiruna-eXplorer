@@ -2,8 +2,10 @@ import { DocumentDAO, DocumentDaoHelper } from '../../../src/dao/documentDAO';
 import db from '../../../src/db/db';
 import { DocumentNotFoundError } from '../../../src/errors/documentErrors';
 import { Document, DocumentData, DocumentGeoData } from '../../../src/components/document';
-import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
+import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@jest/globals";
 import { InternalServerError } from '../../../src/errors/link_docError';
+import { closeDbPool } from "../../../src/db/db";
+import { server } from "../../../index";
 
 const wellknown = require('wellknown');
 
@@ -29,6 +31,11 @@ describe('DocumentDAO', () => {
     afterEach(() => {
     jest.resetAllMocks();
     });
+
+    afterAll(async () => {
+        server.close();
+        await closeDbPool();
+    })
 
     describe("insertZone", () => {
 
