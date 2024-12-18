@@ -205,7 +205,12 @@ const updateDocument = async (
   longitude: number | null,
   latitude: number | null,
   stakeholders: string | null,
-  scale: string | null
+  scale: string | null,
+  title: string | null,
+  description: string | null,
+  issuanceDate: string | null,
+  type: string | null,
+  language: string | null
 ) => {
   // console.log(documentID, zoneID, longitude, latitude);
   const response = await fetch(`${SERVER_URL}/document/${documentID}`, {
@@ -214,7 +219,7 @@ const updateDocument = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ zoneID, longitude, latitude, stakeholders, scale }),
+    body: JSON.stringify({ zoneID, longitude, latitude, stakeholders, scale, title, description, issuanceDate, type, language }),
   });
 
   if (!response.ok) {

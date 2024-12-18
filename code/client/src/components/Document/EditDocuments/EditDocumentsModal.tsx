@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
 
 import API from "../../../API/API";
@@ -6,12 +6,15 @@ import "./EditDocumentsModal.css";
 import { Feature, MultiPolygon } from "geojson";
 import GeoReferenceComponent from "../../GeoreferenceComponent/GeoreferenceComponent";
 import CustomSelectBox from "../../NewDocument/CustomSelectBox/CustomSelectBox";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { format, parse } from "date-fns";
 
 interface EditDocumentProps {
   document: any;
   show: boolean;
   onHide: () => void;
-  updateTable: any;
+  updateTable: () => void;
 }
 
 export default function EditDocumentModal({
@@ -20,6 +23,28 @@ export default function EditDocumentModal({
   onHide,
   updateTable,
 }: EditDocumentProps) {
+  const [editableDocument, setEditableDocument] = useState({ ...document, 
+    title: document.title || "", 
+    description: document.description || "",
+    issuanceDate: document.issuanceDate || "",
+    type: document.type || "",
+    language: document.language || "",
+    pages: document.pages || "",});
+  const parsedDate = () => {
+    try {
+      if (/^\d{4}$/.test(editableDocument.issuanceDate)) {
+        return parse(`01/01/${editableDocument.issuanceDate}`, "dd/MM/yyyy", new Date());
+      } else if (/^\d{2}\/\d{4}$/.test(editableDocument.issuanceDate)) {
+          return parse(`01/${editableDocument.issuanceDate}`, "dd/MM/yyyy", new Date());
+      } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(editableDocument.issuanceDate)) {
+          return parse(editableDocument.issuanceDate, "dd/MM/yyyy", new Date());
+      } else {
+        return null;
+      }
+    } catch {
+      return null;
+    }
+  };
   const [stakeholders, setStakeholders] = useState("");
   const [scale, setScale] = useState("");
   const [latitude, setLatitude] = useState<number | null>(document.latitude);
@@ -215,7 +240,8 @@ export default function EditDocumentModal({
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formTitle">
               <Form.Label className="main-text">Title</Form.Label>
-              <Form.Control type="text" value={document.title} disabled />
+              <Form.Control type="text" value={editableDocument.title}  
+              onChange={(e) => setEditableDocument({ ...editableDocument, title: e.target.value })}/>
             </Form.Group>
 
             <Form.Group as={Col} controlId="formStakeholders">
@@ -237,8 +263,10 @@ export default function EditDocumentModal({
             <Form.Control
               as="textarea"
               rows={3}
-              value={document.description}
-              disabled
+              value={editableDocument.description}
+              onChange={(e) =>
+                setEditableDocument({ ...editableDocument, description: e.target.value })
+              }
             />
           </Form.Group>
 
@@ -303,33 +331,72 @@ export default function EditDocumentModal({
             </Form.Group>
 
             <Form.Group as={Col} controlId="formIssuanceDate">
-              <Form.Label className="main-text">Date of Issue</Form.Label>
-              <Form.Control
-                type="text"
-                value={document.issuanceDate}
-                disabled
-              />
+              <Form.Label className="main-text" style={{ display: "block" }}>
+                Date of Issue*
+              </Form.Label>
+
+              <div className="d-flex">
+                <div className="react-datepicker-wrapper" style={{ flex: "1" }}>
+                  <DatePicker
+                    selected={editableDocument.issuanceDate ? new Date(editableDocument.issuanceDate) : null}
+                    onChange={(date) => {
+                      const formattedDate = date ? format(date, "dd/MM/yyyy") : "";
+                      setEditableDocument({ ...editableDocument, issuanceDate: formattedDate });
+                    }}
+                    dateFormat="dd/MM/yyyy"
+                    placeholderText="DD/MM/YYYY"
+                    className="form-control"
+                  />
+                </div>
+
+                <div
+                  className="input-group-text"
+                  style={{
+                    background: "none",
+                    borderLeft: "none",
+                    cursor: "pointer",
+                  }}
+                  onClick={() =>
+                    document.querySelector(".react-datepicker__input-container input")?.focus()
+                  }
+                >
+                  <i className="bi bi-calendar3" style={{ color: "rgb(8, 95, 178)" }}></i>
+                </div>
+              </div>
             </Form.Group>
 
             <Form.Group as={Col} controlId="formType">
               <Form.Label className="main-text">Type</Form.Label>
-              <Form.Control type="text" value={document.type} disabled />
+              <Form.Control type="text" value={editableDocument.type} 
+                onChange={(e) =>{
+                  setEditableDocument({ ...editableDocument, type: e.target.value })
+                }}
+              />
             </Form.Group>
           </Row>
 
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formLanguage">
               <Form.Label className="main-text">Language</Form.Label>
-              <Form.Control
-                type="text"
-                value={document.language || ""}
-                disabled
-              />
+              <Form.Select
+                value={editableDocument.language} // Bind to state
+                onChange={(e) =>
+                  setEditableDocument({ ...editableDocument, language: e.target.value })
+                }
+              >
+                <option value="English">English</option>
+                <option value="Swedish">Swedish</option>
+              </Form.Select>
             </Form.Group>
+
 
             <Form.Group as={Col} controlId="formPages">
               <Form.Label className="main-text">Pages</Form.Label>
-              <Form.Control type="text" value={document.pages || ""} disabled />
+              <Form.Control type="text" value={editableDocument.pages || ""} 
+                onChange={(e) =>
+                  setEditableDocument({ ...editableDocument, pages: e.target.value })
+                }
+              />
             </Form.Group>
           </Row>
           {/* <Row>
