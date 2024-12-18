@@ -85,8 +85,8 @@ class DocumentDaoHelper {
         }
 
         if(documentData.issuanceDate) {
-            conditions.push("issuanceDate = ?, parsedDate = ?");
-            params.push(documentData.issuanceDate, documentData.parsedDate);
+            conditions.push("issuanceDate = ?, nodeX = null");
+            params.push(documentData.issuanceDate);
         }
 
         if(documentData.language) {
@@ -101,6 +101,7 @@ class DocumentDaoHelper {
 
         if(documentData.scale) {
             conditions.push("scale = ?");
+            conditions.push("nodeY = null");
             params.push(documentData.scale);
         }
 
@@ -161,7 +162,7 @@ class DocumentDAO {
                 documentGeoData.zoneID = lastID;
             }
 
-            const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, parsedDate, type, language, pages)
+            const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
             VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
             const params = [
                 documentData.title,
@@ -172,7 +173,6 @@ class DocumentDAO {
                 documentData.stakeholders,
                 documentData.scale,
                 documentData.issuanceDate,
-                documentData.parsedDate.toISOString().split("T")[0],
                 documentData.type,
                 documentData.language,
                 documentData.pages
@@ -236,8 +236,9 @@ class DocumentDAO {
                 d.stakeholders,
                 d.scale,
                 d.issuanceDate,
-                d.parsedDate,
                 d.type,
+                d.nodeX,
+                d.nodeY,
                 d.language,
                 d.pages,
                 conn.connections,
@@ -303,7 +304,8 @@ class DocumentDAO {
                     stakeholders: result[0].stakeholders,
                     scale: result[0].scale,
                     issuanceDate: result[0].issuanceDate,
-                    parsedDate: new Date(new Date(result[0].parsedDate).getTime() - (new Date(result[0].parsedDate).getTimezoneOffset() * 60000)),
+                    nodeX: result[0].nodeX,
+                    nodeY: result[0].nodeY,
                     type: result[0].type,
                     language: result[0].language,
                     pages: result[0].pages
@@ -341,7 +343,8 @@ class DocumentDAO {
                 d.stakeholders,
                 d.scale,
                 d.issuanceDate,
-                d.parsedDate,
+                d.nodeX,
+                d.nodeY,
                 d.type,
                 d.language,
                 d.pages,
@@ -410,7 +413,8 @@ class DocumentDAO {
                     stakeholders: row.stakeholders,
                     scale: row.scale,
                     issuanceDate: row.issuanceDate,
-                    parsedDate: new Date(new Date(row.parsedDate).getTime() - (new Date(row.parsedDate).getTimezoneOffset() * 60000)),
+                    nodeX: row.nodeX,
+                    nodeY: row.nodeY,
                     type: row.type,
                     language: row.language,
                     pages: row.pages
@@ -455,15 +459,23 @@ class DocumentDAO {
         }
     }
 
-    async updateDiagramDate(documentID: number, newParsedDate: string): Promise<boolean> {
+    async updateDiagram(documentIDs: number[], nodeXs: number[], nodeYs: number[]): Promise<boolean> {
         let conn;
         try {
             conn = await db.getConnection();
-            const sql = `UPDATE document SET parsedDate = ? WHERE documentID = ?`;
-            const result = await conn.query(sql, [newParsedDate, documentID]);
-            if(result.affectedRows == 0) throw new Error("Failed to update the document date coordinates");
+            await conn.beginTransaction();
+            const sql = `UPDATE document SET nodeX = ?, nodeY = ? WHERE documentID = ?`;
+            const paramsArray = documentIDs.map((docID, index) => [nodeXs[index], nodeYs[index], docID]);
+            console.log(paramsArray);
+            for (const params of paramsArray) {
+                console.log(params)
+                const result = await conn.query(sql, params); 
+                if (result.affectedRows === 0) throw new Error("Failed to update the document date coordinates");
+            }
+            await conn.commit();
             return true;
         } catch (err: any) {
+            await conn?.rollback();
             throw new InternalServerError();
         } finally {
             await conn?.release();
@@ -496,20 +508,6 @@ class DocumentDAO {
             return true;
         } catch(err: any) {
             await conn?.rollback();
-            throw new InternalServerError();
-        } finally {
-            await conn?.release();
-        }
-    }
-
-    async getParsedDate(documentID: number): Promise<Date> {
-        let conn;
-        try {
-            conn = await db.getConnection();
-            const sql = `SELECT parsedDate FROM document WHERE documentID = ?`
-            const result = await conn.query(sql, [documentID]);
-            return new Date(new Date(result[0].parsedDate).getTime() - (new Date(result[0].parsedDate).getTimezoneOffset() * 60000));
-        } catch(err: any) {
             throw new InternalServerError();
         } finally {
             await conn?.release();
