@@ -128,9 +128,9 @@ const login = async (userInfo: any) => {
     })
 };
 
-afterAll(() => {
+afterAll(async() => {
     server.close(); // Chiude il server al termine dei test
-    closeDbPool();
+    await closeDbPool();
 });
 
 /* TEST:  ZoneRoutes */
