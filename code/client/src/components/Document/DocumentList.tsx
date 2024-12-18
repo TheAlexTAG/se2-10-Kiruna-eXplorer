@@ -24,8 +24,6 @@ interface UserProps {
 }
 
 interface FilterProps {
-  documents: any;
-  fetchDocuments: any;
   setFilteredDocuments: Dispatch<SetStateAction<any>>;
   filterVisible: boolean;
   setFilterVisible: Dispatch<SetStateAction<boolean>>;
@@ -235,8 +233,6 @@ export const DocumentList = ({ userInfo }: UserProps) => {
 
       {/* Filters Form */}
       <FilterDocs
-        documents={documents}
-        fetchDocuments={fetchDocuments}
         setFilteredDocuments={setFilteredDocuments}
         filterVisible={filterVisible}
         setFilterVisible={setFilterVisible}
@@ -470,8 +466,6 @@ export const DocumentList = ({ userInfo }: UserProps) => {
 };
 
 export const FilterDocs: React.FC<FilterProps> = ({
-  documents,
-  fetchDocuments,
   setFilteredDocuments,
   filterVisible,
   setFilterVisible,
