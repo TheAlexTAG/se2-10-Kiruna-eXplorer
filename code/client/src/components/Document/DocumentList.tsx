@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import {
   Table,
   Button,
@@ -19,11 +19,37 @@ import NewDocument from "../NewDocument/NewDocument";
 import "./DocumentList.css";
 import "./OriginalResources/OriginalResourcesModal.css";
 import { useNavigate } from "react-router-dom";
-interface userProps {
+interface UserProps {
   userInfo: { username: string; role: string } | null;
 }
 
-export const DocumentList = ({ userInfo }: userProps) => {
+interface FilterProps {
+  documents: any;
+  fetchDocuments: any;
+  setFilteredDocuments: Dispatch<SetStateAction<any>>;
+  filterVisible: boolean;
+  setFilterVisible: Dispatch<SetStateAction<boolean>>;
+  setCurrentPage: Dispatch<SetStateAction<number>>;
+  setTotalItems: Dispatch<SetStateAction<number>>;
+  setFilters: Dispatch<
+    SetStateAction<{
+      stakeholders: string;
+      scale: string;
+      issuanceDate: string;
+      type: string;
+      language: string;
+    }>
+  >;
+  filters: {
+    stakeholders: string;
+    scale: string;
+    issuanceDate: string;
+    type: string;
+    language: string;
+  };
+}
+
+export const DocumentList = ({ userInfo }: UserProps) => {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState([]);
   const [document, setDocument] = useState<any | null>(null);
@@ -62,51 +88,21 @@ export const DocumentList = ({ userInfo }: userProps) => {
       </Pagination.Item>
     );
   }
-  const stakeholderOptions: string[] = [
-    "LKAB",
-    "Municipalty",
-    "Regional authority",
-    "Architecture firms",
-    "Citizens",
-    "Kiruna kommun",
-    "Others",
-  ];
-
-  const typeOptions: string[] = [
-    "Design doc.",
-    "Informative doc.",
-    "Prescriptive doc.",
-    "Technical doc.",
-    "Agreement",
-    "Conflict",
-    "Consultation",
-    "Material effect",
-  ];
 
   const fetchDocuments = async (pageNumber: number) => {
     API.getDocumentsWithPagination(
-      pageNumber ? pageNumber : currentPage,
-      pageSize
+      pageNumber,
+      10,
+      filters.stakeholders || undefined,
+      filters.scale || undefined,
+      filters.issuanceDate || undefined,
+      filters.type || undefined,
+      filters.language || undefined
     ).then((data) => {
       setDocuments(data.documents);
       setFilteredDocuments(data.documents);
       setTotalItems(data.totalItems);
     });
-  };
-
-  const applyFilters = async () => {
-    try {
-      const filteredData = await API.filterDocuments(
-        filters.stakeholders || undefined,
-        filters.scale || undefined,
-        filters.issuanceDate || undefined,
-        filters.type || undefined,
-        filters.language || undefined
-      );
-      setFilteredDocuments(filteredData);
-    } catch (error) {
-      console.error("Error applying filters:", error);
-    }
   };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -126,27 +122,6 @@ export const DocumentList = ({ userInfo }: userProps) => {
   useEffect(() => {
     fetchDocuments(currentPage);
   }, []);
-
-  const handleFilterChange = (
-    event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
-  ) => {
-    const { name, value } = event.target;
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [name]: value,
-    }));
-  };
-
-  const handleResetFilters = () => {
-    setFilters({
-      stakeholders: "",
-      scale: "",
-      issuanceDate: "",
-      type: "",
-      language: "",
-    });
-    setFilteredDocuments(documents);
-  };
 
   // Function for show/hide filters form
   const toggleFilterVisibility = () => {
@@ -259,123 +234,17 @@ export const DocumentList = ({ userInfo }: userProps) => {
       )}
 
       {/* Filters Form */}
-      <Collapse in={filterVisible}>
-        <Card
-          data-bs-theme="dark"
-          className="main-text"
-          style={{
-            width: "310px",
-            position: "absolute",
-            right: "32px",
-            zIndex: "999",
-            top: "140px",
-          }}
-        >
-          <h3>Filters</h3>
-
-          <Form className="mb-3 filter-card" data-bs-theme="dark">
-            <Form.Group as={Col} controlId="filterStakeholders">
-              <Form.Label>Stakeholders</Form.Label>
-              <Form.Select
-                name="stakeholders"
-                value={filters.stakeholders}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-                  handleFilterChange(event)
-                }
-              >
-                <option value="">Select Stakeholder</option>
-                {stakeholderOptions.map((stakeholder) => (
-                  <option key={stakeholder} value={stakeholder}>
-                    {stakeholder}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-            <Form.Group as={Col} controlId="filterScale">
-              <Form.Label>Scale</Form.Label>
-              <Form.Select
-                name="scale"
-                value={filters.scale}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-                  handleFilterChange(event)
-                }
-              >
-                <option value="">Select Scale</option>
-                <option value="Blueprints/effects">Blueprints/effects</option>
-                <option value="1:1,000">1:1,000</option>
-                <option value="1:5,000">1:5,000</option>
-                <option value="1:10,000">1:10,000</option>
-                <option value="1:100,000">1:100,000</option>
-                <option value="Concept">Concept</option>
-                <option value="Text">Text</option>
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group as={Col} controlId="filterIssuanceDate">
-              <Form.Label>Issuance Date</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="DD/MM/YYYY"
-                name="issuanceDate"
-                value={filters.issuanceDate}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                  handleFilterChange(event)
-                }
-              />
-            </Form.Group>
-            <Form.Group as={Col} controlId="filterType">
-              <Form.Label>Type</Form.Label>
-              <Form.Select
-                name="type"
-                value={filters.type}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-                  handleFilterChange(event)
-                }
-              >
-                <option value="">Select Type</option>
-                {typeOptions.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group as={Col} controlId="filterLanguage">
-              <Form.Label>Language</Form.Label>
-              <Form.Select
-                name="language"
-                value={filters.language}
-                onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
-                  handleFilterChange(event)
-                }
-              >
-                <option value="">Select Language</option>
-                <option value="English">English</option>
-                <option value="Spanish">Spanish</option>
-                <option value="Swedish">Swedish</option>
-                <option value="French">French</option>
-                <option value="German">German</option>
-                <option value="Italian">Italian</option>
-                <option value="Chinese">Chinese</option>
-                <option value="Japanese">Japanese</option>
-                <option value="Korean">Korean</option>
-                <option value="Russian">Russian</option>
-                <option value="Arabic">Arabic</option>
-              </Form.Select>
-            </Form.Group>
-
-            <div className="d-flex justify-content-between mt-3">
-              <Button variant="primary" onClick={applyFilters}>
-                Apply
-              </Button>
-              <Button variant="outline-danger" onClick={handleResetFilters}>
-                Reset
-              </Button>
-            </div>
-          </Form>
-        </Card>
-      </Collapse>
+      <FilterDocs
+        documents={documents}
+        fetchDocuments={fetchDocuments}
+        setFilteredDocuments={setFilteredDocuments}
+        filterVisible={filterVisible}
+        setFilterVisible={setFilterVisible}
+        setCurrentPage={setCurrentPage}
+        setTotalItems={setTotalItems}
+        setFilters={setFilters}
+        filters={filters}
+      />
       {successMessage && (
         <Alert variant="success" dismissible>
           {successMessage}
@@ -450,9 +319,9 @@ export const DocumentList = ({ userInfo }: userProps) => {
                       </Dropdown.Item>
                       <Dropdown.Divider />
                       <Dropdown.Item>
-                        <div
+                        <button
                           style={{ color: "#2d6efd" }}
-                          className="p-2"
+                          className="p-2 reset-button"
                           onClick={() => {
                             navigate("/diagram", {
                               state: { selectedDocument: document },
@@ -460,13 +329,13 @@ export const DocumentList = ({ userInfo }: userProps) => {
                           }}
                         >
                           <i className="bi bi-diagram-3"></i> Open in Diagram
-                        </div>
+                        </button>
                       </Dropdown.Item>
                       <Dropdown.Divider />
                       <Dropdown.Item>
-                        <div
+                        <button
                           style={{ color: "#2d6efd" }}
-                          className="p-2"
+                          className="p-2 reset-button"
                           onClick={() => {
                             navigate("/map", {
                               state: { selectedDocument: document },
@@ -474,7 +343,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
                           }}
                         >
                           <i className="bi bi-geo-alt"></i> Open in Map
-                        </div>
+                        </button>
                       </Dropdown.Item>
                     </DropdownButton>
                   </td>
@@ -486,10 +355,12 @@ export const DocumentList = ({ userInfo }: userProps) => {
         <div className="d-flex justify-content-center ">
           <Pagination data-bs-theme="dark">
             <Pagination.Prev
+              disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
             />
             {paginationItems}
             <Pagination.Next
+              disabled={currentPage === totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
             />
           </Pagination>
@@ -595,5 +466,214 @@ export const DocumentList = ({ userInfo }: userProps) => {
         onClick={closeUploadingFile}
       ></div>
     </div>
+  );
+};
+
+export const FilterDocs: React.FC<FilterProps> = ({
+  documents,
+  fetchDocuments,
+  setFilteredDocuments,
+  filterVisible,
+  setFilterVisible,
+  setCurrentPage,
+  setTotalItems,
+  setFilters,
+  filters,
+}) => {
+  const stakeholderOptions: string[] = [
+    "LKAB",
+    "Municipalty",
+    "Regional authority",
+    "Architecture firms",
+    "Citizens",
+    "Kiruna kommun",
+    "Others",
+  ];
+
+  const typeOptions: string[] = [
+    "Design doc.",
+    "Informative doc.",
+    "Prescriptive doc.",
+    "Technical doc.",
+    "Agreement",
+    "Conflict",
+    "Consultation",
+    "Material effect",
+  ];
+
+  const applyFilters = async () => {
+    try {
+      const filteredData = await API.getDocumentsWithPagination(
+        1,
+        10,
+        filters.stakeholders || undefined,
+        filters.scale || undefined,
+        filters.issuanceDate || undefined,
+        filters.type || undefined,
+        filters.language || undefined
+      );
+      setFilteredDocuments(filteredData.documents);
+      setCurrentPage(1);
+      setTotalItems(filteredData.totalItems);
+      setFilterVisible(false);
+    } catch (error) {
+      console.error("Error applying filters:", error);
+    }
+  };
+  const handleFilterChange = (
+    event: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>
+  ) => {
+    const { name, value } = event.target;
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [name]: value,
+    }));
+  };
+
+  const handleResetFilters = async () => {
+    try {
+      setFilters({
+        stakeholders: "",
+        scale: "",
+        issuanceDate: "",
+        type: "",
+        language: "",
+      });
+      const filteredData = await API.getDocumentsWithPagination(
+        1,
+        10,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      );
+      setFilteredDocuments(filteredData.documents);
+      setCurrentPage(1);
+      setTotalItems(filteredData.totalItems);
+      setFilterVisible(false);
+    } catch (error) {
+      console.error("Error applying filters:", error);
+    }
+  };
+
+  return (
+    <Collapse in={filterVisible}>
+      <Card
+        data-bs-theme="dark"
+        className="main-text"
+        style={{
+          width: "310px",
+          position: "absolute",
+          right: "32px",
+          zIndex: "999",
+          top: "140px",
+        }}
+      >
+        <h3>Filters</h3>
+
+        <Form className="mb-3 filter-card" data-bs-theme="dark">
+          <Form.Group as={Col} controlId="filterStakeholders">
+            <Form.Label>Stakeholders</Form.Label>
+            <Form.Select
+              name="stakeholders"
+              value={filters.stakeholders}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                handleFilterChange(event)
+              }
+            >
+              <option value="">Select Stakeholder</option>
+              {stakeholderOptions.map((stakeholder) => (
+                <option key={stakeholder} value={stakeholder}>
+                  {stakeholder}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+          <Form.Group as={Col} controlId="filterScale">
+            <Form.Label>Scale</Form.Label>
+            <Form.Select
+              name="scale"
+              value={filters.scale}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                handleFilterChange(event)
+              }
+            >
+              <option value="">Select Scale</option>
+              <option value="Blueprints/effects">Blueprints/effects</option>
+              <option value="1:1,000">1:1,000</option>
+              <option value="1:5,000">1:5,000</option>
+              <option value="1:10,000">1:10,000</option>
+              <option value="1:100,000">1:100,000</option>
+              <option value="Concept">Concept</option>
+              <option value="Text">Text</option>
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group as={Col} controlId="filterIssuanceDate">
+            <Form.Label>Issuance Date</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="DD/MM/YYYY"
+              name="issuanceDate"
+              value={filters.issuanceDate}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                handleFilterChange(event)
+              }
+            />
+          </Form.Group>
+          <Form.Group as={Col} controlId="filterType">
+            <Form.Label>Type</Form.Label>
+            <Form.Select
+              name="type"
+              value={filters.type}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                handleFilterChange(event)
+              }
+            >
+              <option value="">Select Type</option>
+              {typeOptions.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group as={Col} controlId="filterLanguage">
+            <Form.Label>Language</Form.Label>
+            <Form.Select
+              name="language"
+              value={filters.language}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) =>
+                handleFilterChange(event)
+              }
+            >
+              <option value="">Select Language</option>
+              <option value="English">English</option>
+              <option value="Spanish">Spanish</option>
+              <option value="Swedish">Swedish</option>
+              <option value="French">French</option>
+              <option value="German">German</option>
+              <option value="Italian">Italian</option>
+              <option value="Chinese">Chinese</option>
+              <option value="Japanese">Japanese</option>
+              <option value="Korean">Korean</option>
+              <option value="Russian">Russian</option>
+              <option value="Arabic">Arabic</option>
+            </Form.Select>
+          </Form.Group>
+
+          <div className="d-flex justify-content-between mt-3">
+            <Button variant="primary" onClick={applyFilters}>
+              Apply
+            </Button>
+            <Button variant="outline-danger" onClick={handleResetFilters}>
+              Reset
+            </Button>
+          </div>
+        </Form>
+      </Card>
+    </Collapse>
   );
 };

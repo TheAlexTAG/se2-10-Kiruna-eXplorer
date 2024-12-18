@@ -16,6 +16,7 @@ export const TopBar = ({ user, logout }: TopBarProps) => {
           <Navbar className="d-flex justify-content-between navbar-component pt-2 pb-0 mx-4">
             <Navbar.Brand as={Link} to="/">
               <img
+                alt="kiruna flag"
                 src="./src/assets/Kiruna_vapen.png"
                 style={{ width: "36px", marginRight: "8px" }}
               />
@@ -70,9 +71,14 @@ export const TopBar = ({ user, logout }: TopBarProps) => {
         <>
           {user ? (
             <a
+              href="#"
+              role="button"
               className="home-logout-btn"
               style={{ cursor: "pointer" }}
-              onClick={logout}
+              onClick={(e) => {
+                e.preventDefault(); // Prevent default anchor behavior
+                logout(); // Call the logout function
+              }}
             >
               Logout
             </a>

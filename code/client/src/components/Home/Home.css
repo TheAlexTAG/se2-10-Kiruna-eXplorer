@@ -13,7 +13,7 @@
   padding-inline: 100px;
 }
 .main-home .main-title {
-  font-family: "Playfair Display";
+  font-family: "Playfair Display", serif;
   font-style: normal;
   font-weight: 400;
   font-size: 96px;
@@ -21,7 +21,7 @@
   color: #fbfffd;
 }
 .main-home .main-body {
-  font-family: "Playfair Display";
+  font-family: "Playfair Display", serif;
   font-style: normal;
   font-weight: 400;
   font-size: 36px;
@@ -57,7 +57,7 @@
   justify-content: center;
   height: calc(100vh / 3);
   /* height: 342px; */
-  font-family: "Playfair Display";
+  font-family: "Playfair Display", serif;
   font-style: normal;
   font-weight: 400;
   font-size: 64px;
@@ -65,7 +65,7 @@
 }
 
 .main-home .main-func .function-title span {
-  font-family: "Playfair Display";
+  font-family: "Playfair Display", serif;
   font-style: normal;
   font-weight: 400;
   font-size: 64px;

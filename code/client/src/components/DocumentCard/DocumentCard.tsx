@@ -18,6 +18,8 @@ interface DocumentCardProps {
   >;
   handleMoreClick: any;
   inDiagram: boolean;
+  setMapZoom?: Dispatch<SetStateAction<number>>;
+  setMapCenter?: Dispatch<SetStateAction<[number, number]>>;
 }
 
 export const DocumentCard = ({
@@ -25,6 +27,8 @@ export const DocumentCard = ({
   setSelectedDocument,
   handleMoreClick,
   inDiagram,
+  setMapZoom,
+  setMapCenter,
 }: DocumentCardProps) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -43,10 +47,23 @@ export const DocumentCard = ({
   };
 
   const handleChangeCardInfo = (documentID: number) => {
-    API.getDocument(documentID).then((response) => {
-      handleMoreClick(response);
-    });
+    API.getDocument(documentID)
+      .then((response) => {
+        handleMoreClick(response);
+        console.log("response is ", response);
+        if (response.latitude && response.longitude) {
+          if (setMapZoom) setMapZoom(15);
+          if (setMapCenter)
+            setMapCenter([response.latitude, response.longitude]);
+        } else {
+          console.warn("Document does not have coordinates");
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching document: ", err);
+      });
   };
+
   return (
     <>
       <div
@@ -116,10 +133,18 @@ export const DocumentCard = ({
                 <div>
                   {cardInfo.links.map((link: any, index: number) => (
                     <div
+                      tabIndex={0}
+                      role="button"
                       key={index}
                       className="my-2"
                       style={{ cursor: "pointer" }}
                       onClick={() => handleChangeCardInfo(link.documentID)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault(); // Prevent scrolling on Space
+                          event.currentTarget.click(); // Trigger onClick
+                        }
+                      }}
                     >
                       <i
                         className="bi bi-link-45deg mx-1"
@@ -201,8 +226,15 @@ export const DocumentCard = ({
                     const serializableCardInfo = JSON.parse(
                       JSON.stringify(cardInfo)
                     );
+
                     navigate("/map", {
-                      state: { selectedDocument: serializableCardInfo },
+                      state: {
+                        selectedDocument: {
+                          ...serializableCardInfo,
+                          latitude: cardInfo.latitude,
+                          longitude: cardInfo.longitude,
+                        },
+                      },
                     });
                   }}
                 >

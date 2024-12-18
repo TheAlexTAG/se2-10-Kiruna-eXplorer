@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Feature, MultiPolygon } from "geojson";
 import MapComponent from "../Map/MapComponent";
-import { Alert } from "react-bootstrap";
+import { Alert, Button } from "react-bootstrap";
 import "./DocumentsMap.css";
 import { TbPencilPin, TbPencilX } from "react-icons/tb";
 import { useAuth } from "../../contexts/GlobalStateProvider";
@@ -42,7 +42,8 @@ const DocumentsMap: React.FC = () => {
     <>
       {user && user.role === "Urban Planner" && (
         <>
-          <div
+          <Button
+            variant="light"
             className="manage-zones-btn"
             style={{
               position: "absolute",
@@ -56,7 +57,7 @@ const DocumentsMap: React.FC = () => {
             <span className="tooltip">
               {editMode ? "Exit Manage Zones" : "Manage Zones"}
             </span>
-          </div>
+          </Button>
           {errorMessage && (
             <Alert
               variant="danger"

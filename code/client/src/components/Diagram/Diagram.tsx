@@ -16,6 +16,7 @@ import L from "leaflet";
 import { Dropdown, Button, ButtonGroup } from "react-bootstrap";
 import ReactDOM from "react-dom";
 import { useLocation } from "react-router-dom";
+import "./Diagram.css";
 
 interface IconProps {
   width?: string | number;
@@ -95,7 +96,6 @@ const legendData = [
   { label: "Update", lineStyle: "1,5,5,5" },
 ];
 
-
 const getColor = (stakeholder: string) => {
   // Verifica se ci sono più stakeholder separati da virgole
   if (stakeholder.includes(",")) {
@@ -168,7 +168,10 @@ const getIconComponent = (type: string): React.FC<IconProps> => {
   }
 };
 
-function getDateRange(issuanceDate: string, parsedDate: Date): { min: number; max: number } {
+function getDateRange(
+  issuanceDate: string,
+  parsedDate: Date
+): { min: number; max: number } {
   if (RegExp(/^\d{4}$/).exec(issuanceDate)) {
     // yyyy: Limita all'intero anno
     const yearStart = new Date(parsedDate.getFullYear(), 0, 1).getTime();
@@ -176,8 +179,16 @@ function getDateRange(issuanceDate: string, parsedDate: Date): { min: number; ma
     return { min: yearStart, max: yearEnd };
   } else if (RegExp(/^\d{2}\/\d{4}$/).exec(issuanceDate)) {
     // mm/yyyy: Limita all'intero mese
-    const monthStart = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1).getTime();
-    const monthEnd = new Date(parsedDate.getFullYear(), parsedDate.getMonth() + 1, 1).getTime();
+    const monthStart = new Date(
+      parsedDate.getFullYear(),
+      parsedDate.getMonth(),
+      1
+    ).getTime();
+    const monthEnd = new Date(
+      parsedDate.getFullYear(),
+      parsedDate.getMonth() + 1,
+      1
+    ).getTime();
     return { min: monthStart, max: monthEnd };
   } else {
     // Altri formati (dd/mm/yyyy o invalidi): Nessun range
@@ -206,7 +217,12 @@ const fetchDocuments = async (): Promise<Node[]> => {
     parsedDate: parseDate(doc.parsedDate.split("T")[0]),
     pages: doc.pages,
     language: doc.language,
+    zoneID: doc.zoneID,
   }));
+};
+
+const updateDiagramDate = async (documentID: number, newDate: string) => {
+  return await API.updateDiagramDate(documentID, newDate);
 };
 
 interface userProps {
@@ -249,7 +265,6 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
   useEffect(() => {
     const loadData = async () => {
       const fetchedNodes = await fetchDocuments();
-      console.log(fetchedNodes);
       setNodes(fetchedNodes);
     };
 
@@ -264,24 +279,25 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     const newYDomain = new Set([
       "Concept",
       "Text",
-      ...[...new Set(nodes.map((node: Node) => node.parsedScale))]
-        .sort((a, b) => {
+      ...[...new Set(nodes.map((node: Node) => node.parsedScale))].sort(
+        (a, b) => {
           // Se entrambi sono "Blueprints/effects", mettili alla fine
           if (a === "Blueprints/effects") return 1;
           if (b === "Blueprints/effects") return -1;
-    
+
           // Ordina numericamente in ordine decrescente
-          if (typeof a === 'number' && typeof b === 'number') {
+          if (typeof a === "number" && typeof b === "number") {
             return b - a;
           }
-    
+
           // Se uno è un numero e l'altro è una stringa, metti il numero prima
-          if (typeof a === 'number') return -1;
-          if (typeof b === 'number') return 1;
-    
+          if (typeof a === "number") return -1;
+          if (typeof b === "number") return 1;
+
           // Se entrambi sono stringhe, ordina alfabeticamente (decrescente)
           return String(b).localeCompare(String(a));
-        }),
+        }
+      ),
       "Blueprints/effects",
       "",
     ]);
@@ -534,6 +550,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
     // Disegna i link tra i nodi
     const seenLinks = new Set();
+
     graphGroup
       .append("g")
       .selectAll("path")
@@ -550,7 +567,20 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
             .filter(({ sourceNode, targetNode, relationship }) => {
               if (targetNode) {
                 const linkKey = [sourceNode.id, targetNode.id, relationship]
-                  .sort()
+                  .sort((a, b) => {
+                    // If both are numbers, sort numerically
+                    if (typeof a === "number" && typeof b === "number") {
+                      return a - b;
+                    }
+
+                    // If both are strings, sort lexicographically
+                    if (typeof a === "string" && typeof b === "string") {
+                      return a.localeCompare(b);
+                    }
+
+                    // Handle mixed types (numbers first)
+                    return typeof a === "number" ? -1 : 1;
+                  })
                   .join("-");
                 if (seenLinks.has(linkKey)) {
                   return false;
@@ -577,12 +607,57 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         }
         return "";
       })
+      .attr("class", "my-line")
       .attr("stroke", "black")
       .attr("stroke-width", 2)
       .attr("fill", "none")
       .attr("stroke-dasharray", ({ relationship }) =>
         getLineStyle(relationship)
       )
+      .on("mouseover", function (event, d) {
+        d3.select(this)
+          .attr("stroke", "blue") // Change line color
+          .attr("stroke-width", 4); // Make the line thicker
+        // Create a tooltip container dynamically
+        const tooltipContainer = document.createElement("div");
+        tooltipContainer.id = "tooltip-container";
+        tooltipContainer.style.position = "absolute";
+        tooltipContainer.style.left = `${event.pageX + 10}px`; // Add offset for better visibility
+        tooltipContainer.style.top = `${event.pageY + 10}px`;
+        tooltipContainer.style.background = "rgba(0, 0, 0, 0.8)";
+        tooltipContainer.style.color = "#fff";
+        tooltipContainer.style.padding = "8px 12px";
+        tooltipContainer.style.borderRadius = "4px";
+        tooltipContainer.style.fontSize = "12px";
+        tooltipContainer.style.boxShadow = "0px 2px 4px rgba(0, 0, 0, 0.3)";
+        tooltipContainer.style.pointerEvents = "none"; // Prevent interaction
+        tooltipContainer.style.zIndex = "1000";
+
+        // Add text to the tooltip
+        tooltipContainer.innerText = `Connection Type: ${d.relationship}`;
+
+        // Append the tooltip to the body
+        document.body.appendChild(tooltipContainer);
+      })
+      .on("mousemove", function (event) {
+        // Dynamically update the tooltip position as the mouse moves
+        const tooltip = document.getElementById("tooltip-container");
+        if (tooltip) {
+          tooltip.style.left = `${event.pageX + 10}px`;
+          tooltip.style.top = `${event.pageY + 10}px`;
+        }
+      })
+      .on("mouseout", function () {
+        d3.select(this)
+          .attr("stroke", "black") // Reset line color
+          .attr("stroke-width", 2); // Reset line width
+        // Remove the tooltip when the mouse leaves the line
+        const tooltip = document.getElementById("tooltip-container");
+        if (tooltip) {
+          document.body.removeChild(tooltip);
+        }
+      })
+
       .on("click", function (event, d) {
         if (userInfo?.role !== "Urban Planner") {
           alert("You do not have permission to update relationships.");
@@ -600,11 +675,10 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
         const onRelationshipChange = async (rel: string) => {
           try {
-            d.relationship = rel; 
+            d.relationship = rel;
             await API.updateLink(d.id, d.sourceNode.id, d.targetNode.id, rel);
 
-            d3.select(this)
-              .attr("stroke-dasharray", getLineStyle(rel));
+            d3.select(this).attr("stroke-dasharray", getLineStyle(rel));
 
             alert("Relationship updated successfully!");
           } catch (error) {
@@ -653,28 +727,37 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         );
       });
 
-      const drag = d3.drag()
-  .on("start", function (event, d) {
-    simulation.alphaTarget(0.3);
-    d3.select(this).raise().classed("active", true);
-    d.initialY = d.y;
-  })
-  .on("drag", function (event, d) {
-    const { min, max } = getDateRange(d.issuanceDate, d.parsedDate);
-    const yMin = d.initialY - 10;  // Limite inferiore per Y (5 pixel sopra)
-    const yMax = d.initialY + 10;
-    if (min !== max) {
-      const newX = d.x + event.dx;
-      const newY = d.y + event.dy; 
-      d.x = Math.min(Math.max(newX, xScale(min)), xScale(max));
-      d.y = Math.min(Math.max(newY, yMin), yMax);
-      d3.select(this).attr("transform", `translate(${d.x}, ${d.y})`);
-    }
-  })
-  .on("end", function (event, d) {
-    simulation.alphaTarget(0).restart()
-    d3.select(this).classed("active", false);
-  });
+    const drag = d3
+      .drag()
+      .on("start", function (event, d) {
+        simulation.alphaTarget(0.3);
+        d3.select(this).raise().classed("active", true);
+        d.initialY = d.y;
+      })
+      .on("drag", function (event, d) {
+        const { min, max } = getDateRange(d.issuanceDate, d.parsedDate);
+        const yMin = d.initialY - 10; // Limite inferiore per Y (5 pixel sopra)
+        const yMax = d.initialY + 10;
+        if (min !== max) {
+          const newX = d.x + event.dx;
+          const newY = d.y + event.dy;
+          d.x = Math.min(Math.max(newX, xScale(min)), xScale(max));
+          d.y = Math.min(Math.max(newY, yMin), yMax);
+          d3.select(this).attr("transform", `translate(${d.x}, ${d.y})`);
+        }
+      })
+      .on("end", async function (event, d) {
+        simulation.alphaTarget(0).restart();
+        d3.select(this).classed("active", false);
+        const date = new Date(xScale.invert(d.x));
+        const isoString = date.toISOString();
+        try{
+          await updateDiagramDate(d.id, isoString);
+        }
+        catch{
+          //riportare quelle iniziali
+        }
+      });
 
     // Disegna i nodi
     const nodes_diag: any = graphGroup
@@ -738,14 +821,13 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
           .on("click", function (event, d) {
             setSelectedDocument(d);
           });
-      })
-
-      nodes_diag.call(drag);
-
-      simulation.nodes(nodeData).on("tick", function () {
-        nodes_diag
-          .attr("transform", (d) => `translate(${d.x}, ${d.y})`);
       });
+
+    nodes_diag.call(drag);
+
+    simulation.nodes(nodeData).on("tick", function () {
+      nodes_diag.attr("transform", (d) => `translate(${d.x}, ${d.y})`);
+    });
 
     // aggiungi funzionalità di zoom
     const offset = 50;
