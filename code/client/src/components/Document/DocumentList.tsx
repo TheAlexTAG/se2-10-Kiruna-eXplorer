@@ -95,7 +95,8 @@ export const DocumentList = ({ userInfo }: UserProps) => {
       filters.scale || undefined,
       filters.issuanceDate || undefined,
       filters.type || undefined,
-      filters.language || undefined
+      filters.language || undefined,
+      searchTerm
     ).then((data) => {
       setDocuments(data.documents);
       setFilteredDocuments(data.documents);
@@ -106,10 +107,20 @@ export const DocumentList = ({ userInfo }: UserProps) => {
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value.toLowerCase();
     setSearchTerm(value);
-    const filtered = documents.filter((document: any) =>
-      document.title?.toLowerCase().includes(value)
-    );
-    setFilteredDocuments(filtered);
+    API.getDocumentsWithPagination(
+      1,
+      10,
+      filters.stakeholders || undefined,
+      filters.scale || undefined,
+      filters.issuanceDate || undefined,
+      filters.type || undefined,
+      filters.language || undefined,
+      value
+    ).then((data) => {
+      setDocuments(data.documents);
+      setFilteredDocuments(data.documents);
+      setTotalItems(data.totalItems);
+    });
   };
 
   const handleEditClick = (document: any) => {
