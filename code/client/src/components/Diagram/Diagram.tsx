@@ -198,6 +198,7 @@ const fetchDocuments = async (): Promise<Node[]> => {
     parsedDate: parseDate(doc.issuanceDate),
     pages: doc.pages,
     language: doc.language,
+    zoneID: doc.zoneID,
   }));
 };
 
@@ -241,6 +242,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
   useEffect(() => {
     const loadData = async () => {
       const fetchedNodes = await fetchDocuments();
+
       setNodes(fetchedNodes);
     };
 
@@ -255,24 +257,25 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     const newYDomain = new Set([
       "Concept",
       "Text",
-      ...[...new Set(nodes.map((node: Node) => node.parsedScale))]
-        .sort((a, b) => {
+      ...[...new Set(nodes.map((node: Node) => node.parsedScale))].sort(
+        (a, b) => {
           // Se entrambi sono "Blueprints/effects", mettili alla fine
           if (a === "Blueprints/effects") return 1;
           if (b === "Blueprints/effects") return -1;
-    
+
           // Ordina numericamente in ordine decrescente
-          if (typeof a === 'number' && typeof b === 'number') {
+          if (typeof a === "number" && typeof b === "number") {
             return b - a;
           }
-    
+
           // Se uno è un numero e l'altro è una stringa, metti il numero prima
-          if (typeof a === 'number') return -1;
-          if (typeof b === 'number') return 1;
-    
+          if (typeof a === "number") return -1;
+          if (typeof b === "number") return 1;
+
           // Se entrambi sono stringhe, ordina alfabeticamente (decrescente)
           return String(b).localeCompare(String(a));
-        }),
+        }
+      ),
       "Blueprints/effects",
       "",
     ]);
@@ -591,11 +594,10 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
         const onRelationshipChange = async (rel: string) => {
           try {
-            d.relationship = rel; 
+            d.relationship = rel;
             await API.updateLink(d.id, d.sourceNode.id, d.targetNode.id, rel);
 
-            d3.select(this)
-              .attr("stroke-dasharray", getLineStyle(rel));
+            d3.select(this).attr("stroke-dasharray", getLineStyle(rel));
 
             alert("Relationship updated successfully!");
           } catch (error) {

@@ -14,6 +14,7 @@ import {
   FeatureGroup,
   useMapEvent,
   GeoJSON,
+  useMap,
 } from "react-leaflet";
 import MarkerClusterGroup from "react-leaflet-markercluster";
 import "react-leaflet-markercluster/dist/styles.min.css";
@@ -42,6 +43,7 @@ import { IoDocumentOutline, IoDocumentSharp } from "react-icons/io5";
 
 import { Button, InputGroup, Form, Modal } from "react-bootstrap";
 import { useLocation } from "react-router-dom";
+import { FilterDocs } from "../Document/DocumentList";
 
 declare module "leaflet" {
   interface MarkerOptions {
@@ -106,6 +108,17 @@ type ZoneProps = {
   };
 };
 
+const SetMapView: React.FC<{ center: [number, number]; zoom: number }> = ({
+  center,
+  zoom,
+}) => {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom, { animate: true });
+  }, [center, zoom, map]);
+  return null;
+};
+
 const MapComponent: React.FC<MapComponentProps> = ({
   tempCoordinates,
   setTempCoordinates,
@@ -133,6 +146,10 @@ const MapComponent: React.FC<MapComponentProps> = ({
   showDocs,
 }) => {
   const location = useLocation();
+  const [mapCenter, setMapCenter] = useState<[number, number]>([
+    67.8558, 20.2253,
+  ]);
+  const [mapZoom, setMapZoom] = useState<number>(13);
   const [kirunaDocuments, setKirunaDocuments] = useState<
     KirunaDocument[] | null
   >(null);
@@ -156,10 +173,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
   const [showAreYouSure, setShowAreYouSure] = useState(false);
   const [editedPolygon, setEditedPolygon] =
     useState<ZoneProps["coordinates"]["coordinates"][0]>();
-  /*useEffect(() => {
-    if (editMode) {
-    }
-  }, [editMode]);*/
+  const [filterVisible, setFilterVisible] = useState(false);
 
   useEffect(() => {
     if (searchTerm.trim() === "") {
@@ -197,26 +211,22 @@ const MapComponent: React.FC<MapComponentProps> = ({
       console.error("Error fetching zones:", err);
     }
   };
+  const fetchDocuments = async () => {
+    try {
+      const data = await API.getDocuments();
+      const kirunaDocs = data.filter((doc: KirunaDocument) => doc.zoneID === 0);
+
+      setKirunaDocuments(kirunaDocs);
+      const validDocs = data.filter(
+        (doc: Document) => doc.latitude && doc.longitude
+      );
+      setDocuments(validDocs);
+      setFilteredDocuments(validDocs);
+    } catch (err) {
+      console.error("Error fetching documents: ", err);
+    }
+  };
   useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        const data = await API.getDocuments();
-        // console.log("data is ", data);
-        const kirunaDocs = data.filter(
-          (doc: KirunaDocument) => doc.zoneID === 0
-        );
-
-        setKirunaDocuments(kirunaDocs);
-        const validDocs = data.filter(
-          (doc: Document) => doc.latitude && doc.longitude
-        );
-        setDocuments(validDocs);
-        setFilteredDocuments(validDocs);
-      } catch (err) {
-        console.error("Error fetching documents: ", err);
-      }
-    };
-
     fetchDocuments();
     fetchZones();
     setTempHighlightedDocumentId(highlightedDocumentId);
@@ -248,13 +258,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
   };
   const handleEdited = async (e: any) => {
     const { layers } = e;
-    console.log("my geojson is ", e);
     // Loop through edited layers
     layers.eachLayer(async (layer: any) => {
       const geoJson = layer.toGeoJSON();
 
       const updatedPolygon = geoJson.geometry.coordinates[0];
-      console.log("new updated polygon is ", updatedPolygon);
       const drawnPolygon: Feature<GeoJSONPolygon> = turf.polygon(
         geoJson.geometry.coordinates
       );
@@ -279,23 +287,14 @@ const MapComponent: React.FC<MapComponentProps> = ({
       if (editMode && setShowAreYouSure) {
         setShowAreYouSure(true);
       }
-      /*try {
-        // Assuming API.updateZone takes a zone ID and updated polygon
-        const zoneId = layer.options.zoneId; // Ensure you set this when rendering polygons
-        await API.updateZone(zoneId, updatedPolygon);
-        console.log(`Zone ${zoneId} updated successfully!`);
-      } catch (error) {
-        console.error(`Error updating zone ${layer.options.zoneId}:`, error);
-      }*/
     });
   };
   const handleUpdateZone = async () => {
-    console.log("selected zone id is ", selectedZoneId);
     if (selectedZoneId) {
       try {
-        const res = await API.editZone(selectedZoneId, editedPolygon);
-        console.log("res is ", res);
+        await API.editZone(selectedZoneId, editedPolygon);
         fetchZones();
+        fetchDocuments();
       } catch (err) {
         console.error("Error updating zone: ", err);
       }
@@ -306,15 +305,12 @@ const MapComponent: React.FC<MapComponentProps> = ({
   };
 
   const handleZoneClick = (zoneId: number | null) => {
-    // console.log("ciao");
     if (setHighlightedZoneId && onZoneSelect && selectionMode === "zone") {
-      // console.log("ciaone");
       setHighlightedZoneId(zoneId);
       onZoneSelect(zoneId);
     }
   };
 
-  // console.log("selection mode is ", selectionMode);
   const PointClickHandler: React.FC = () => {
     useMapEvent("click", (e) => {
       setSelectedDocument(null);
@@ -372,13 +368,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
   };
 
   const renderCustomPolygon = () => {
-    // console.log("helli", customArea);
     if (selectionMode !== "custom" || !selectionMode) {
       return null;
     }
 
     if (customArea) {
-      // console.log("hell");
       return (
         <FeatureGroup>
           {zones
@@ -400,8 +394,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
       );
     }
   };
-  // console.log("zones is ", zones);
-  // console.log("custom area is ", customArea);
 
   const renderSelectedHoveredZone = () => {
     if (!selectedHoveredZoneId) return null;
@@ -531,12 +523,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
     setShowKirunaDocuments(true);
   };
 
-  // console.log("Test - tempCoords are ", tempCoordinates);
-  // console.log("Test - zone id is ", highlightedZoneId);
-  // console.log("Test - highlighted documetn id ", highlightedDocumentId);
-  // console.log("Test - selectedDocument is ", selectedDocument);
-  // console.log("Test - selectionMode is ", selectionMode);
-
   const handleDocumentHover = (doc: Document | KirunaDocument) => {
     if (selectedHoveredZoneId !== doc.zoneID) setHoveredZoneId(doc.zoneID);
   };
@@ -551,13 +537,24 @@ const MapComponent: React.FC<MapComponentProps> = ({
     if (location.state?.selectedDocument) {
       const document = location.state.selectedDocument;
       handleMoreClick(document);
+      const { latitude, longitude } = document;
+
+      if (latitude && longitude) {
+        setMapCenter([latitude, longitude]);
+        setMapZoom(15);
+      }
     }
   }, [location.state]);
+
+  const toggleFilterVisibility = () => {
+    setFilterVisible((prev) => !prev);
+  };
+
   return (
     <div>
       <MapContainer
-        center={[67.8558, 20.2253]}
-        zoom={13}
+        center={mapCenter}
+        zoom={mapZoom}
         style={
           selectionMode
             ? {
@@ -574,6 +571,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
               }
         }
       >
+        <SetMapView center={mapCenter} zoom={mapZoom} />
+
         {isSatelliteView ? (
           <TileLayer
             key="satellite"
@@ -597,13 +596,11 @@ const MapComponent: React.FC<MapComponentProps> = ({
           showCoverageOnHover={false} // Disable coverage hover
           iconCreateFunction={(cluster) => {
             const childMarkers = cluster.getAllChildMarkers();
-            // console.log("childmarkers are: ", childMarkers);
+
             const containsHighlightedDoc = childMarkers.some((marker) => {
-              // console.log("temp high is ", tempHighlightedDocumentId);
-              // console.log("temp mark option id is ", marker.options.docId);
               return marker.options.docId === tempHighlightedDocumentId;
             });
-            // console.log("containshigghlighteddoc: ", containsHighlightedDoc);
+
             const className = containsHighlightedDoc
               ? "hotspot-cluster-icon"
               : "custom-cluster-icon";
@@ -751,6 +748,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
           setSelectedDocument={setSelectedDocument}
           handleMoreClick={handleMoreClick}
           inDiagram={false}
+          setMapZoom={setMapZoom}
+          setMapCenter={setMapCenter}
         />
       )}
       <div
@@ -820,8 +819,24 @@ const MapComponent: React.FC<MapComponentProps> = ({
             />
             <Button variant="secondary" onClick={() => setSearchTerm("")}>
               Clear
+            </Button>{" "}
+            <Button variant="secondary" onClick={toggleFilterVisibility}>
+              {filterVisible ? (
+                <i className="bi bi-x-lg fs-4" style={{ color: "#dc3545" }}></i>
+              ) : (
+                <i
+                  className="bi bi-funnel fs-4"
+                  style={{ color: "#085FB2" }}
+                ></i>
+              )}
             </Button>
           </InputGroup>
+
+          <FilterDocs
+            documents={documents}
+            filterVisible={filterVisible}
+            setFilteredDocuments={setFilteredDocuments}
+          />
 
           <div
             onClick={handleOpenKirunaModal}
@@ -869,7 +884,6 @@ const MapComponent: React.FC<MapComponentProps> = ({
                 onClick={() => {
                   setShowAreYouSure(false);
                   handleUpdateZone();
-                  console.log("Zone modification confirmed");
                 }}
               >
                 Confirm
