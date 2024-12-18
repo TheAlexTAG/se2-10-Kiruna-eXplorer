@@ -19,7 +19,7 @@ import NewDocument from "../NewDocument/NewDocument";
 import "./DocumentList.css";
 import "./OriginalResources/OriginalResourcesModal.css";
 import { useNavigate } from "react-router-dom";
-interface userProps {
+interface UserProps {
   userInfo: { username: string; role: string } | null;
 }
 
@@ -29,7 +29,7 @@ interface FilterProps {
   filterVisible: boolean;
 }
 
-export const DocumentList = ({ userInfo }: userProps) => {
+export const DocumentList = ({ userInfo }: UserProps) => {
   const navigate = useNavigate();
   const [documents, setDocuments] = useState([]);
   const [document, setDocument] = useState<any | null>(null);

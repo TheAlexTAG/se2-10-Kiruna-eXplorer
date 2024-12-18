@@ -15,7 +15,7 @@ import "./LinkingDocumentsModal.css";
 import API from "../../../API/API";
 import { LinkingDocumentDropdown } from "../LinkingDocumentDropdown/LinkingDocumentDropdown";
 
-interface documentsProps {
+interface DocumentsProps {
   currentDocument: any;
   updateTable: any;
   setSuccessMessage: any;
@@ -25,7 +25,7 @@ export const LinkingDocumentsModal = ({
   currentDocument,
   updateTable,
   setSuccessMessage,
-}: documentsProps) => {
+}: DocumentsProps) => {
   const [show, setShow] = useState(false);
   const [error, setError] = useState("");
   const [tab, setTab] = useState(0);
