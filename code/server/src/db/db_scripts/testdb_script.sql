@@ -1,6 +1,6 @@
 CREATE DATABASE kiruna_testdb;
 
-USE kiruna_testdbkiruna_testdb;
+USE kiruna_testdb;
 
 CREATE TABLE `user` (
 	userID INT AUTO_INCREMENT PRIMARY KEY,
