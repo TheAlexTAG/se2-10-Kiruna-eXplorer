@@ -763,9 +763,8 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         d3.select(this).classed("active", false);
         const date = new Date(xScale.invert(d.x));
         const isoString = date.toISOString();
-        console.log(isoString)
         try{
-          await updateDiagramDate(1, isoString);
+          await updateDiagramDate(d.id, isoString);
         }
         catch{
           //riportare quelle iniziali
