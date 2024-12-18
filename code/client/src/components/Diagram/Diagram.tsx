@@ -575,7 +575,20 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
             .filter(({ sourceNode, targetNode, relationship }) => {
               if (targetNode) {
                 const linkKey = [sourceNode.id, targetNode.id, relationship]
-                  .sort()
+                  .sort((a, b) => {
+                    // If both are numbers, sort numerically
+                    if (typeof a === "number" && typeof b === "number") {
+                      return a - b;
+                    }
+
+                    // If both are strings, sort lexicographically
+                    if (typeof a === "string" && typeof b === "string") {
+                      return a.localeCompare(b);
+                    }
+
+                    // Handle mixed types (numbers first)
+                    return typeof a === "number" ? -1 : 1;
+                  })
                   .join("-");
                 if (seenLinks.has(linkKey)) {
                   return false;
