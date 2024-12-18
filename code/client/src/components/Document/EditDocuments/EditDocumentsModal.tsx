@@ -264,8 +264,8 @@ export default function EditDocumentModal({
         ) {
           updatedFields.stakeholders = editableDocument.stakeholders ?? null;
         }
-        if (editableDocument.scale !== currentDocument.scale) {
-          updatedFields.scale = editableDocument.scale ?? null;
+        if (scale !== currentDocument.scale) {
+          updatedFields.scale = scale ?? null;
         }
         if (editableDocument.title !== currentDocument.title) {
           updatedFields.title = editableDocument.title ?? null;
@@ -284,6 +284,9 @@ export default function EditDocumentModal({
         }
         if (customArea !== null) {
           updatedFields.coordinates = customArea;
+        }
+        if (editableDocument.pages !== currentDocument.pages) {
+          updatedFields.pages = editableDocument.pages ?? null;
         }
 
         if (Object.keys(updatedFields).length > 0) {
