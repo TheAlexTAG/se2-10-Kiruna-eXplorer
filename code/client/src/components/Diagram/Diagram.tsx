@@ -233,10 +233,6 @@ const fetchDocuments = async (): Promise<Node[]> => {
 };
 
 
-const updateDiagramDate = async (documentID: number, newDate: string) => {
-  return await API.updateDiagramDate(documentID, newDate);
-};
-
 interface userProps {
   userInfo: { username: string; role: string } | null;
 }
