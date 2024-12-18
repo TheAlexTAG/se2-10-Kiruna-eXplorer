@@ -423,6 +423,34 @@ const updateLink = async (
   return await response.json();
 };
 
+const updateDiagramDate = async (documentID: number, newDate: string) => {
+  try {
+    const response = await fetch(`${SERVER_URL}/diagram/${documentID}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ parsedDate: newDate }),
+    });
+
+    if (response.ok) {
+      const res = await response.json();
+
+      return res;
+    } else {
+      const errDetails = await response.json();
+      console.log("errdetails is ", errDetails);
+      throw new Error(
+        errDetails.error ? errDetails.error : errDetails.error[0].msg
+      );
+    }
+  } catch (error) {
+    console.error("An error occurred while updating the position:", error);
+    throw error; 
+  }
+};
+
 const API = {
   login,
   logout,
@@ -441,5 +469,6 @@ const API = {
   handleDownloadResource,
   getStakeholders,
   updateLink,
+  updateDiagramDate
 };
 export default API;

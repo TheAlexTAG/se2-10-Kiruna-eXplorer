@@ -221,6 +221,10 @@ const fetchDocuments = async (): Promise<Node[]> => {
   }));
 };
 
+const updateDiagramDate = async (documentID: number, newDate: string) => {
+  return await API.updateDiagramDate(documentID, newDate);
+};
+
 interface userProps {
   userInfo: { username: string; role: string } | null;
 }
@@ -754,9 +758,18 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
           d3.select(this).attr("transform", `translate(${d.x}, ${d.y})`);
         }
       })
-      .on("end", function (event, d) {
+      .on("end", async function (event, d) {
         simulation.alphaTarget(0).restart();
         d3.select(this).classed("active", false);
+        const date = new Date(xScale.invert(d.x));
+        const isoString = date.toISOString();
+        console.log(isoString)
+        try{
+          await updateDiagramDate(1, isoString);
+        }
+        catch{
+          //riportare quelle iniziali
+        }
       });
 
     // Disegna i nodi
