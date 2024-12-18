@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --verbose --testTimeout=30000 --detectOpenHandles --forceExit --runInBand --coverage --colors",
-    "dev": "nodemon --exec ts-node index.ts"
+    "dev": "nodemon --exec ts-node index.ts",
+    "test_unit": "jest test_unit/SPRINT 4 --verbose --testTimeout=30000 --detectOpenHandles --forceExit --runInBand --coverage --colors",
+    "test_integration": "jest test_integration --verbose --testTimeout=30000 --detectOpenHandles --forceExit --runInBand --coverage --colors"
   },
   "author": "",
   "license": "ISC",

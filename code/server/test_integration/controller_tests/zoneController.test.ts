@@ -2,16 +2,16 @@ import { describe, test, expect, beforeAll, afterAll } from "@jest/globals"
 import request from 'supertest';
 
 import { app, server } from "../../index";
-import { ZoneDAO } from "../../src/dao/zoneDAO";
+import { ZoneController } from "../../src/controllers/zoneController";
 import { closeDbPool } from "../../src/db/db";
 import {cleanup} from "../../src/db/cleanup";
 import { Zone } from "../../src/components/zone";
 
-import wellknown from "wellknown";
-import { geometry } from "@turf/turf";
+import { Kiruna } from "../../src/utilities";
+import { Geometry } from "geojson";
 
 const baseURL: string= "/api";
-const zoneDAO= new ZoneDAO();
+const controller= new ZoneController();
 
 const urbanPlanner = { username: process.env.TEST_USERNAME, password: process.env.TEST_PASSWORD};
 let upCookie: string;
@@ -136,48 +136,8 @@ afterAll(() => {
     closeDbPool();
 });
 
-/* TEST:  ZoneDAO  */
-describe("ZoneDAO.createZone tests --> integration", () => {
-    test("Test createZone", async () => {
-        const zone: Zone= ZoneDAO.createZone(1, 'POLYGON((20.175 67.870, 20.195 67.870, 20.195 67.890, 20.175 67.890, 20.175 67.870))');
-
-        const result: Zone = {
-            "id": 1,
-            "coordinates": {
-                "type": "Polygon",
-                "coordinates": [
-                    [
-                        [
-                            20.175,
-                            67.87
-                        ],
-                        [
-                            20.195,
-                            67.87
-                        ],
-                        [
-                            20.195,
-                            67.89
-                        ],
-                        [
-                            20.175,
-                            67.89
-                        ],
-                        [
-                            20.175,
-                            67.87
-                        ]
-                    ]
-                ]
-            }
-        };
-
-        expect(zone).toEqual(result);
-    });
-});
-
-
-describe("ZoneDAO.getZone tests --> integration", () => {
+/* TEST:  ZoneController */
+describe("ZoneController.getZone tests --> integration", () => {
     beforeAll(async () => {
         await cleanup();
         upCookie = await login(urbanPlanner);
@@ -191,7 +151,7 @@ describe("ZoneDAO.getZone tests --> integration", () => {
     });
 
     test("Test getZone", async () => {
-        const zone: Zone = await zoneDAO.getZone(1);
+        const zone: Zone = await controller.getZone(1);
 
         const result: Zone = {
             "id": 1,
@@ -226,31 +186,14 @@ describe("ZoneDAO.getZone tests --> integration", () => {
 
         expect(zone).toEqual(result);
     });
-});
 
-describe("ZoneDAO.zoneExistsCoord tests --> integration", () => {
-    beforeAll(async () => {
-        await cleanup();
-        upCookie = await login(urbanPlanner);
-        await request(app).post(`${baseURL}/document`).set("Cookie", upCookie).send(firstDoc).expect(200);
-        await request(app).post(`${baseURL}/document`).set("Cookie", upCookie).send(secondDoc).expect(200);
-        await request(app).post(`${baseURL}/document`).set("Cookie", upCookie).send(thirdDoc).expect(200);
-    });
-
-    afterAll(async () => {
-        await cleanup();
-    });
-
-    test("Test zoneExistsCoord --> true", async () => {
-        const spy: boolean = await ZoneDAO.zoneExistsCoord(wellknown.stringify(geometry("Polygon", [thirdDoc.coordinates]) as wellknown.GeoJSONGeometry));
-        expect(spy).toEqual(true);
-    });
-
-    test("Test zoneExistsCoord --> false", async () => {
-        const spy: boolean = await ZoneDAO.zoneExistsCoord("POLYGON((20.150 67.860, 20.170 67.861, 20.170 67.880, 20.150 67.880, 20.150 67.860))");
-        expect(spy).toEqual(false);
+    test("Test getZone Kiruna", async () => {
+        const zone: Zone = await controller.getZone(0);
+        const kiruna= await Kiruna.getKirunaGeometry();
+        expect(zone).toEqual(new Zone(0,kiruna));
     });
 });
+
 
 describe("ZoneDAO.getAllZOne tests --> integration", () => {
     beforeAll(async () => {
@@ -266,7 +209,7 @@ describe("ZoneDAO.getAllZOne tests --> integration", () => {
     });
 
     test("Test getAllZone", async () => {
-        const zones: Zone[] = await zoneDAO.getAllZone();
+        const zones: Zone[] = await controller.getAllZone();
     
         const result: Zone[] = [
             {
@@ -360,6 +303,9 @@ describe("ZoneDAO.getAllZOne tests --> integration", () => {
                 }
             }
         ];
+
+        const kiruna= await Kiruna.getKirunaGeometry();
+        result.push(new Zone(0,kiruna));
     
         expect(zones).toEqual(result);
     });
@@ -379,7 +325,23 @@ describe("ZoneDAO.modifyZone tests --> integration", () => {
     });
     
     test("Test modifyZone", async () => {
-        const spy: boolean= await zoneDAO.modifyZone(2,'POLYGON((20.200 67.850, 20.220 67.850, 20.220 67.870, 20.200 67.870, 20.200 67.850))',67.85165993465826, 20.288109604482475);
+        const geo: Geometry= {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [20.20639122940088, 67.85862825793728],
+                [20.212732618595822, 67.85544133829652],
+                [20.2171523747011, 67.85080504114305],
+                [20.222148620732355, 67.8361656811918],
+                [20.234831399121163, 67.83587570012043],
+                [20.24309442140475, 67.85167441707196],
+                [20.218689681172407, 67.86319058909814],
+                [20.20735204594621, 67.86181474199265],
+                [20.20639122940088, 67.85862825793728]
+              ]
+            ]
+        };
+        const spy: boolean= await controller.modifyZone(2,geo);
 
         expect(spy).toEqual(true);
     });

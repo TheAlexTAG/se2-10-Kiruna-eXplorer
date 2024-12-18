@@ -9,4 +9,5 @@ module.exports = {
     moduleDirectories: ['node_modules', 'src'],
     collectCoverage: true,
     collectCoverageFrom: ['src/**/*.{ts,js}', '!**/node_modules/**', '!**/vendor/**'],
+    setupFiles: ['./jest.setup.ts'],
 };
