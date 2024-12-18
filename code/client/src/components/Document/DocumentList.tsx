@@ -25,6 +25,7 @@ interface UserProps {
 
 interface FilterProps {
   documents: any;
+  fetchDocuments: any;
   setFilteredDocuments: Dispatch<SetStateAction<any>>;
   filterVisible: boolean;
   setFilterVisible: Dispatch<SetStateAction<boolean>>;
@@ -235,6 +236,7 @@ export const DocumentList = ({ userInfo }: UserProps) => {
       {/* Filters Form */}
       <FilterDocs
         documents={documents}
+        fetchDocuments={fetchDocuments}
         setFilteredDocuments={setFilteredDocuments}
         filterVisible={filterVisible}
         setFilterVisible={setFilterVisible}
@@ -469,6 +471,7 @@ export const DocumentList = ({ userInfo }: UserProps) => {
 
 export const FilterDocs: React.FC<FilterProps> = ({
   documents,
+  fetchDocuments,
   setFilteredDocuments,
   filterVisible,
   setFilterVisible,
@@ -527,15 +530,31 @@ export const FilterDocs: React.FC<FilterProps> = ({
     }));
   };
 
-  const handleResetFilters = () => {
-    setFilters({
-      stakeholders: "",
-      scale: "",
-      issuanceDate: "",
-      type: "",
-      language: "",
-    });
-    setFilteredDocuments(documents);
+  const handleResetFilters = async () => {
+    try {
+      setFilters({
+        stakeholders: "",
+        scale: "",
+        issuanceDate: "",
+        type: "",
+        language: "",
+      });
+      const filteredData = await API.getDocumentsWithPagination(
+        1,
+        10,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined
+      );
+      setFilteredDocuments(filteredData.documents);
+      setCurrentPage(1);
+      setTotalItems(filteredData.totalItems);
+      setFilterVisible(false);
+    } catch (error) {
+      console.error("Error applying filters:", error);
+    }
   };
 
   return (
