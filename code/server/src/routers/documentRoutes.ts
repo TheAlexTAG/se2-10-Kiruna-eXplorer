@@ -129,10 +129,11 @@ class DocumentRoutes {
                 stakeholders: req.body.stakeholders,
                 scale: req.body.scale,
                 issuanceDate: req.body.issuanceDate,
-                parsedDate: this.helper.parseDate(req.body.issuanceDate),
                 type: req.body.type,
                 language: req.body.language ?? null,
-                pages: req.body.pages ?? null
+                pages: req.body.pages ?? null,
+                nodeX: null,
+                nodeY: null
             }
             let documentGeoData: DocumentGeoData = {
                 zoneID: req.body.zoneID ?? null,
@@ -183,10 +184,11 @@ class DocumentRoutes {
                 stakeholders: req.body.stakeholders ?? null,
                 scale: req.body.scale ?? null,
                 issuanceDate: req.body.issuanceDate ?? null,
-                parsedDate: req.body.issuanceDate ? this.helper.parseDate(req.body.issuanceDate): null,
                 type: req.body.type ?? null,
                 language: req.body.language ?? null,
-                pages: req.body.pages ?? null
+                pages: req.body.pages ?? null,
+                nodeX: null,
+                nodeY: null
             }
             let documentGeoData: DocumentGeoData = {
                 zoneID: req.body.zoneID ?? null,
@@ -262,17 +264,18 @@ class DocumentRoutes {
         .then((stakeholders) => res.status(200).json(stakeholders))
         .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
 
-        this.app.put("/api/diagram/:id",
-            this.utilities.isUrbanPlanner,
-            param("id").isInt(),
-            this.utilities.documentExists,
-            body("parsedDate").custom((value) => {
-                if (isNaN(Date.parse(value)))
-                    throw new Error("Invalid date format");
-                return true;
-              }),
+        this.app.put("/api/diagram",
+            body("documentIDs").isArray()
+            .bail()
+            .custom((value) => value.every((id: number) => Number.isInteger(id) && id > 0)),
+            body("xPositions").isArray()
+            .bail()
+            .custom((value) => value.every((pos: number) => typeof pos === "number")),
+            body("yPositions").isArray()
+            .bail()
+            .custom((value) => value.every((pos: number) => typeof pos === "number")),
             this.errorHandler.validateRequest,
-        (req: any, res: any, next: any) => this.controller.updateDiagramDate(req.params.id, req.body.parsedDate.split("T")[0])
+        (req: any, res: any, next: any) => this.controller.updateDiagramDate(req.body.documentIDs, req.body.xPositions, req.body.yPositions)
         .then((response: boolean) => res.status(200).json(response))
         .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
         

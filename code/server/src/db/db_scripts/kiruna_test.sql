@@ -25,13 +25,13 @@ CREATE TABLE document (
 	stakeholders TEXT NOT NULL,
 	scale VARCHAR(30) NOT NULL,
 	issuanceDate VARCHAR(10) NOT NULL,
-	parsedDate DATE NOT NULL,
+	nodeX DOUBLE DEFAULT NULL,
+	nodeY DOUBLE DEFAULT NULL,
 	`type` VARCHAR(30) NOT NULL,
 	`language` VARCHAR(30),
 	pages VARCHAR(50),
 	FOREIGN KEY (zoneID) REFERENCES `zone`(zoneID) ON UPDATE CASCADE ON DELETE SET NULL
 );
-
 CREATE TABLE link (
 	linkID INT AUTO_INCREMENT PRIMARY KEY,
 	firstDoc INT NOT NULL,
@@ -114,3 +114,7 @@ BEGIN
    END IF;
 END$$
 DELIMITER ;
+
+INSERT INTO user (userid, username, password, salt, role) VALUES
+(null, 'up', 'ef89d2ba51b91f79c2319169a341381eaacd02c4cc3b548cf540ea4b1f148ad9', 'ce3f584e06ec9fc06b92edf73cd9f569', 'Urban Planner'),
+(null, 'admin', 'ef89d2ba51b91f79c2319169a341381eaacd02c4cc3b548cf540ea4b1f148ad9', 'ce3f584e06ec9fc06b92edf73cd9f569', 'Admin');

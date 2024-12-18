@@ -13,7 +13,8 @@
 .navbar-component a {
   color: whitesmoke;
 }
-.navbar-component .nav-link:hover {
+.navbar-component .nav-link:hover,
+.navbar-component .nav-link:focus {
   color: #085fb2;
 }
 

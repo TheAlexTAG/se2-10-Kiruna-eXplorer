@@ -7,3 +7,11 @@ coverage
 # dotenv environment variable files
 .env
 test.env
+mariadb.env
+
+# Database scripts
+db_scripts/
+
+# Docker configuration files
+Dockerfile
+docker-compose.yml

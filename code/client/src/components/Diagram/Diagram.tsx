@@ -14,7 +14,7 @@ import API from "../../API/API";
 import { DocumentCard } from "../DocumentCard/DocumentCard";
 import L from "leaflet";
 import { Dropdown, Button, ButtonGroup } from "react-bootstrap";
-import ReactDOM from "react-dom";
+import ReactDOM, { flushSync } from "react-dom";
 import { useLocation } from "react-router-dom";
 import "./Diagram.css";
 
@@ -41,6 +41,8 @@ type Node = {
   resource: [];
   parsedScale: number;
   parsedDate: Date;
+  nodeX: number;
+  nodeY: number;
   x: number;
   y: number;
 };
@@ -118,8 +120,16 @@ const getColor = (stakeholder: string) => {
 };
 
 const parseDate = (dateStr: string): Date => {
-  const ddmmyyyy = d3.timeParse("%Y-%m-%d");
-  return ddmmyyyy(dateStr)!;
+  const ddmmyyyy = d3.timeParse("%d/%m/%Y");
+  const mmyyyy = d3.timeParse("%m/%Y");
+  const yyyy = d3.timeParse("%Y");
+  if (ddmmyyyy(dateStr)) {
+    return ddmmyyyy(dateStr)!;
+  } else if (mmyyyy(dateStr)) {
+    return mmyyyy(dateStr)!;
+  } else {
+    return yyyy(dateStr)!;
+  }
 };
 
 const parseScale = (scale: string): number | string => {
@@ -168,32 +178,31 @@ const getIconComponent = (type: string): React.FC<IconProps> => {
   }
 };
 
-function getDateRange(
-  issuanceDate: string,
-  parsedDate: Date
-): { min: number; max: number } {
+function getDateRange(issuanceDate: string): { min: number; max: number } {
+  // Controlla se il formato è 'yyyy' (anno)
   if (RegExp(/^\d{4}$/).exec(issuanceDate)) {
-    // yyyy: Limita all'intero anno
-    const yearStart = new Date(parsedDate.getFullYear(), 0, 1).getTime();
-    const yearEnd = new Date(parsedDate.getFullYear() + 1, 0, 1).getTime();
+    const year = parseInt(issuanceDate, 10);
+    // Limita all'intero anno
+    const yearStart = new Date(year, 0, 1).getTime();
+    const yearEnd = new Date(year + 1, 0, 1).getTime();
     return { min: yearStart, max: yearEnd };
-  } else if (RegExp(/^\d{2}\/\d{4}$/).exec(issuanceDate)) {
-    // mm/yyyy: Limita all'intero mese
-    const monthStart = new Date(
-      parsedDate.getFullYear(),
-      parsedDate.getMonth(),
-      1
-    ).getTime();
-    const monthEnd = new Date(
-      parsedDate.getFullYear(),
-      parsedDate.getMonth() + 1,
-      1
-    ).getTime();
-    return { min: monthStart, max: monthEnd };
-  } else {
-    // Altri formati (dd/mm/yyyy o invalidi): Nessun range
-    return { min: parsedDate.getTime(), max: parsedDate.getTime() };
   }
+  // Controlla se il formato è 'mm/yyyy' (mese e anno)
+  else if (RegExp(/^\d{2}\/\d{4}$/).exec(issuanceDate)) {
+    const [month, year] = issuanceDate.split('/');
+    const monthStart = new Date(parseInt(year, 10), parseInt(month, 10) - 1, 1).getTime();
+    const monthEnd = new Date(parseInt(year, 10), parseInt(month, 10), 1).getTime();
+    return { min: monthStart, max: monthEnd };
+  }
+  // Controlla se il formato è 'dd/mm/yyyy' (giorno, mese e anno)
+  else if (RegExp(/^\d{2}\/\d{2}\/\d{4}$/).exec(issuanceDate)) {
+    const [day, month, year] = issuanceDate.split('/');
+    const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+    const timestamp = date.getTime();
+    return { min: timestamp, max: timestamp };
+  }
+  // Altri formati (invalidi): Nessun range
+  return { min: new Date(issuanceDate).getTime(), max: new Date(issuanceDate).getTime() };
 }
 
 const fetchDocuments = async (): Promise<Node[]> => {
@@ -214,16 +223,15 @@ const fetchDocuments = async (): Promise<Node[]> => {
     attachment: doc.attachment,
     resource: doc.resource,
     parsedScale: parseScale(doc.scale),
-    parsedDate: parseDate(doc.parsedDate.split("T")[0]),
+    parsedDate: parseDate(doc.issuanceDate),
     pages: doc.pages,
     language: doc.language,
     zoneID: doc.zoneID,
+    nodeX: doc.nodeX,
+    nodeY: doc.nodeY
   }));
 };
 
-const updateDiagramDate = async (documentID: number, newDate: string) => {
-  return await API.updateDiagramDate(documentID, newDate);
-};
 
 interface userProps {
   userInfo: { username: string; role: string } | null;
@@ -232,16 +240,52 @@ interface userProps {
 export const Diagram: React.FC<userProps> = ({ userInfo }) => {
   const location = useLocation();
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const dragRef = useRef<d3.DragBehavior<Element, unknown, unknown>>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [selectedDocument, setSelectedDocument] = useState<any | null>(null);
   const [isZoomEnabled, setIsZoomEnabled] = useState(false);
   const zoomBehavior = useRef<d3.ZoomBehavior<Element, unknown> | null>(null); // Ref per il comportamento dello zoom
+  const [isDragEnabled, setIsDragEnabled] = useState(false);
+  const [fetch, setFetch] = useState(false);
+  const isDragRef = useRef<boolean>(false);
+
+const toggleDrag = async() => {
+      setIsDragEnabled((prev) => {
+        isDragRef.current = !prev;
+        return !prev;
+      });
+
+    if (!isDragEnabled) {
+      console.log("Drag Abilitato");
+      d3.selectAll('g.node')
+        .call(dragRef.current);
+    } else {
+      d3.selectAll('g.node')
+        .on(".drag", null);
+      const nodes = d3.selectAll("g.node")
+      .data()
+      .filter(d => d.isDragged);
+      const documentIDs = nodes.map((d: any) => d.id);
+      const xPositions = nodes.map((d: any) => d.x);
+      const yPositions = nodes.map((d: any) => d.y);
+
+      console.log("Document IDs:", documentIDs);
+      console.log("X Positions:", xPositions);
+      console.log("Y Positions:", yPositions);
+
+      if(documentIDs.length !== 0) {
+        await API.updateDiagram(documentIDs, xPositions, yPositions);
+        setFetch((prev) => !prev)
+      }
+    }
+  };
 
   useEffect(() => {
     if (location.state?.selectedDocument) {
       setIsZoomEnabled(true);
       const document = location.state.selectedDocument;
-      setSelectedDocument(document);
+      if(!isDragRef.current)
+        setSelectedDocument(document);
     }
   }, [location.state]);
 
@@ -265,11 +309,12 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
   useEffect(() => {
     const loadData = async () => {
       const fetchedNodes = await fetchDocuments();
+      console.log(fetchedNodes);
       setNodes(fetchedNodes);
     };
 
     loadData();
-  }, []);
+  }, [fetch]);
 
   useEffect(() => {
     if (nodes.length === 0) return;
@@ -304,17 +349,16 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
     const newXDomain = [
       d3.timeYear.offset(
-        d3.min(nodes.map((node: Node) => node.parsedDate))!,
+        d3.min(nodes.map((node: Node) => parseDate(node.issuanceDate)))!,
         -1
       ), // domain 1 year before the min date
       d3.timeYear.offset(
-        d3.max(nodes.map((node: Node) => node.parsedDate))!,
+        d3.max(nodes.map((node: Node) => parseDate(node.issuanceDate)))!,
         1
       ), // domain 1 year after the max date
     ];
 
     const numberOfYears = d3.timeYear.count(newXDomain[0], newXDomain[1]);
-
     const width = Math.max(window.innerWidth, numberOfYears * 150);
     const height = Math.max(window.innerHeight, newYDomain.size * 125);
 
@@ -537,8 +581,14 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     // Crea la simulazione della forza per posizionare i nodi
     const simulation = d3
       .forceSimulation(nodeData)
-      .force("x", d3.forceX((d) => xScale(d.parsedDate)).strength(1)) // Forza verso la posizione x basata su xScale
-      .force("y", d3.forceY((d) => yScale(d.parsedScale)).strength(1)) // Forza verso la posizione y basata su yScale
+      .force("x", d3.forceX((d) => {
+        if(d.nodeX === null) return xScale(d.parsedDate)
+        else return d.nodeX
+      }).strength(1)) // Forza verso la posizione x basata su xScale
+      .force("y", d3.forceY((d) => {
+        if(d.nodeY === null) return yScale(d.parsedScale)
+        else return d.nodeY
+      }).strength(1)) // Forza verso la posizione y basata su yScale
       .force(
         "collision",
         d3.forceCollide(25) // Distanza minima tra i nodi (raggio di collisione)
@@ -732,32 +782,43 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
       .on("start", function (event, d) {
         simulation.alphaTarget(0.3);
         d3.select(this).raise().classed("active", true);
-        d.initialY = d.y;
+        d.initialY = yScale(d.parsedScale);
       })
       .on("drag", function (event, d) {
-        const { min, max } = getDateRange(d.issuanceDate, d.parsedDate);
-        const yMin = d.initialY - 10; // Limite inferiore per Y (5 pixel sopra)
-        const yMax = d.initialY + 10;
-        if (min !== max) {
+        const { min, max } = getDateRange(d.issuanceDate);
+        const yMin = d.initialY - 50; 
+        const yMax = d.initialY + 50;
           const newX = d.x + event.dx;
           const newY = d.y + event.dy;
-          d.x = Math.min(Math.max(newX, xScale(min)), xScale(max));
+          d.x = Math.min(Math.max(newX, xScale(min) + 0.1), xScale(max) + 0.1);
           d.y = Math.min(Math.max(newY, yMin), yMax);
           d3.select(this).attr("transform", `translate(${d.x}, ${d.y})`);
+
+          d3.selectAll("path.my-line").attr("d", (linkData) => {
+            const { sourceNode, targetNode, index } = linkData;
+      
+            if (sourceNode && targetNode) {
+              const startX = sourceNode.x;
+              const startY = sourceNode.y;
+              const endX = targetNode.x;
+              const endY = targetNode.y;
+      
+              const controlX = (startX + endX) / 2;
+              const controlY = (startY + endY) / 2 - 50 - index * 50;
+      
+              return `M${startX},${startY} Q${controlX},${controlY} ${endX},${endY}`;
+            }
+            return "";
+          });
         }
-      })
+      )
       .on("end", async function (event, d) {
         simulation.alphaTarget(0).restart();
         d3.select(this).classed("active", false);
-        const date = new Date(xScale.invert(d.x));
-        const isoString = date.toISOString();
-        try{
-          await updateDiagramDate(d.id, isoString);
-        }
-        catch{
-          //riportare quelle iniziali
-        }
+        d.isDragged = true;
       });
+
+      dragRef.current = drag;
 
     // Disegna i nodi
     const nodes_diag: any = graphGroup
@@ -819,11 +880,10 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
             d3.select(this).select("text").style("visibility", "hidden");
           })
           .on("click", function (event, d) {
-            setSelectedDocument(d);
+            if(!isDragRef.current)
+              setSelectedDocument(d);
           });
       });
-
-    nodes_diag.call(drag);
 
     simulation.nodes(nodeData).on("tick", function () {
       nodes_diag.attr("transform", (d) => `translate(${d.x}, ${d.y})`);
@@ -878,6 +938,7 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         <Button
           variant={isZoomEnabled ? "outline-secondary" : "outline-light"}
           onClick={() => setIsZoomEnabled(!isZoomEnabled)}
+          disabled={isDragEnabled}
         >
           {isZoomEnabled ? "Disable Zoom" : "Enable Zoom"}
         </Button>
@@ -895,9 +956,16 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         >
           Zoom Out
         </Button>
+        <Button
+          variant={isDragEnabled ? "outline-danger" : "outline-light"}
+          onClick={toggleDrag}
+          disabled={selectedDocument}
+        >
+          {isDragEnabled ? "Commit positions" : "Change document positions"}
+        </Button>
       </ButtonGroup>
       <svg ref={svgRef}></svg>
-      {selectedDocument && (
+      {!isDragRef.current && selectedDocument &&(
         <DocumentCard
           cardInfo={selectedDocument}
           iconToShow={getIconByType(selectedDocument.type).options.iconUrl}

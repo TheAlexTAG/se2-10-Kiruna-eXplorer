@@ -138,7 +138,7 @@ const getDocumentsWithPagination = async (
   issuanceDate: string | null | undefined,
   type: string | null | undefined,
   language: string | null | undefined,
-  keyword: string | null | undefined,
+  keyword: string | null | undefined
 ) => {
   const queryParams = new URLSearchParams();
 
@@ -203,32 +203,21 @@ const connectDocuments = async (
 
 const updateDocument = async (
   documentID: number,
-  zoneID: number | null,
-  longitude: number | null,
-  latitude: number | null,
-  stakeholders: string | null,
-  scale: string | null,
-  title: string | null,
-  description: string | null,
-  issuanceDate: string | null,
-  type: string | null,
-  language: string | null
+  updatedFields: Record<string, any> // Accept only changed fields as an object
 ) => {
-  // console.log(documentID, zoneID, longitude, latitude);
   const response = await fetch(`${SERVER_URL}/document/${documentID}`, {
     method: "PUT",
     credentials: "include",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ zoneID, longitude, latitude, stakeholders, scale, title, description, issuanceDate, type, language }),
+    body: JSON.stringify(updatedFields), // Send only the updated fields
   });
 
   if (!response.ok) {
-    // console.log("response is ", response);
     const errorData = await response.json();
-    console.error("Error updating georeference:", errorData);
-    throw new Error(errorData.error || "Failed to update georeference");
+    console.error("Error updating document:", errorData);
+    throw new Error(errorData.error || "Failed to update document");
   }
 
   if (response.status === 200) {
@@ -440,20 +429,21 @@ const updateLink = async (
   return await response.json();
 };
 
-const updateDiagramDate = async (documentID: number, newDate: string) => {
+const updateDiagram = async (documentIDs: number[], xPositions: number [], yPositions: number []) => {
   try {
-    const response = await fetch(`${SERVER_URL}/diagram/${documentID}`, {
+    console.log(JSON.stringify({ documentIDs: documentIDs, xPositions: xPositions, yPositions: yPositions }))
+    const response = await fetch(`${SERVER_URL}/diagram`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ parsedDate: newDate }),
+      body: JSON.stringify({ documentIDs: documentIDs, xPositions: xPositions, yPositions: yPositions }),
     });
 
     if (response.ok) {
       const res = await response.json();
-
+      console.log(res);
       return res;
     } else {
       const errDetails = await response.json();
@@ -486,6 +476,6 @@ const API = {
   handleDownloadResource,
   getStakeholders,
   updateLink,
-  updateDiagramDate,
+  updateDiagram,
 };
 export default API;

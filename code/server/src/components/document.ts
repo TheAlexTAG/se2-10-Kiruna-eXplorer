@@ -28,11 +28,12 @@ class Document {
     stakeholders: string;
     scale: string;
     issuanceDate: string;
-    parsedDate: Date;
     type: string;
     language: string | null;
     pages: string | null;
     connections: number;
+    nodeX: number | null;
+    nodeY: number | null;
     attachment: Attachment[];
     resource: Resource[];
     links: Link[];
@@ -69,7 +70,8 @@ class Document {
         this.stakeholders = documentData.stakeholders;
         this.scale = documentData.scale;
         this.issuanceDate = documentData.issuanceDate;
-        this.parsedDate = documentData.parsedDate;
+        this.nodeX = documentData.nodeX;
+        this.nodeY = documentData.nodeY;
         this.type = documentData.type;
         this.language = documentData.language;
         this.pages = documentData.pages;
@@ -87,10 +89,11 @@ interface DocumentData {
     stakeholders: string,
     scale: string,
     issuanceDate: string,
-    parsedDate: Date,
     type: string,
     language: string | null,
     pages: string | null
+    nodeX: number | null,
+    nodeY: number | null,
 }
 
 interface DocumentEditData {
@@ -100,10 +103,11 @@ interface DocumentEditData {
     stakeholders: string | null,
     scale: string | null,
     issuanceDate: string | null,
-    parsedDate: Date | null,
     type: string | null,
     language: string | null,
-    pages: string | null
+    pages: string | null,
+    nodeX: number | null,
+    nodeY: number | null,
 }
 
 interface DocumentGeoData {
