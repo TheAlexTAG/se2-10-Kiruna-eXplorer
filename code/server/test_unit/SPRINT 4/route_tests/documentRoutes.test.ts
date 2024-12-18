@@ -1253,7 +1253,7 @@ describe("Route document and helper unit test", () => {
             const mockArrayMiddleware = (req: any, res: any, next: any) => {
                 req.files = [
                     { originalname: 'test.txt', buffer: Buffer.from('file content') },
-                    { originalname: 'test2.txt', buffer: Buffer.from('file content') }
+                    { originalname: 'test2.txt', buffer: Buffer.from('file content 2') }
                 ];
                 next();
             };
