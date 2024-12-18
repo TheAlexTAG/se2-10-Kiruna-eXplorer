@@ -365,7 +365,7 @@ export const DocumentList = ({ userInfo }: UserProps) => {
 
       {selectedDocument && (
         <EditDocumentModal
-          document={selectedDocument}
+          currentDocument={selectedDocument}
           updateTable={fetchDocuments}
           show={showEditModal}
           onHide={() => setShowEditModal(false)}

@@ -1,5 +1,13 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Form, Row, Col, Button, Alert, Modal } from "react-bootstrap";
+import {
+  Form,
+  Row,
+  Col,
+  Button,
+  Alert,
+  Modal,
+  InputGroup,
+} from "react-bootstrap";
 
 import API from "../../../API/API";
 import "./EditDocumentsModal.css";
@@ -11,33 +19,44 @@ import "react-datepicker/dist/react-datepicker.css";
 import { format, parse } from "date-fns";
 
 interface EditDocumentProps {
-  document: any;
+  currentDocument: any;
   show: boolean;
   onHide: () => void;
   updateTable: () => void;
 }
 
 export default function EditDocumentModal({
-  document,
+  currentDocument,
   show,
   onHide,
   updateTable,
 }: EditDocumentProps) {
-  const [editableDocument, setEditableDocument] = useState({ ...document, 
-    title: document.title || "", 
-    description: document.description || "",
-    issuanceDate: document.issuanceDate || "",
-    type: document.type || "",
-    language: document.language || "",
-    pages: document.pages || "",});
+  const [editableDocument, setEditableDocument] = useState({
+    ...currentDocument,
+    title: currentDocument.title || "",
+    description: currentDocument.description || "",
+    issuanceDate: currentDocument.issuanceDate || "",
+    type: currentDocument.type || "",
+    language: currentDocument.language || "",
+    pages: currentDocument.pages || "",
+    scale: currentDocument.scale || "",
+  });
   const parsedDate = () => {
     try {
       if (/^\d{4}$/.test(editableDocument.issuanceDate)) {
-        return parse(`01/01/${editableDocument.issuanceDate}`, "dd/MM/yyyy", new Date());
+        return parse(
+          `01/01/${editableDocument.issuanceDate}`,
+          "dd/MM/yyyy",
+          new Date()
+        );
       } else if (/^\d{2}\/\d{4}$/.test(editableDocument.issuanceDate)) {
-          return parse(`01/${editableDocument.issuanceDate}`, "dd/MM/yyyy", new Date());
+        return parse(
+          `01/${editableDocument.issuanceDate}`,
+          "dd/MM/yyyy",
+          new Date()
+        );
       } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(editableDocument.issuanceDate)) {
-          return parse(editableDocument.issuanceDate, "dd/MM/yyyy", new Date());
+        return parse(editableDocument.issuanceDate, "dd/MM/yyyy", new Date());
       } else {
         return null;
       }
@@ -45,11 +64,16 @@ export default function EditDocumentModal({
       return null;
     }
   };
+  const datePickerRef = useRef(null);
   const [stakeholders, setStakeholders] = useState("");
   const [scale, setScale] = useState("");
-  const [latitude, setLatitude] = useState<number | null>(document.latitude);
-  const [longitude, setLongitude] = useState<number | null>(document.longitude);
-  const [zoneID, setZoneID] = useState<number | null>(document.zoneID);
+  const [latitude, setLatitude] = useState<number | null>(
+    currentDocument.latitude
+  );
+  const [longitude, setLongitude] = useState<number | null>(
+    currentDocument.longitude
+  );
+  const [zoneID, setZoneID] = useState<number | null>(currentDocument.zoneID);
   const [showMapModal, setShowMapModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [tempZoneId, setTempZoneId] = useState<number | null>(null);
@@ -105,6 +129,13 @@ export default function EditDocumentModal({
   const handleLocationSelect = () => {
     setLatitude(tempCoordinates.lat);
     setLongitude(tempCoordinates.lng);
+    setEditableDocument({
+      ...editableDocument,
+      latitude: tempCoordinates.lat,
+      longitude: tempCoordinates.lng,
+      zoneID: tempZoneId,
+    });
+
     setHighlightedDocumentId(tempHighlightedDocumentId);
     setZoneID(tempZoneId);
     setCustomArea(tempCustom);
@@ -113,32 +144,94 @@ export default function EditDocumentModal({
 
   const handleLatitudeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLatitude = e.target.value ? parseFloat(e.target.value) : null;
+    setEditableDocument({
+      ...editableDocument,
+      latitude: newLatitude,
+    });
     setLatitude(newLatitude);
     if (newLatitude !== null) setZoneID(null);
   };
 
   const handleLongitudeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newLongitude = e.target.value ? parseFloat(e.target.value) : null;
+    setEditableDocument({
+      ...editableDocument,
+      longitude: newLongitude,
+    });
     setLongitude(newLongitude);
     if (newLongitude !== null) setZoneID(null);
   };
+  const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // console.log(editableDocument);
+    // console.log(currentDocument);
 
-    if (
-      latitude === null &&
-      longitude === null &&
-      zoneID === null &&
-      customArea === null
-    ) {
-      setErrorMessage("Please provide valid coordinates or select a zone.");
+    const errors = {
+      title: !editableDocument.title,
+      description: !editableDocument.description,
+      stakeholders: !editableDocument.stakeholders,
+      scale: !editableDocument.scale,
+      issuanceDate: !editableDocument.issuanceDate,
+      type: !editableDocument.type,
+      latitude:
+        !editableDocument.latitude &&
+        !editableDocument.zoneID &&
+        !editableDocument.customArea,
+      longitude:
+        !editableDocument.longitude &&
+        !editableDocument.zoneID &&
+        !editableDocument.customArea,
+    };
+
+    setFieldErrors(errors);
+    if (!editableDocument.title) {
+      setErrorMessage("Title is required");
       return;
     }
+    if (!editableDocument.description) {
+      setErrorMessage("Description is required");
+      return;
+    }
+    if (!editableDocument.stakeholders) {
+      setErrorMessage("Stakeholders are required");
+      return;
+    }
+    console.log(
+      editableDocument.zoneID,
+      editableDocument.customArea,
+      editableDocument.latitude,
+      editableDocument.longitude
+    );
 
+    if (
+      !editableDocument.zoneID &&
+      !editableDocument.customArea &&
+      !editableDocument.latitude &&
+      !editableDocument.longitude
+    ) {
+      setErrorMessage(
+        "Please provide valid coordinates if no zone is selected."
+      );
+      return;
+    }
+    if (!editableDocument.scale) {
+      setErrorMessage("Scale is required");
+      return;
+    }
+    if (!editableDocument.issuanceDate) {
+      setErrorMessage("Issuance date is required");
+      return;
+    }
+    if (!editableDocument.type) {
+      setErrorMessage("Type is required");
+      return;
+    }
+    setErrorMessage(null);
     setIsReady(true);
 
-    // console.log(document.id, zoneID, longitude, latitude);
+    // console.log(currentDocument.id, zoneID, longitude, latitude);
   };
 
   useEffect(() => {
@@ -146,19 +239,29 @@ export default function EditDocumentModal({
       setIsReady(false);
       try {
         await API.updateDocument(
-          document.id,
-          zoneID,
-          longitude,
-          latitude,
-          stakeholders,
-          scale
+          currentDocument.id,
+          editableDocument.zoneID ? editableDocument.zoneID : null,
+          editableDocument.longitude ? editableDocument.longitude : null,
+          editableDocument.latitude ? editableDocument.latitude : null,
+          editableDocument.stakeholders ? editableDocument.stakeholders : null,
+          editableDocument.scale ? editableDocument.scale : null,
+          editableDocument.title ? editableDocument.title : undefined,
+          editableDocument.description
+            ? editableDocument.description
+            : undefined,
+          editableDocument.issuanceDate
+            ? editableDocument.issuanceDate
+            : undefined,
+          editableDocument.type ? editableDocument.type : undefined,
+          editableDocument.language ? editableDocument.language : undefined
         );
         updateTable();
         onHide();
       } catch (error: any) {
         console.log("aaa");
         setErrorMessage(
-          error.message || "An error occurred while updating the document."
+          error.message ||
+            "An error occurred while updating the currentDocument."
         );
       }
     };
@@ -212,7 +315,60 @@ export default function EditDocumentModal({
     const valuesString = [...selectedStakeholders]
       .map((option) => option.value)
       .join(", ");
+
+    setEditableDocument({
+      ...editableDocument,
+      stakeholders: valuesString,
+    });
     setStakeholders(valuesString);
+  };
+
+  const handleDateChange = (date: Date | null) => {
+    if (date) {
+      const formattedDate = format(date, "dd/MM/yyyy");
+      setIssuanceDate(formattedDate);
+      setEditableDocument({
+        ...editableDocument,
+        issuanceDate: formattedDate,
+      });
+    } else {
+      setIssuanceDate("");
+    }
+  };
+  const [showCalendar, setShowCalendar] = useState(false);
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(event.target)
+      ) {
+        setShowCalendar(false); // Close calendar if click is outside
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside); // Cleanup listener on unmount
+    };
+  }, []);
+  const [issuanceDate, setIssuanceDate] = useState<string>("");
+  const handleManualDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value.trim();
+    setIssuanceDate(input);
+
+    const fullDateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+    const monthYearRegex = /^\d{2}\/\d{4}$/;
+    const yearRegex = /^\d{4}$/;
+
+    if (
+      !fullDateRegex.test(input) &&
+      !monthYearRegex.test(input) &&
+      !yearRegex.test(input)
+    ) {
+      console.warn(
+        "Invalid date format. Supported formats: dd/mm/yyyy, mm/yyyy, yyyy."
+      );
+    }
   };
 
   return (
@@ -239,37 +395,74 @@ export default function EditDocumentModal({
         <Form onSubmit={handleSubmit}>
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formTitle">
-              <Form.Label className="main-text">Title</Form.Label>
-              <Form.Control type="text" value={editableDocument.title}  
-              onChange={(e) => setEditableDocument({ ...editableDocument, title: e.target.value })}/>
+              <Form.Label className="main-text">Title*</Form.Label>
+              <Form.Control
+                type="text"
+                value={editableDocument.title}
+                onChange={(e) =>
+                  setEditableDocument({
+                    ...editableDocument,
+                    title: e.target.value,
+                  })
+                }
+              />
+              {fieldErrors.title && (
+                <div className="text-danger">
+                  <i className="bi bi-x-circle-fill text-danger"></i> This field
+                  is required
+                </div>
+              )}
             </Form.Group>
 
             <Form.Group as={Col} controlId="formStakeholders">
-              <Form.Label className="main-text">Stakeholders</Form.Label>
+              <Form.Label className="main-text">Stakeholders*</Form.Label>
               <CustomSelectBox
                 options={stakeholderOptions}
                 handleSelect={handleStakeholderSelect}
                 isMulti={true}
-                value={document.stakeholders.split(",").map((item) => ({
+                value={currentDocument.stakeholders.split(",").map((item) => ({
                   value: item.trim(),
                   label: item.trim(),
                 }))}
               />
+              {fieldErrors.stakeholders && (
+                <div className="text-danger">
+                  <i className="bi bi-x-circle-fill text-danger"></i> This field
+                  is required
+                </div>
+              )}
             </Form.Group>
           </Row>
 
           <Form.Group className="mb-3" controlId="formDescription">
-            <Form.Label className="main-text">Description</Form.Label>
+            <Form.Label className="main-text">Description*</Form.Label>
             <Form.Control
               as="textarea"
               rows={3}
               value={editableDocument.description}
               onChange={(e) =>
-                setEditableDocument({ ...editableDocument, description: e.target.value })
+                setEditableDocument({
+                  ...editableDocument,
+                  description: e.target.value,
+                })
               }
             />
+            {fieldErrors.description && (
+              <div className="text-danger">
+                <i className="bi bi-x-circle-fill text-danger"></i> This field
+                is required
+              </div>
+            )}
           </Form.Group>
-
+          <Row className="main-text mb-2">
+            <strong>Location Details*</strong>
+            {(fieldErrors.latitude || fieldErrors.longitude) && (
+              <div className="text-danger">
+                <i className="bi bi-x-circle-fill text-danger"></i> This field
+                is required
+              </div>
+            )}
+          </Row>
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formLatitude">
               <Form.Label className="main-text">Latitude</Form.Label>
@@ -306,7 +499,7 @@ export default function EditDocumentModal({
             <Form.Group controlId="formAssignToKiruna">
               <Form.Switch
                 className="main-text"
-                label="Assign document to entire Kiruna area"
+                label="Assign currentDocument to entire Kiruna area"
                 checked={zoneID === 0}
                 onChange={(e) => {
                   setZoneID(e.target.checked ? 0 : null);
@@ -321,13 +514,22 @@ export default function EditDocumentModal({
 
           <Row className="mb-3">
             <Form.Group as={Col} controlId="formScale">
-              <Form.Label className="main-text">Scale</Form.Label>
+              <Form.Label className="main-text">Scale*</Form.Label>
               <CustomSelectBox
                 options={scaleOptions}
                 handleSelect={handleScaleSelect}
                 isMulti={false}
-                value={{ value: document.scale, label: document.scale }}
+                value={{
+                  value: currentDocument.scale,
+                  label: currentDocument.scale,
+                }}
               />
+              {fieldErrors.scale && (
+                <div className="text-danger">
+                  <i className="bi bi-x-circle-fill text-danger"></i> This field
+                  is required
+                </div>
+              )}
             </Form.Group>
 
             <Form.Group as={Col} controlId="formIssuanceDate">
@@ -336,42 +538,70 @@ export default function EditDocumentModal({
               </Form.Label>
 
               <div className="d-flex">
-                <div className="react-datepicker-wrapper" style={{ flex: "1" }}>
+                <div
+                  className="custom-date-picker"
+                  ref={datePickerRef}
+                  style={{ width: "0" }}
+                >
                   <DatePicker
-                    selected={editableDocument.issuanceDate ? new Date(editableDocument.issuanceDate) : null}
-                    onChange={(date) => {
-                      const formattedDate = date ? format(date, "dd/MM/yyyy") : "";
-                      setEditableDocument({ ...editableDocument, issuanceDate: formattedDate });
-                    }}
+                    selected={parsedDate()}
+                    onChange={handleDateChange}
                     dateFormat="dd/MM/yyyy"
                     placeholderText="DD/MM/YYYY"
-                    className="form-control"
+                    className="form-control "
+                    required
+                    open={showCalendar}
                   />
                 </div>
 
-                <div
-                  className="input-group-text"
-                  style={{
-                    background: "none",
-                    borderLeft: "none",
-                    cursor: "pointer",
-                  }}
-                  onClick={() =>
-                    document.querySelector(".react-datepicker__input-container input")?.focus()
-                  }
-                >
-                  <i className="bi bi-calendar3" style={{ color: "rgb(8, 95, 178)" }}></i>
-                </div>
+                <InputGroup className="search-bar" data-bs-theme="dark">
+                  <InputGroup.Text
+                    style={{
+                      background: "none",
+                      borderRight: "none",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => setShowCalendar(!showCalendar)}
+                  >
+                    <i
+                      className="bi bi-calendar3"
+                      style={{ color: "#085FB2" }}
+                    ></i>
+                  </InputGroup.Text>
+                  <Form.Control
+                    type="text"
+                    placeholder="Optional manual input (dd/mm/yyyy, mm/yyyy, yyyy)"
+                    value={editableDocument.issuanceDate}
+                    onChange={handleManualDateChange}
+                  />
+                </InputGroup>
               </div>
+              {fieldErrors.issuanceDate && (
+                <div className="text-danger">
+                  <i className="bi bi-x-circle-fill text-danger"></i> This field
+                  is required
+                </div>
+              )}
             </Form.Group>
 
             <Form.Group as={Col} controlId="formType">
-              <Form.Label className="main-text">Type</Form.Label>
-              <Form.Control type="text" value={editableDocument.type} 
-                onChange={(e) =>{
-                  setEditableDocument({ ...editableDocument, type: e.target.value })
+              <Form.Label className="main-text">Type*</Form.Label>
+              <Form.Control
+                type="text"
+                value={editableDocument.type}
+                onChange={(e) => {
+                  setEditableDocument({
+                    ...editableDocument,
+                    type: e.target.value,
+                  });
                 }}
               />
+              {fieldErrors.type && (
+                <div className="text-danger">
+                  <i className="bi bi-x-circle-fill text-danger"></i> This field
+                  is required
+                </div>
+              )}
             </Form.Group>
           </Row>
 
@@ -381,7 +611,10 @@ export default function EditDocumentModal({
               <Form.Select
                 value={editableDocument.language} // Bind to state
                 onChange={(e) =>
-                  setEditableDocument({ ...editableDocument, language: e.target.value })
+                  setEditableDocument({
+                    ...editableDocument,
+                    language: e.target.value,
+                  })
                 }
               >
                 <option value="English">English</option>
@@ -389,12 +622,16 @@ export default function EditDocumentModal({
               </Form.Select>
             </Form.Group>
 
-
             <Form.Group as={Col} controlId="formPages">
               <Form.Label className="main-text">Pages</Form.Label>
-              <Form.Control type="text" value={editableDocument.pages || ""} 
+              <Form.Control
+                type="text"
+                value={editableDocument.pages || ""}
                 onChange={(e) =>
-                  setEditableDocument({ ...editableDocument, pages: e.target.value })
+                  setEditableDocument({
+                    ...editableDocument,
+                    pages: e.target.value,
+                  })
                 }
               />
             </Form.Group>

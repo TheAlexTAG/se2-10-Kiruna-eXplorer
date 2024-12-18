@@ -442,7 +442,7 @@ const NewDocument: React.FC<NewDocumentProps> = ({
   return (
     <div
       className="document-container"
-      style={{ backgroundColor: "transparent" }}
+      style={{ backgroundColor: "transparent", zIndex: "999" }}
     >
       <Button variant="primary" onClick={handleShow} className="fab">
         <i className="bi bi-plus-lg fs-2"></i>
