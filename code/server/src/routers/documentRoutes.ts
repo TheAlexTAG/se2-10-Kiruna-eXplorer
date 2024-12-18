@@ -243,10 +243,9 @@ class DocumentRoutes {
                     throw new Error("Invalid date format");
                 return true;
             }),
-            query("title").optional().isString(),
+            query("keyword").optional().isString(),
             query("type").optional().isString(),
             query("language").optional().isString(),
-            query('description').optional().isString(),
             this.utilities.paginationCheck,
             this.errorHandler.validateRequest,
         (req: any, res: any, next: any) => {

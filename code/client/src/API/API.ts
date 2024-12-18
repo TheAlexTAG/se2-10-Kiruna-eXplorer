@@ -137,7 +137,8 @@ const getDocumentsWithPagination = async (
   scale: string | null | undefined,
   issuanceDate: string | null | undefined,
   type: string | null | undefined,
-  language: string | null | undefined
+  language: string | null | undefined,
+  keyword: string | null | undefined,
 ) => {
   const queryParams = new URLSearchParams();
 
@@ -156,6 +157,7 @@ const getDocumentsWithPagination = async (
   if (issuanceDate) queryParams.append("issuanceDate", issuanceDate);
   if (type) queryParams.append("type", type);
   if (language) queryParams.append("language", language);
+  if (keyword) queryParams.append("keyword", keyword);
 
   const response = await fetch(
     `${SERVER_URL}/pagination/documents?${queryParams.toString()}`,

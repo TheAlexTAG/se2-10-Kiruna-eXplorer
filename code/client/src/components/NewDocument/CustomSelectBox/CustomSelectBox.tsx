@@ -55,7 +55,6 @@ const CustomSelectBox = ({
   useEffect(() => {
     if (value) {
       setSelectedOptions(value);
-      console.log(value);
     }
   }, []);
 
