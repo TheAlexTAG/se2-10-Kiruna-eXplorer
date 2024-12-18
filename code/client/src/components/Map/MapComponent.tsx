@@ -37,13 +37,12 @@ import MaterialEffectIcon from "../../assets/icons/material-effect-icon";
 import TechnicalIcon from "../../assets/icons/technical-icon";
 import DesignIcon from "../../assets/icons/design-icon";
 import PrescriptiveIcon from "../../assets/icons/prescriptive-icon";
-import KirunaDocs from "./KirunaDocs/KirunaDocs";
+import KirunaDocs from "./Components/KirunaDocs";
 import { PiBird } from "react-icons/pi";
 import { IoDocumentOutline, IoDocumentSharp } from "react-icons/io5";
-
 import { Button, InputGroup, Form, Modal } from "react-bootstrap";
 import { useLocation } from "react-router-dom";
-import { FilterDocs } from "../Document/DocumentList";
+import { FilterDocsMap } from "./Components/FilterDocsMap";
 
 declare module "leaflet" {
   interface MarkerOptions {
@@ -835,7 +834,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
             </Button>
           </InputGroup>
 
-          <FilterDocs
+          <FilterDocsMap
             documents={documents}
             filterVisible={filterVisible}
             setFilteredDocuments={setFilteredDocuments}
