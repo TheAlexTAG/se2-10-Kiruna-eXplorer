@@ -480,8 +480,8 @@ describe('DocumentDAO', () => {
             const document1: Document = new Document(documentData1, documentGeoData, 0, [], [], []);
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'query').mockResolvedValue([
-                {documentID:1, title:'Documento 1', description: 'Descrizione 1',zoneID: null,latitude:null, longitude:null, stakeholders:'Stakeholders 1', scale:'1:100', issuanceDate:'2024-11-26', parsedDate:'2024-11-26', type: 'Report',language: 'it', pages:'5',connections: 0, attachment:[], resource:[], link:[]}]),
-             jest.spyOn(connMock, 'release');
+                {documentID:1, title:'Documento 1', description: 'Descrizione 1',zoneID: null,latitude:null, longitude:null, stakeholders:'Stakeholders 1', scale:'1:100', issuanceDate:'2024-11-26', parsedDate:'2024-11-26', type: 'Report',language: 'it', pages:'5',connections: 0, attachment:[], resource:[], link:[]}]);
+            jest.spyOn(connMock, 'release');
 
             const result = await dao.getDocsWithFilters({zoneID: '0'});
 
