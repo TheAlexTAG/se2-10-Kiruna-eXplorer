@@ -1,14 +1,12 @@
-import { describe, test, expect, beforeAll, beforeEach, afterAll } from "@jest/globals"
+import { describe, test, expect, afterAll, beforeEach } from "@jest/globals"
 import request from 'supertest';
 
 import { app, server } from "../../index";
-import { LinkDocumentController } from "../../src/controllers/link_docController";
 import { closeDbPool } from "../../src/db/db";
 import {cleanup} from "../../src/db/cleanup";
 import { Relationship } from "../../src/components/link_doc";
 
 const baseURL: string= "/api";
-let link_docController: LinkDocumentController;
 
 const urbanPlanner = { username: process.env.TEST_USERNAME, password: process.env.TEST_PASSWORD};
 let upCookie: string;
@@ -32,10 +30,6 @@ beforeEach(async () => {
     await cleanup();
 });
 
-beforeAll(async () => {
-    link_docController = new LinkDocumentController();
-});
-
 afterAll(async () => {
     await cleanup();
     server.close();
@@ -43,9 +37,9 @@ afterAll(async () => {
 })
 
 
-describe("LinkDoc integration test from controller to db", () => {
+describe("LinkDoc integration test from route to db", () => {
     
-    test("insertLink", async () => {
+    test("POST api/link", async () => {
         upCookie = await login(urbanPlanner);
         const firstDoc = {title:'Document1', description:'This is a sample description.', zoneID:null, latitude:67.8300, longitude:20.1900, stakeholders:'John Doe, Jane Smith',scale:'1:100', issuanceDate:'12/09/2024',type:'Report',language:'EN',pages:'1-10',coordinates: null};
         const secondDoc = {title:'Document2', description:'This is a sample description.', zoneID:null, latitude:67.8300, longitude:20.1900, stakeholders:'John Doe, Jane Smith',scale:'1:100', issuanceDate:'12/09/2024',type:'Report',language:'EN',pages:'1-10',coordinates: null};
@@ -54,11 +48,12 @@ describe("LinkDoc integration test from controller to db", () => {
         const firstID =firstResponse.body;
         const secondID =secondResponse.body;
 
-        const response = await link_docController.createLink(firstID, [{id: secondID, relationship:['Direct consequence']}]);
-        expect(response).toBe(true);
+        const response = await request(app).post('/api/link').set("Cookie", upCookie).send({ firstDoc: firstID, secondDoc:[{id:secondID, relationship: ['Direct consequence']}]});
+        expect(response.status).toBe(200);
+        expect(response.body).toBe(true);
     })
 
-    test("modifyLink", async () => {
+    test("PUT api/link", async () => {
         upCookie = await login(urbanPlanner);
         const firstDoc = {title:'Document1', description:'This is a sample description.', zoneID:null, latitude:67.8300, longitude:20.1900, stakeholders:'John Doe, Jane Smith',scale:'1:100', issuanceDate:'12/09/2024',type:'Report',language:'EN',pages:'1-10',coordinates: null};
         const secondDoc = {title:'Document2', description:'This is a sample description.', zoneID:null, latitude:67.8300, longitude:20.1900, stakeholders:'John Doe, Jane Smith',scale:'1:100', issuanceDate:'12/09/2024',type:'Report',language:'EN',pages:'1-10',coordinates: null};
@@ -70,9 +65,9 @@ describe("LinkDoc integration test from controller to db", () => {
         await request(app).post(`${baseURL}/link`).set("Cookie", upCookie).send(link1).expect(200);
         let firstDocument = (await request(app).get(`${baseURL}/document/${firstID}`)).body;
         const linkID = firstDocument.links[0].linkID;
-        
-        const response = await link_docController.modifyLink(linkID, firstID, secondID, Relationship.COLLATERAL);
-        expect(response.relationship).toEqual(Relationship.COLLATERAL);
-    })
 
+        const response = await request(app).put(`${baseURL}/link/${linkID}`).set("Cookie", upCookie).send({ firstDoc: firstID, secondDoc:secondID, relationship: 'Collateral consequence'});
+        expect(response.status).toBe(200);
+        expect(response.body.relationship).toEqual(Relationship.COLLATERAL);
+    })
 })
