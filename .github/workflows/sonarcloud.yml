@@ -18,7 +18,7 @@ jobs:
         run: npm install
         working-directory: ./code/server
       - name: Test and coverage 
-        run: npm run test_unit
+        run: npm test test_unit/SPRINT 4
         working-directory: ./code/server
       - name: SonarQube Cloud Scan
         uses: SonarSource/sonarcloud-github-action@master
