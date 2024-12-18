@@ -19,7 +19,7 @@ const LocalStrategy = require("passport-local");
 import session from "express-session"; // Create the session
 
 // init express
-const app: express.Application = express();
+const app= express();
 const port: number = 3001;
 
 // enable cors

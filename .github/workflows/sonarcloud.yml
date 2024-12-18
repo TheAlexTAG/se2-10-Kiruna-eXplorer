@@ -1,21 +1,42 @@
-name: Build
+name: SonarCloud Analysis
+
 on:
   push:
     branches:
       - main
-      - dev
   pull_request:
-    types: [opened, synchronize, reopened]
+
 jobs:
   sonarcloud:
-    name: SonarQube Cloud
+    name: SonarCloud Scan
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: SonarQube Cloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run selected tests and collect coverage
+        run: npm test
+
+      - name: SonarCloud Scan
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          npx sonar-scanner \
+            -Dsonar.projectKey=<tuo_progetto> \
+            -Dsonar.organization=<tua_organizzazione> \
+            -Dsonar.sources=src \
+            -Dsonar.tests=test_integration,test_unit/SPRINT 4 \
+            -Dsonar.test.inclusions=**/test_integration/**/*.test.ts,**/test_unit/SPRINT 4/**/*.test.ts \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
