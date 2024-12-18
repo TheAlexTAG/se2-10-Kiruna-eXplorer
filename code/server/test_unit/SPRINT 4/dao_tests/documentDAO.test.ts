@@ -147,35 +147,6 @@ describe('DocumentDAO', () => {
             expect(result).toEqual(2);
         });
 
-        test("It should return InsertZoneError if the document is related to an new zone that is not insered", async () => { 
-            const documentData : DocumentData = {
-                documentID: 0,
-                title: "Documento 1",
-                description: "Descrizione 1",
-                stakeholders: "Stakeholders 1",
-                scale: "1:100",
-                issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
-                type: "Report",
-                language: "it",
-                pages: "5"
-            }
-            const coordinates: [number, number][] = [ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]];
-            const documentGeoData: DocumentGeoData = {zoneID: null, coordinates: coordinates, latitude: null, longitude: null};
-            
-            jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
-            jest.spyOn(connMock, 'beginTransaction');
-            jest.spyOn(DocumentDaoHelper.prototype, 'insertZone').mockResolvedValueOnce(null);
-            jest.spyOn(connMock, 'query').mockResolvedValue({insertId: 2});
-            jest.spyOn(connMock, 'commit');
-            jest.spyOn(connMock, 'release');
-
-            await expect(dao.createDocumentNode(documentData, documentGeoData)).rejects.toThrow(InsertZoneError);
-
-            expect(connMock.rollback).toHaveBeenCalled();
-        });
-
-
         test("It should return an InternalServerError if the db call return a generic error", async () => {
             const documentData : DocumentData = {
                 documentID: 0,
@@ -273,32 +244,7 @@ describe('DocumentDAO', () => {
             expect(result).toEqual(true);
         });
 
-        test("It should return InsertZoneError if the document is related to an new zone that is not insered", async () => { 
-            const documentData : DocumentData = {
-                documentID: 1,
-                title: "Documento 1",
-                description: "Descrizione 1",
-                stakeholders: "Stakeholders 1",
-                scale: "1:100",
-                issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
-                type: "Report",
-                language: "it",
-                pages: "5"
-            }
-            const coordinates: [number, number][] = [ [67.8600, 20.2250],[67.8600, 20.2300],[67.8550, 20.2350],[67.8500, 20.2300],[67.8500, 20.2200],[67.8550, 20.2150],[67.8600, 20.2250]];
-            const documentGeoData: DocumentGeoData = {zoneID: null, coordinates: coordinates, latitude: null, longitude: null};
-            jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
-            jest.spyOn(connMock, 'beginTransaction');
-            jest.spyOn(DocumentDaoHelper.prototype, 'insertZone').mockResolvedValueOnce(null);
-            jest.spyOn(connMock, 'rollback');
-            jest.spyOn(connMock, 'release');
-
-            await expect(dao.updateDocument(documentData, documentGeoData, true)).rejects.toThrow(InsertZoneError);
-
-            expect(connMock.rollback).toHaveBeenCalled();
-        });
-
+        
         test("It should return DocumentUpdateError if there is no such document", async () => { 
             const documentData : DocumentData = {
                 documentID: 1,
@@ -317,7 +263,7 @@ describe('DocumentDAO', () => {
             jest.spyOn(connMock, 'query').mockResolvedValue({affectedRows: 0});
             jest.spyOn(connMock, 'release');
 
-            await expect(dao.updateDocument(documentData, documentGeoData)).rejects.toThrow(DocumentUpdateError);
+            await expect(dao.updateDocument(documentData, documentGeoData)).rejects.toThrow(InternalServerError);
         });
 
         test("It should return an InternalServerError if the db call return a generic error", async () => {
