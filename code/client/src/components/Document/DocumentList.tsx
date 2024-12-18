@@ -148,7 +148,25 @@ export const DocumentList = ({ userInfo }: UserProps) => {
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (event: any) => {
+    const allowedExtensions = ["pdf", "doc", "docx", "txt"]; 
     const selectedFiles = Array.from(event.target.files);
+    const invalidFiles = selectedFiles.filter((file: any) => {
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      return !allowedExtensions.includes(fileExtension);
+    });
+
+    if (invalidFiles.length > 0) {
+      setError(
+        `The following file(s) are not allowed: ${invalidFiles
+          .map((file: any) => file.name)
+          .join(", ")}. Only PDF, DOC, and TXT files are allowed.`
+      );
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ""; // Clear the input field
+      }
+      return;
+    }
+
     const duplicateFiles = selectedFiles.filter((newFile: any) =>
       files.some((existingFile) => existingFile.name === newFile.name)
     );
