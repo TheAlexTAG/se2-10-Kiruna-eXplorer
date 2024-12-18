@@ -11,17 +11,12 @@ class DocumentDaoHelper {
         const conditions: string[] = [];
         const params: any[] = [];
         let sql = "";
-        if(filters.title != null) {
-            conditions.push("d.title LIKE ?");
-            params.push(`%${filters.title}%`);
+        if(filters.keyword != null) {
+            conditions.push("(d.title LIKE ? OR d.description LIKE ?)");
+            params.push(`%${filters.keyword}%`);
+            params.push(`%${filters.keyword}%`);
         }
-        if(filters.description != null) {
-            const keywords: string[] = filters.description.split(/,\s*/).filter((k: string) => k.trim() !== "");
-            keywords.forEach(keyword => {
-                conditions.push("d.description LIKE ?");
-                params.push(`%${keyword}%`);
-            });
-        }
+
         if (filters.zoneID != null) {
             if(filters.zoneID == 0) {
                 conditions.push("d.zoneID = ? AND d.latitude = ? AND d.longitude = ?");
