@@ -36,7 +36,18 @@ export const Home = () => {
             </div>
           </div>
           <div className="main-func">
-            <div className="w-100" onClick={() => navigate("/map")}>
+            <div
+              tabIndex={0}
+              role="button"
+              className="w-100"
+              onClick={() => navigate("/map")}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault(); // Prevent scrolling on Space
+                  event.currentTarget.click(); // Trigger onClick
+                }
+              }}
+            >
               <Button className="w-100" variant="link">
                 <Row className="m-0 p-0">
                   <Col md={9} className="m-0 p-0">
@@ -55,7 +66,17 @@ export const Home = () => {
                 </Row>
               </Button>
             </div>
-            <div onClick={() => navigate("/document")}>
+            <div
+              tabIndex={0}
+              role="button"
+              onClick={() => navigate("/document")}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault(); // Prevent scrolling on Space
+                  event.currentTarget.click(); // Trigger onClick
+                }
+              }}
+            >
               <Button className="w-100" variant="link">
                 <Row className="m-0 p-0">
                   <Col
@@ -74,7 +95,17 @@ export const Home = () => {
                 </Row>
               </Button>
             </div>
-            <div onClick={() => navigate("/diagram")}>
+            <div
+              tabIndex={0}
+              role="button"
+              onClick={() => navigate("/diagram")}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault(); // Prevent scrolling on Space
+                  event.currentTarget.click(); // Trigger onClick
+                }
+              }}
+            >
               {" "}
               <Button className="w-100" variant="link">
                 <Row className="m-0 p-0">

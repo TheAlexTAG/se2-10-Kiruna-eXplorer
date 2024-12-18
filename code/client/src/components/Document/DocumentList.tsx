@@ -282,9 +282,9 @@ export const DocumentList = ({ userInfo }: userProps) => {
                       </Dropdown.Item>
                       <Dropdown.Divider />
                       <Dropdown.Item>
-                        <div
+                        <button
                           style={{ color: "#2d6efd" }}
-                          className="p-2"
+                          className="p-2 reset-button"
                           onClick={() => {
                             navigate("/diagram", {
                               state: { selectedDocument: document },
@@ -292,13 +292,13 @@ export const DocumentList = ({ userInfo }: userProps) => {
                           }}
                         >
                           <i className="bi bi-diagram-3"></i> Open in Diagram
-                        </div>
+                        </button>
                       </Dropdown.Item>
                       <Dropdown.Divider />
                       <Dropdown.Item>
-                        <div
+                        <button
                           style={{ color: "#2d6efd" }}
-                          className="p-2"
+                          className="p-2 reset-button"
                           onClick={() => {
                             navigate("/map", {
                               state: { selectedDocument: document },
@@ -306,7 +306,7 @@ export const DocumentList = ({ userInfo }: userProps) => {
                           }}
                         >
                           <i className="bi bi-geo-alt"></i> Open in Map
-                        </div>
+                        </button>
                       </Dropdown.Item>
                     </DropdownButton>
                   </td>

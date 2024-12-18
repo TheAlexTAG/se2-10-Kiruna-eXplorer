@@ -752,7 +752,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
           setMapCenter={setMapCenter}
         />
       )}
-      <div
+      <Button
+        variant="light"
         onClick={toggleSatelliteView}
         className="map-toggle-btn"
         style={{
@@ -768,8 +769,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
             ? "Switch to Default View"
             : "Switch to Satellite View"}
         </span>
-      </div>
-      <div
+      </Button>
+      <Button
+        variant="light"
         onClick={toggleZonesView}
         className="map-toggle-btn"
         style={{
@@ -783,8 +785,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
         <span className="tooltip">
           {showZones ? "Hide Zones" : "Show Zones"}
         </span>
-      </div>
-      <div
+      </Button>
+      <Button
+        variant="light"
         onClick={toggleDocsView}
         className="map-toggle-btn"
         style={{
@@ -800,7 +803,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
           <IoDocumentOutline size={20} />
         )}
         <span className="tooltip">{showDocs ? "Hide Docs" : "Show Docs"}</span>
-      </div>
+      </Button>
       {!selectionMode && (
         <>
           <InputGroup
@@ -838,7 +841,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
             setFilteredDocuments={setFilteredDocuments}
           />
 
-          <div
+          <Button
             onClick={handleOpenKirunaModal}
             className="kiruna-doc-btn"
             style={{
@@ -848,9 +851,9 @@ const MapComponent: React.FC<MapComponentProps> = ({
               zIndex: 1000,
             }}
           >
-            <PiBird />
+            <PiBird color="black" />
             <span className="tooltip">Show Kiruna Municipality Documents</span>
-          </div>
+          </Button>
           <KirunaDocs
             show={showKirunaDocuments}
             onClose={() => setShowKirunaDocuments(false)}

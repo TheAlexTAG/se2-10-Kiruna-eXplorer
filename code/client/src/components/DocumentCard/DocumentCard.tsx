@@ -133,10 +133,18 @@ export const DocumentCard = ({
                 <div>
                   {cardInfo.links.map((link: any, index: number) => (
                     <div
+                      tabIndex={0}
+                      role="button"
                       key={index}
                       className="my-2"
                       style={{ cursor: "pointer" }}
                       onClick={() => handleChangeCardInfo(link.documentID)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault(); // Prevent scrolling on Space
+                          event.currentTarget.click(); // Trigger onClick
+                        }
+                      }}
                     >
                       <i
                         className="bi bi-link-45deg mx-1"
