@@ -7,13 +7,10 @@ import { closeDbPool } from "../../src/db/db";
 import {cleanup} from "../../src/db/cleanup";
 import { LinkDocument, Relationship } from "../../src/components/link_doc";
 
-import wellknown from "wellknown";
-import { geometry } from "@turf/turf";
-
 const baseURL: string= "/api";
 let link_docDAO: LinkDocumentDAO;
 
-const urbanPlanner = { username: 'up', password: 'pwd'};
+const urbanPlanner = { username: process.env.TEST_USERNAME, password: process.env.TEST_PASSWORD};
 let upCookie: string;
 
 const login = async (userInfo: any) => {
@@ -41,7 +38,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
     await cleanup();
-})
+    server.close(); 
+    await closeDbPool();
+});
 
 describe("LinkDoc integration test from dao to db", () => {
     test("checkLink", async () => {
