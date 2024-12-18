@@ -7,3 +7,4 @@ coverage
 # dotenv environment variable files
 .env
 test.env
+mariadb.env

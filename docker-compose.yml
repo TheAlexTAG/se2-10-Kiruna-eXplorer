@@ -1,12 +1,15 @@
 version: "3.8"
 
 services:
+
   client:
     build:
       context: ./code/client
       dockerfile: Dockerfile
     ports:
       - "5173:5173"
+    networks:
+      - se10Kiruna-network
     volumes:
       - ./code/client:/app
       - /app/node_modules
@@ -16,14 +19,36 @@ services:
     build:
       context: ./code/server
       dockerfile: Dockerfile
+    env_file:
+        - ./code/server/.env
     ports:
       - "3001:3001"
+    networks:
+      - se10Kiruna-network
     volumes:
       - ./code/server:/app
       - /app/node_modules
     command: npm run dev
 
-networks:
-  default:
-    name: se10Kiruna-network
+  mariadb:
+    image: mariadb:latest
+    container_name: mariadb
+    restart: always
+    env_file:
+        - ./code/server/src/db/mariadb.env    
+    ports:
+      - "3306:3306"
+    networks:
+      - se10Kiruna-network 
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./code/server/src/db/db_scripts/kiruna.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./code/server/src/db/db_scripts/kiruna_test.sql:/docker-entrypoint-initdb.d/second_script.sql
 
+networks:
+  se10Kiruna-network:
+    driver: bridge
+
+volumes:
+  mariadb_data: 
+    driver: local
