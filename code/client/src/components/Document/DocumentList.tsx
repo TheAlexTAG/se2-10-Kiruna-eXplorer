@@ -27,6 +27,25 @@ interface FilterProps {
   documents: any;
   setFilteredDocuments: Dispatch<SetStateAction<any>>;
   filterVisible: boolean;
+  setFilterVisible: Dispatch<SetStateAction<boolean>>;
+  setCurrentPage: Dispatch<SetStateAction<number>>;
+  setTotalItems: Dispatch<SetStateAction<number>>;
+  setFilters: Dispatch<
+    SetStateAction<{
+      stakeholders: string;
+      scale: string;
+      issuanceDate: string;
+      type: string;
+      language: string;
+    }>
+  >;
+  filters: {
+    stakeholders: string;
+    scale: string;
+    issuanceDate: string;
+    type: string;
+    language: string;
+  };
 }
 
 export const DocumentList = ({ userInfo }: UserProps) => {
@@ -38,7 +57,13 @@ export const DocumentList = ({ userInfo }: UserProps) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterVisible, setFilterVisible] = useState(false); //state fot show/hide filters form
-
+  const [filters, setFilters] = useState({
+    stakeholders: "",
+    scale: "",
+    issuanceDate: "",
+    type: "",
+    language: "",
+  });
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
@@ -65,8 +90,13 @@ export const DocumentList = ({ userInfo }: UserProps) => {
 
   const fetchDocuments = async (pageNumber: number) => {
     API.getDocumentsWithPagination(
-      pageNumber ? pageNumber : currentPage,
-      pageSize
+      pageNumber,
+      10,
+      filters.stakeholders || undefined,
+      filters.scale || undefined,
+      filters.issuanceDate || undefined,
+      filters.type || undefined,
+      filters.language || undefined
     ).then((data) => {
       setDocuments(data.documents);
       setFilteredDocuments(data.documents);
@@ -207,6 +237,11 @@ export const DocumentList = ({ userInfo }: UserProps) => {
         documents={documents}
         setFilteredDocuments={setFilteredDocuments}
         filterVisible={filterVisible}
+        setFilterVisible={setFilterVisible}
+        setCurrentPage={setCurrentPage}
+        setTotalItems={setTotalItems}
+        setFilters={setFilters}
+        filters={filters}
       />
       {successMessage && (
         <Alert variant="success" dismissible>
@@ -318,10 +353,12 @@ export const DocumentList = ({ userInfo }: UserProps) => {
         <div className="d-flex justify-content-center ">
           <Pagination data-bs-theme="dark">
             <Pagination.Prev
+              disabled={currentPage === 1}
               onClick={() => handlePageChange(currentPage - 1)}
             />
             {paginationItems}
             <Pagination.Next
+              disabled={currentPage === totalPages}
               onClick={() => handlePageChange(currentPage + 1)}
             />
           </Pagination>
@@ -434,14 +471,12 @@ export const FilterDocs: React.FC<FilterProps> = ({
   documents,
   setFilteredDocuments,
   filterVisible,
+  setFilterVisible,
+  setCurrentPage,
+  setTotalItems,
+  setFilters,
+  filters,
 }) => {
-  const [filters, setFilters] = useState({
-    stakeholders: "",
-    scale: "",
-    issuanceDate: "",
-    type: "",
-    language: "",
-  });
   const stakeholderOptions: string[] = [
     "LKAB",
     "Municipalty",
@@ -465,14 +500,19 @@ export const FilterDocs: React.FC<FilterProps> = ({
 
   const applyFilters = async () => {
     try {
-      const filteredData = await API.filterDocuments(
+      const filteredData = await API.getDocumentsWithPagination(
+        1,
+        10,
         filters.stakeholders || undefined,
         filters.scale || undefined,
         filters.issuanceDate || undefined,
         filters.type || undefined,
         filters.language || undefined
       );
-      setFilteredDocuments(filteredData);
+      setFilteredDocuments(filteredData.documents);
+      setCurrentPage(1);
+      setTotalItems(filteredData.totalItems);
+      setFilterVisible(false);
     } catch (error) {
       console.error("Error applying filters:", error);
     }

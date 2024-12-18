@@ -132,7 +132,12 @@ const getDocument = async (id: number) => {
 };
 const getDocumentsWithPagination = async (
   pageNumber: number,
-  pageSize: number
+  pageSize: number,
+  stakeholders: string | null | undefined,
+  scale: string | null | undefined,
+  issuanceDate: string | null | undefined,
+  type: string | null | undefined,
+  language: string | null | undefined
 ) => {
   const queryParams = new URLSearchParams();
 
@@ -146,6 +151,11 @@ const getDocumentsWithPagination = async (
   } else {
     queryParams.append("pageSize", "10");
   }
+  if (stakeholders) queryParams.append("stakeholders", stakeholders);
+  if (scale) queryParams.append("scale", scale);
+  if (issuanceDate) queryParams.append("issuanceDate", issuanceDate);
+  if (type) queryParams.append("type", type);
+  if (language) queryParams.append("language", language);
 
   const response = await fetch(
     `${SERVER_URL}/pagination/documents?${queryParams.toString()}`,
@@ -447,7 +457,7 @@ const updateDiagramDate = async (documentID: number, newDate: string) => {
     }
   } catch (error) {
     console.error("An error occurred while updating the position:", error);
-    throw error; 
+    throw error;
   }
 };
 
@@ -469,6 +479,6 @@ const API = {
   handleDownloadResource,
   getStakeholders,
   updateLink,
-  updateDiagramDate
+  updateDiagramDate,
 };
 export default API;
