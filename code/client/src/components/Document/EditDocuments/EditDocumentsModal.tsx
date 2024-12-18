@@ -138,6 +138,10 @@ export default function EditDocumentModal({
 
     setHighlightedDocumentId(tempHighlightedDocumentId);
     setZoneID(tempZoneId);
+    setEditableDocument({
+      ...editableDocument,
+      zoneID: tempZoneId,
+    });
     setCustomArea(tempCustom);
     setShowMapModal(false);
   };
@@ -149,7 +153,13 @@ export default function EditDocumentModal({
       latitude: newLatitude,
     });
     setLatitude(newLatitude);
-    if (newLatitude !== null) setZoneID(null);
+    if (newLatitude !== null) {
+      setZoneID(null);
+      setEditableDocument({
+        ...editableDocument,
+        zoneID: null,
+      });
+    }
   };
 
   const handleLongitudeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,14 +169,18 @@ export default function EditDocumentModal({
       longitude: newLongitude,
     });
     setLongitude(newLongitude);
-    if (newLongitude !== null) setZoneID(null);
+    if (newLongitude !== null) {
+      setZoneID(null);
+      setEditableDocument({
+        ...editableDocument,
+        zoneID: null,
+      });
+    }
   };
   const [fieldErrors, setFieldErrors] = useState<Record<string, boolean>>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // console.log(editableDocument);
-    // console.log(currentDocument);
 
     const errors = {
       title: !editableDocument.title,
@@ -177,12 +191,12 @@ export default function EditDocumentModal({
       type: !editableDocument.type,
       latitude:
         !editableDocument.latitude &&
-        !editableDocument.zoneID &&
-        !editableDocument.customArea,
+        zoneID == null &&
+        editableDocument.customArea == null,
       longitude:
         !editableDocument.longitude &&
-        !editableDocument.zoneID &&
-        !editableDocument.customArea,
+        zoneID == null &&
+        editableDocument.customArea == null,
     };
 
     setFieldErrors(errors);
@@ -198,23 +212,22 @@ export default function EditDocumentModal({
       setErrorMessage("Stakeholders are required");
       return;
     }
-    console.log(
-      editableDocument.zoneID,
-      editableDocument.customArea,
-      editableDocument.latitude,
-      editableDocument.longitude
-    );
-
     if (
-      !editableDocument.zoneID &&
-      !editableDocument.customArea &&
-      !editableDocument.latitude &&
-      !editableDocument.longitude
+      editableDocument.latitude === null &&
+      editableDocument.longitude === null &&
+      zoneID === null &&
+      customArea === null
     ) {
       setErrorMessage(
         "Please provide valid coordinates if no zone is selected."
       );
       return;
+    }
+    if (zoneID || customArea) {
+      if (!editableDocument.latitude || !editableDocument.longitude) {
+        setErrorMessage("Please provide valid coordinates");
+        return;
+      }
     }
     if (!editableDocument.scale) {
       setErrorMessage("Scale is required");
@@ -230,8 +243,6 @@ export default function EditDocumentModal({
     }
     setErrorMessage(null);
     setIsReady(true);
-
-    // console.log(currentDocument.id, zoneID, longitude, latitude);
   };
 
   useEffect(() => {
@@ -240,7 +251,7 @@ export default function EditDocumentModal({
       try {
         await API.updateDocument(
           currentDocument.id,
-          editableDocument.zoneID ? editableDocument.zoneID : null,
+          zoneID !== null && zoneID !== undefined ? zoneID : null,
           editableDocument.longitude ? editableDocument.longitude : null,
           editableDocument.latitude ? editableDocument.latitude : null,
           editableDocument.stakeholders ? editableDocument.stakeholders : null,
@@ -258,7 +269,6 @@ export default function EditDocumentModal({
         updateTable();
         onHide();
       } catch (error: any) {
-        console.log("aaa");
         setErrorMessage(
           error.message ||
             "An error occurred while updating the currentDocument."
@@ -306,11 +316,19 @@ export default function EditDocumentModal({
 
   const handleZoneSelect = (zoneId: number | null) => {
     setTempZoneId(zoneId);
+    setEditableDocument({
+      ...editableDocument,
+      zoneID: zoneId,
+    });
     if (zoneId !== null) {
       setTempCoordinates({ lat: null, lng: null });
+      setEditableDocument({
+        ...editableDocument,
+        latitude: null,
+        longitude: null,
+      });
     }
   };
-
   const handleStakeholderSelect = (selectedStakeholders: any) => {
     const valuesString = [...selectedStakeholders]
       .map((option) => option.value)
@@ -499,13 +517,22 @@ export default function EditDocumentModal({
             <Form.Group controlId="formAssignToKiruna">
               <Form.Switch
                 className="main-text"
-                label="Assign currentDocument to entire Kiruna area"
+                label="Assign document to entire Kiruna area"
                 checked={zoneID === 0}
                 onChange={(e) => {
                   setZoneID(e.target.checked ? 0 : null);
+                  setEditableDocument({
+                    ...editableDocument,
+                    zoneID: e.target.checked ? 0 : null,
+                  });
                   if (e.target.checked) {
                     setLatitude(null);
                     setLongitude(null);
+                    setEditableDocument({
+                      ...editableDocument,
+                      latitude: null,
+                      longitude: null,
+                    });
                   }
                 }}
               />
