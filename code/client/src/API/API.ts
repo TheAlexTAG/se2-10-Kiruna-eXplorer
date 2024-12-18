@@ -132,7 +132,12 @@ const getDocument = async (id: number) => {
 };
 const getDocumentsWithPagination = async (
   pageNumber: number,
-  pageSize: number
+  pageSize: number,
+  stakeholders: string | null | undefined,
+  scale: string | null | undefined,
+  issuanceDate: string | null | undefined,
+  type: string | null | undefined,
+  language: string | null | undefined
 ) => {
   const queryParams = new URLSearchParams();
 
@@ -146,6 +151,11 @@ const getDocumentsWithPagination = async (
   } else {
     queryParams.append("pageSize", "10");
   }
+  if (stakeholders) queryParams.append("stakeholders", stakeholders);
+  if (scale) queryParams.append("scale", scale);
+  if (issuanceDate) queryParams.append("issuanceDate", issuanceDate);
+  if (type) queryParams.append("type", type);
+  if (language) queryParams.append("language", language);
 
   const response = await fetch(
     `${SERVER_URL}/pagination/documents?${queryParams.toString()}`,
@@ -195,7 +205,12 @@ const updateDocument = async (
   longitude: number | null,
   latitude: number | null,
   stakeholders: string | null,
-  scale: string | null
+  scale: string | null,
+  title: string | null,
+  description: string | null,
+  issuanceDate: string | null,
+  type: string | null,
+  language: string | null
 ) => {
   // console.log(documentID, zoneID, longitude, latitude);
   const response = await fetch(`${SERVER_URL}/document/${documentID}`, {
@@ -204,7 +219,7 @@ const updateDocument = async (
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ zoneID, longitude, latitude, stakeholders, scale }),
+    body: JSON.stringify({ zoneID, longitude, latitude, stakeholders, scale, title, description, issuanceDate, type, language }),
   });
 
   if (!response.ok) {
@@ -423,6 +438,34 @@ const updateLink = async (
   return await response.json();
 };
 
+const updateDiagramDate = async (documentID: number, newDate: string) => {
+  try {
+    const response = await fetch(`${SERVER_URL}/diagram/${documentID}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify({ parsedDate: newDate }),
+    });
+
+    if (response.ok) {
+      const res = await response.json();
+
+      return res;
+    } else {
+      const errDetails = await response.json();
+      console.log("errdetails is ", errDetails);
+      throw new Error(
+        errDetails.error ? errDetails.error : errDetails.error[0].msg
+      );
+    }
+  } catch (error) {
+    console.error("An error occurred while updating the position:", error);
+    throw error;
+  }
+};
+
 const API = {
   login,
   logout,
@@ -441,5 +484,6 @@ const API = {
   handleDownloadResource,
   getStakeholders,
   updateLink,
+  updateDiagramDate,
 };
 export default API;
