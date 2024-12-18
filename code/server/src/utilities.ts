@@ -82,27 +82,35 @@ class Utilities{
     }
 
     isValidDate(dateStr: string): boolean {
-        const parts = dateStr.split('/').map(Number);
+        
+        const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+     
+        const monthYearRegex = /^(\d{2})\/(\d{4})$/;
     
-        if (parts.length === 3) {
-            const [day, month, year] = parts;
+        const yearRegex = /^(\d{4})$/;
+    
+        // Se il formato è 'dd/mm/yyyy'
+        const dateMatch = RegExp(dateRegex).exec(dateStr);
+        if (dateMatch) {
+            const [, day, month, year] = dateMatch.map(Number);
             const date = new Date(year, month - 1, day);
             return (
                 date.getFullYear() === year &&
                 date.getMonth() === month - 1 &&
                 date.getDate() === day
             );
-        } 
-        else if (parts.length === 2) {
-            const [month, year] = parts;
+        }
+    
+        const monthYearMatch = RegExp(monthYearRegex).exec(dateStr);
+        if (monthYearMatch) {
+            const [, month, year] = monthYearMatch.map(Number);
             const date = new Date(year, month - 1, 1);
-            return (
-                date.getFullYear() === year &&
-                date.getMonth() === month - 1
-            );
-        } 
-        else if (parts.length === 1) {
-            const [year] = parts;
+            return date.getFullYear() === year && date.getMonth() === month - 1;
+        }
+    
+        const yearMatch = RegExp(yearRegex).exec(dateStr);
+        if (yearMatch) {
+            const [year] = yearMatch.map(Number);
             return year >= 1000 && year <= 9999;
         }
     

@@ -440,20 +440,21 @@ const updateLink = async (
   return await response.json();
 };
 
-const updateDiagramDate = async (documentID: number, newDate: string) => {
+const updateDiagram = async (documentIDs: number[], xPositions: number [], yPositions: number []) => {
   try {
-    const response = await fetch(`${SERVER_URL}/diagram/${documentID}`, {
+    console.log(JSON.stringify({ documentIDs: documentIDs, xPositions: xPositions, yPositions: yPositions }))
+    const response = await fetch(`${SERVER_URL}/diagram`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ parsedDate: newDate }),
+      body: JSON.stringify({ documentIDs: documentIDs, xPositions: xPositions, yPositions: yPositions }),
     });
 
     if (response.ok) {
       const res = await response.json();
-
+      console.log(res);
       return res;
     } else {
       const errDetails = await response.json();
@@ -486,6 +487,6 @@ const API = {
   handleDownloadResource,
   getStakeholders,
   updateLink,
-  updateDiagramDate,
+  updateDiagram,
 };
 export default API;
