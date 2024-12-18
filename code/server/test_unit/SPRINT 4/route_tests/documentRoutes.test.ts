@@ -1063,7 +1063,6 @@ describe("Route document and helper unit test", () => {
                 ];
                 next();
             };
-            
             jest.spyOn(upload, 'array').mockImplementation(() => mockArrayMiddleware);
 
             jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
@@ -1149,10 +1148,11 @@ describe("Route document and helper unit test", () => {
             jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
                 return next();
             })
-            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+            const mockArrayMiddleware = (req: any, res: any, next: any) => {
                 return new Error();
-            });
-        
+            };
+            jest.spyOn(upload, 'array').mockImplementation(() => mockArrayMiddleware);
+            
             const response = await request(app)
                 .post('/api/resource/1')
                 .attach("files", Buffer.from("file content"), { filename: "image.png" });
@@ -1171,10 +1171,11 @@ describe("Route document and helper unit test", () => {
             jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
                 return next();
             })
-            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+            const mockArrayMiddleware = (req: any, res: any, next: any) => {
                 req.files = [];
                 next();
-            });
+            };
+            jest.spyOn(upload, 'array').mockImplementation(() => mockArrayMiddleware);
         
             const response = await request(app)
                 .post('/api/resource/1')
@@ -1208,12 +1209,13 @@ describe("Route document and helper unit test", () => {
             jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
                 return next();
             })
-            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+            const mockArrayMiddleware = (req: any, res: any, next: any) => {
                 req.files = [
                     { originalname: 'test.txt', buffer: Buffer.from('file content') }
                 ];
                 next();
-            });
+            };
+            jest.spyOn(upload, 'array').mockImplementation(() => mockArrayMiddleware);
             jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
         
             const response = await request(app)
@@ -1248,13 +1250,14 @@ describe("Route document and helper unit test", () => {
             jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
                 return next();
             })
-            jest.spyOn(upload, 'array').mockImplementation(() => (req: any, res: any, next: any) => {
+            const mockArrayMiddleware = (req: any, res: any, next: any) => {
                 req.files = [
                     { originalname: 'test.txt', buffer: Buffer.from('file content') },
                     { originalname: 'test2.txt', buffer: Buffer.from('file content') }
                 ];
                 next();
-            });
+            };
+            jest.spyOn(upload, 'array').mockImplementation(() => mockArrayMiddleware);
             jest.spyOn(DocumentController.prototype, 'getDocument').mockResolvedValue(document);
             jest.spyOn(DocumentController.prototype, 'addResource').mockRejectedValue(new Error());
         
