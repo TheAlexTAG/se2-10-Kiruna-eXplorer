@@ -11,7 +11,6 @@ async function cleanup(): Promise<void> {
             FROM information_schema.tables
             WHERE table_schema = DATABASE() AND table_name!= 'user';
           `)
-        //console.log(tables);
         for (const table of tables) {
             await conn.query(`DELETE FROM \`${table.table_name}\`;`);
         }
