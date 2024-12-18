@@ -114,3 +114,7 @@ BEGIN
    END IF;
 END$$
 DELIMITER ;
+
+INSERT INTO user (userid, username, password, salt, role) VALUES
+(null, 'up', 'ef89d2ba51b91f79c2319169a341381eaacd02c4cc3b548cf540ea4b1f148ad9', 'ce3f584e06ec9fc06b92edf73cd9f569', 'Urban Planner'),
+(null, 'admin', 'ef89d2ba51b91f79c2319169a341381eaacd02c4cc3b548cf540ea4b1f148ad9', 'ce3f584e06ec9fc06b92edf73cd9f569', 'Admin');
