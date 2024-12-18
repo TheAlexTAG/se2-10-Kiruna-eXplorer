@@ -95,7 +95,6 @@ const legendData = [
   { label: "Update", lineStyle: "1,5,5,5" },
 ];
 
-
 const getColor = (stakeholder: string) => {
   // Verifica se ci sono più stakeholder separati da virgole
   if (stakeholder.includes(",")) {
@@ -168,7 +167,10 @@ const getIconComponent = (type: string): React.FC<IconProps> => {
   }
 };
 
-function getDateRange(issuanceDate: string, parsedDate: Date): { min: number; max: number } {
+function getDateRange(
+  issuanceDate: string,
+  parsedDate: Date
+): { min: number; max: number } {
   if (RegExp(/^\d{4}$/).exec(issuanceDate)) {
     // yyyy: Limita all'intero anno
     const yearStart = new Date(parsedDate.getFullYear(), 0, 1).getTime();
@@ -176,8 +178,16 @@ function getDateRange(issuanceDate: string, parsedDate: Date): { min: number; ma
     return { min: yearStart, max: yearEnd };
   } else if (RegExp(/^\d{2}\/\d{4}$/).exec(issuanceDate)) {
     // mm/yyyy: Limita all'intero mese
-    const monthStart = new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1).getTime();
-    const monthEnd = new Date(parsedDate.getFullYear(), parsedDate.getMonth() + 1, 1).getTime();
+    const monthStart = new Date(
+      parsedDate.getFullYear(),
+      parsedDate.getMonth(),
+      1
+    ).getTime();
+    const monthEnd = new Date(
+      parsedDate.getFullYear(),
+      parsedDate.getMonth() + 1,
+      1
+    ).getTime();
     return { min: monthStart, max: monthEnd };
   } else {
     // Altri formati (dd/mm/yyyy o invalidi): Nessun range
@@ -206,6 +216,7 @@ const fetchDocuments = async (): Promise<Node[]> => {
     parsedDate: parseDate(doc.parsedDate.split("T")[0]),
     pages: doc.pages,
     language: doc.language,
+    zoneID: doc.zoneID,
   }));
 };
 
@@ -249,7 +260,6 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
   useEffect(() => {
     const loadData = async () => {
       const fetchedNodes = await fetchDocuments();
-      console.log(fetchedNodes);
       setNodes(fetchedNodes);
     };
 
@@ -264,24 +274,25 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
     const newYDomain = new Set([
       "Concept",
       "Text",
-      ...[...new Set(nodes.map((node: Node) => node.parsedScale))]
-        .sort((a, b) => {
+      ...[...new Set(nodes.map((node: Node) => node.parsedScale))].sort(
+        (a, b) => {
           // Se entrambi sono "Blueprints/effects", mettili alla fine
           if (a === "Blueprints/effects") return 1;
           if (b === "Blueprints/effects") return -1;
-    
+
           // Ordina numericamente in ordine decrescente
-          if (typeof a === 'number' && typeof b === 'number') {
+          if (typeof a === "number" && typeof b === "number") {
             return b - a;
           }
-    
+
           // Se uno è un numero e l'altro è una stringa, metti il numero prima
-          if (typeof a === 'number') return -1;
-          if (typeof b === 'number') return 1;
-    
+          if (typeof a === "number") return -1;
+          if (typeof b === "number") return 1;
+
           // Se entrambi sono stringhe, ordina alfabeticamente (decrescente)
           return String(b).localeCompare(String(a));
-        }),
+        }
+      ),
       "Blueprints/effects",
       "",
     ]);
@@ -600,11 +611,10 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
 
         const onRelationshipChange = async (rel: string) => {
           try {
-            d.relationship = rel; 
+            d.relationship = rel;
             await API.updateLink(d.id, d.sourceNode.id, d.targetNode.id, rel);
 
-            d3.select(this)
-              .attr("stroke-dasharray", getLineStyle(rel));
+            d3.select(this).attr("stroke-dasharray", getLineStyle(rel));
 
             alert("Relationship updated successfully!");
           } catch (error) {
@@ -653,28 +663,29 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
         );
       });
 
-      const drag = d3.drag()
-  .on("start", function (event, d) {
-    simulation.alphaTarget(0.3);
-    d3.select(this).raise().classed("active", true);
-    d.initialY = d.y;
-  })
-  .on("drag", function (event, d) {
-    const { min, max } = getDateRange(d.issuanceDate, d.parsedDate);
-    const yMin = d.initialY - 10;  // Limite inferiore per Y (5 pixel sopra)
-    const yMax = d.initialY + 10;
-    if (min !== max) {
-      const newX = d.x + event.dx;
-      const newY = d.y + event.dy; 
-      d.x = Math.min(Math.max(newX, xScale(min)), xScale(max));
-      d.y = Math.min(Math.max(newY, yMin), yMax);
-      d3.select(this).attr("transform", `translate(${d.x}, ${d.y})`);
-    }
-  })
-  .on("end", function (event, d) {
-    simulation.alphaTarget(0).restart()
-    d3.select(this).classed("active", false);
-  });
+    const drag = d3
+      .drag()
+      .on("start", function (event, d) {
+        simulation.alphaTarget(0.3);
+        d3.select(this).raise().classed("active", true);
+        d.initialY = d.y;
+      })
+      .on("drag", function (event, d) {
+        const { min, max } = getDateRange(d.issuanceDate, d.parsedDate);
+        const yMin = d.initialY - 10; // Limite inferiore per Y (5 pixel sopra)
+        const yMax = d.initialY + 10;
+        if (min !== max) {
+          const newX = d.x + event.dx;
+          const newY = d.y + event.dy;
+          d.x = Math.min(Math.max(newX, xScale(min)), xScale(max));
+          d.y = Math.min(Math.max(newY, yMin), yMax);
+          d3.select(this).attr("transform", `translate(${d.x}, ${d.y})`);
+        }
+      })
+      .on("end", function (event, d) {
+        simulation.alphaTarget(0).restart();
+        d3.select(this).classed("active", false);
+      });
 
     // Disegna i nodi
     const nodes_diag: any = graphGroup
@@ -738,14 +749,13 @@ export const Diagram: React.FC<userProps> = ({ userInfo }) => {
           .on("click", function (event, d) {
             setSelectedDocument(d);
           });
-      })
-
-      nodes_diag.call(drag);
-
-      simulation.nodes(nodeData).on("tick", function () {
-        nodes_diag
-          .attr("transform", (d) => `translate(${d.x}, ${d.y})`);
       });
+
+    nodes_diag.call(drag);
+
+    simulation.nodes(nodeData).on("tick", function () {
+      nodes_diag.attr("transform", (d) => `translate(${d.x}, ${d.y})`);
+    });
 
     // aggiungi funzionalità di zoom
     const offset = 50;
