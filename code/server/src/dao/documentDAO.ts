@@ -1,7 +1,7 @@
 import db from "../db/db";
 import { DocumentNotFoundError, DocumentUpdateError, WrongGeoreferenceUpdateError } from "../errors/documentErrors";
 import { InternalServerError } from "../errors/link_docError";
-import { InsertZoneError, ZoneError } from "../errors/zoneError";
+import { ZoneError } from "../errors/zoneError";
 import { Document, DocumentData, DocumentEditData, DocumentGeoData } from "../components/document";
 import { PoolConnection } from "mariadb";
 
@@ -203,7 +203,6 @@ class DocumentDAO {
             if(georefEdit && documentGeoData.coordinates != null) {
                 await conn.beginTransaction();
                 const lastID = await this.helper.insertZone(documentGeoData.coordinates as string, conn);
-                if(!lastID) throw new InsertZoneError();
                 documentGeoData.zoneID = lastID;
             }
             let sql = `UPDATE document SET `;
