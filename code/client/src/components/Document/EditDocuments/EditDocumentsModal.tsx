@@ -181,7 +181,6 @@ export default function EditDocumentModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const errors = {
       title: !editableDocument.title,
       description: !editableDocument.description,
@@ -189,17 +188,12 @@ export default function EditDocumentModal({
       scale: !editableDocument.scale,
       issuanceDate: !editableDocument.issuanceDate,
       type: !editableDocument.type,
-      latitude:
-        !editableDocument.latitude &&
-        zoneID == null &&
-        editableDocument.customArea == null,
-      longitude:
-        !editableDocument.longitude &&
-        zoneID == null &&
-        editableDocument.customArea == null,
+      latitude: !latitude && zoneID == null && customArea == null,
+      longitude: !longitude && zoneID == null && customArea == null,
     };
 
     setFieldErrors(errors);
+
     if (!editableDocument.title) {
       setErrorMessage("Title is required");
       return;
@@ -212,23 +206,24 @@ export default function EditDocumentModal({
       setErrorMessage("Stakeholders are required");
       return;
     }
+
+    if (zoneID === 0) {
+      setErrorMessage(null);
+      setIsReady(true);
+      return;
+    }
+
     if (
-      editableDocument.latitude === null &&
-      editableDocument.longitude === null &&
-      zoneID === null &&
-      customArea === null
+      zoneID == null &&
+      customArea == null &&
+      (editableDocument.latitude == null || editableDocument.longitude == null)
     ) {
       setErrorMessage(
-        "Please provide valid coordinates if no zone is selected."
+        "Please provide valid coordinates if no zone or custom area is selected."
       );
       return;
     }
-    if (zoneID || customArea) {
-      if (!editableDocument.latitude || !editableDocument.longitude) {
-        setErrorMessage("Please provide valid coordinates");
-        return;
-      }
-    }
+
     if (!editableDocument.scale) {
       setErrorMessage("Scale is required");
       return;
@@ -241,6 +236,7 @@ export default function EditDocumentModal({
       setErrorMessage("Type is required");
       return;
     }
+
     setErrorMessage(null);
     setIsReady(true);
   };
@@ -249,25 +245,54 @@ export default function EditDocumentModal({
     const realSubmit = async () => {
       setIsReady(false);
       try {
-        await API.updateDocument(
-          currentDocument.id,
-          zoneID !== null && zoneID !== undefined ? zoneID : null,
-          editableDocument.longitude ? editableDocument.longitude : null,
-          editableDocument.latitude ? editableDocument.latitude : null,
-          editableDocument.stakeholders ? editableDocument.stakeholders : null,
-          editableDocument.scale ? editableDocument.scale : null,
-          editableDocument.title ? editableDocument.title : undefined,
-          editableDocument.description
-            ? editableDocument.description
-            : undefined,
-          editableDocument.issuanceDate
-            ? editableDocument.issuanceDate
-            : undefined,
-          editableDocument.type ? editableDocument.type : undefined,
-          editableDocument.language ? editableDocument.language : undefined
-        );
-        updateTable();
-        onHide();
+        // Extract only the changed fields
+        const updatedFields: any = {};
+
+        if (zoneID !== currentDocument.zoneID) {
+          updatedFields.zoneID =
+            zoneID !== null && zoneID !== undefined ? zoneID : null;
+        }
+        if (longitude !== currentDocument.longitude) {
+          updatedFields.longitude = longitude ?? null;
+        }
+        if (latitude !== currentDocument.latitude) {
+          updatedFields.latitude = latitude ?? null;
+        }
+        if (
+          JSON.stringify(editableDocument.stakeholders) !==
+          JSON.stringify(currentDocument.stakeholders)
+        ) {
+          updatedFields.stakeholders = editableDocument.stakeholders ?? null;
+        }
+        if (editableDocument.scale !== currentDocument.scale) {
+          updatedFields.scale = editableDocument.scale ?? null;
+        }
+        if (editableDocument.title !== currentDocument.title) {
+          updatedFields.title = editableDocument.title ?? null;
+        }
+        if (editableDocument.description !== currentDocument.description) {
+          updatedFields.description = editableDocument.description ?? null;
+        }
+        if (editableDocument.issuanceDate !== currentDocument.issuanceDate) {
+          updatedFields.issuanceDate = editableDocument.issuanceDate ?? null;
+        }
+        if (editableDocument.type !== currentDocument.type) {
+          updatedFields.type = editableDocument.type ?? null;
+        }
+        if (editableDocument.language !== currentDocument.language) {
+          updatedFields.language = editableDocument.language ?? null;
+        }
+        if (customArea !== null) {
+          updatedFields.coordinates = customArea;
+        }
+
+        if (Object.keys(updatedFields).length > 0) {
+          await API.updateDocument(currentDocument.id, updatedFields);
+          updateTable();
+          onHide();
+        } else {
+          onHide();
+        }
       } catch (error: any) {
         setErrorMessage(
           error.message ||
@@ -275,11 +300,14 @@ export default function EditDocumentModal({
         );
       }
     };
+
     if (isReady) {
       realSubmit();
     }
   }, [isReady]);
+
   useEffect(() => {
+    if (!show) setCustomArea(null);
     API.getStakeholders().then((res: any) => {
       const customStakeholders = res.map((stakeholder: any) => ({
         value: stakeholder,
@@ -290,6 +318,16 @@ export default function EditDocumentModal({
         ...customStakeholders,
       ]);
     });
+    setEditableDocument({
+      ...currentDocument,
+      title: currentDocument.title || "",
+      description: currentDocument.description || "",
+      issuanceDate: currentDocument.issuanceDate || "",
+      type: currentDocument.type || "",
+    });
+    setLatitude(currentDocument.latitude);
+    setLongitude(currentDocument.longitude);
+    setZoneID(currentDocument.zoneID);
   }, [show]);
   const handleScaleSelect = (selectedScale: any) => {
     const scalePattern = /^1:\d{1,3}(?:,\d{3})*$/;
