@@ -1,5 +1,4 @@
 import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@jest/globals";
-import db from "../../../src/db/db"
 import {ZoneDAO} from "../../../src/dao/zoneDAO"
 import {Zone} from "../../../src/components/zone"
 import {ModifyZoneError, ZoneError} from "../../../src/errors/zoneError"
@@ -7,7 +6,7 @@ import {WrongGeoreferenceUpdateError} from "../../../src/errors/documentErrors"
 import { InternalServerError } from "../../../src/errors/link_docError";
 import { Geometry } from "geojson";
 import wellknown, { GeoJSONGeometryOrNull } from 'wellknown';
-import { closeDbPool } from "../../../src/db/db";
+import { closeDbPool, db } from "../../../src/db/db";
 import { server } from "../../../index";
 
 jest.mock("../../../src/db/db.ts")

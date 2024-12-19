@@ -12,7 +12,9 @@ jest.mock('../../../src/utilities');
 
 describe('LinkDocumentRoutes', () => {
 
-    beforeAll(() => {
+    beforeAll(async () => {
+        server.close();
+        await closeDbPool();
         jest.mock('express-validator', () => ({
             validationResult: jest.fn(),
         }));

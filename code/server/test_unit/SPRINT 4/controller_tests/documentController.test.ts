@@ -1,7 +1,7 @@
 import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@jest/globals";
 import {DocumentDAO} from "../../../src/dao/documentDAO";
 import {DocumentController, DocumentControllerHelper} from "../../../src/controllers/documentController";
-import {CoordinatesOutOfBoundsError, WrongGeoreferenceError, InvalidPageNumberError, InvalidNewDateCoordinatesError} from "../../../src/errors/documentErrors"
+import {CoordinatesOutOfBoundsError, WrongGeoreferenceError, InvalidPageNumberError} from "../../../src/errors/documentErrors"
 import * as turf from "@turf/turf"
 import { Feature, GeoJsonProperties, Geometry, Point } from "geojson"
 import { ZoneDAO } from "../../../src/dao/zoneDAO";

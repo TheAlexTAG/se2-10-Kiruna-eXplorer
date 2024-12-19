@@ -1,9 +1,8 @@
 import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@jest/globals";
 import { LinkDocumentDAO } from '../../../src/dao/link_docDAO';
 import { LinkDocument, Relationship } from '../../../src/components/link_doc';
-import db from '../../../src/db/db';
 import { InternalServerError, LinkError, ModifyLinkError } from '../../../src/errors/link_docError';
-import { closeDbPool } from "../../../src/db/db";
+import { closeDbPool, db } from "../../../src/db/db";
 import { server } from "../../../index";
 
 jest.mock("../../../src/db/db.ts")

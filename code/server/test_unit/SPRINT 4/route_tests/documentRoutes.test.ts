@@ -23,7 +23,9 @@ let documentHelper: DocumentRoutesHelper;
 
 describe("Route document and helper unit test", () => {
 
-    beforeAll(() => {
+    beforeAll(async () => {
+        server.close();
+        await closeDbPool();
         documentHelper = new DocumentRoutesHelper();
     });
 
