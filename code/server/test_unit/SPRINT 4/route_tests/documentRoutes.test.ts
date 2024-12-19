@@ -251,6 +251,7 @@ describe("Route document and helper unit test", () => {
 
     }) 
 
+    
     describe("PUT /api/document", () => {
 
         test("It should update the document specified", async () => {
@@ -511,7 +512,8 @@ describe("Route document and helper unit test", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -525,7 +527,6 @@ describe("Route document and helper unit test", () => {
             
 
             const response = await request(app).get("/api/document/1");
-            response.body.parsedDate = new Date(2023, 0, 1);
 
             expect(response.status).toBe(200);
             expect(response.body).toEqual(document);
@@ -560,6 +561,7 @@ describe("Route document and helper unit test", () => {
         });
 
     });
+    
 
     describe("GET /api/documents", () => {
         test("It should return the list of the selected documents", async () => {
@@ -570,7 +572,8 @@ describe("Route document and helper unit test", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -582,7 +585,8 @@ describe("Route document and helper unit test", () => {
                 stakeholders: "Stakeholders 2",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -602,8 +606,6 @@ describe("Route document and helper unit test", () => {
             jest.spyOn(DocumentController.prototype, 'getDocuments').mockResolvedValue([document1, document2]);
 
             const response = await request(app).get("/api/documents?scale=1:100&issuanceDate=01/01/2023");
-            response.body[0].parsedDate = new Date(response.body[0].parsedDate);
-            response.body[1].parsedDate = new Date(response.body[1].parsedDate);
 
             expect(response.status).toBe(200);
             expect(response.body).toEqual([document1, document2]);
@@ -678,6 +680,7 @@ describe("Route document and helper unit test", () => {
         });
 
     });
+    
 
     describe("GET /api/pagination/documents", () => {
 
@@ -689,7 +692,8 @@ describe("Route document and helper unit test", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -701,7 +705,8 @@ describe("Route document and helper unit test", () => {
                 stakeholders: "Stakeholders 2",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -731,8 +736,6 @@ describe("Route document and helper unit test", () => {
             jest.spyOn(DocumentController.prototype, 'getDocumentsWithPagination').mockResolvedValue(paginedDocs);
 
             const response = await request(app).get("/api/pagination/documents?pageSize=2&pageNumber=1&scale=1:100&issuanceDate=01/01/2023");
-            response.body.documents[0].parsedDate = new Date(response.body.documents[0].parsedDate);
-            response.body.documents[1].parsedDate = new Date(response.body.documents[1].parsedDate);
 
             expect(response.status).toBe(200);
             expect(response.body).toEqual(paginedDocs);
@@ -867,15 +870,10 @@ describe("Route document and helper unit test", () => {
         });
     })
 
-    describe("PUT /api/diagram/:id", () => {
+    describe("PUT /api/diagram", () => {
 
-        test("It should update the parse date of the specified document", async () => {
-            const date: string = new Date(2024,5,16).toISOString();
-            const parsedDate = {parsedDate: date};
+        test("It should update the position in diagram of the specified document", async () => {
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
-                return next();
-            })
-            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
                 return next();
             })
             jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
@@ -883,86 +881,39 @@ describe("Route document and helper unit test", () => {
             })
             jest.spyOn(DocumentController.prototype, 'updateDiagramDate').mockResolvedValue(true);
 
-            const response = await request(app).put("/api/diagram/1").send(parsedDate);
-
-            expect(response.status).toBe(200);
-            expect(response.body).toBe(true);
-        })
-
-        test("It should update the parse date of the specified document", async () => {
-            const date: string = new Date(2024,5,16).toISOString();
-            const parsedDate = {parsedDate: date};
-            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
-                return next();
-            })
-            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
-                return next();
-            })
-            jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
-                return next();
-            })
-            jest.spyOn(DocumentController.prototype, 'updateDiagramDate').mockResolvedValue(true);
-
-            const response = await request(app).put("/api/diagram/1").send(parsedDate);
+            const response = await request(app).put("/api/diagram").send({documentIDs: [1,2], xPositions:[12.45, 76.34], yPositions:[34.21, 65.34]});
 
             expect(response.status).toBe(200);
             expect(response.body).toBe(true);
         })
 
         test("It should return 401 status if user in not an urban planner", async () => {
-            const date: string = new Date(2024,5,16).toISOString();
-            const parsedDate = {parsedDate: date};
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
                 return res.status(401).json({ error: "User is not authorized"});
             })
 
-            const response = await request(app).put("/api/diagram/1").send(parsedDate);
+            const response = await request(app).put("/api/diagram").send({documentIDs: [1,2], xPositions:[12.45, 76.34], yPositions:[34.21, 65.34]});
 
             expect(response.status).toBe(401);
             expect(DocumentController.prototype.updateDiagramDate).not.toHaveBeenCalled();
         })
 
-        test("It should return 404 status if this document does not exist", async () => {
-            const date: string = new Date(2024,5,16).toISOString();
-            const parsedDate = {parsedDate: date};
+        test("It should return 422 status if the parameters are not valid", async () => {
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
-                return next();
-            })
-            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
-                return res.status(404).json({ error: 'Document not found' });
-            })
-
-            const response = await request(app).put("/api/diagram/1").send(parsedDate);
-
-            expect(response.status).toBe(404);
-            expect(DocumentController.prototype.updateDiagramDate).not.toHaveBeenCalled();
-        })
-
-        test("It should return 422 status if the date is not valid", async () => {
-            const parsedDate = {parsedDate: 'data'};
-            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
-                return next();
-            })
-            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
                 return next();
             })
             jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
                 return res.status(422);
             })
 
-            const response = await request(app).put("/api/diagram/1").send(parsedDate);
+            const response = await request(app).put("/api/diagram").send({documentIDs: ['uno',2], xPositions:[12.45, 76.34], yPositions:[34.21, 65.34]});
 
             expect(response.status).toBe(422);
             expect(DocumentController.prototype.updateDiagramDate).not.toHaveBeenCalled();
         })
 
         test("It should return 500 status if the controller method returns an error", async () => {
-            const date: string = new Date(2024,5,16).toISOString();
-            const parsedDate = {parsedDate: date};
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
-                return next();
-            })
-            jest.spyOn(Utilities.prototype, "documentExists").mockImplementation((req, res, next) => {
                 return next();
             })
             jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
@@ -970,7 +921,7 @@ describe("Route document and helper unit test", () => {
             })
             jest.spyOn(DocumentController.prototype, 'updateDiagramDate').mockRejectedValue(new Error);
 
-            const response = await request(app).put("/api/diagram/1").send(parsedDate);
+            const response = await request(app).put("/api/diagram").send({documentIDs: [1,2], xPositions:[12.45, 76.34], yPositions:[34.21, 65.34]});
 
             expect(response.status).toBe(500);
         })
@@ -1035,6 +986,7 @@ describe("Route document and helper unit test", () => {
             expect(response.status).toBe(500);
         });
     });
+    
 
     describe("POST /api/resource/:documentID", () => {
         
@@ -1046,7 +998,8 @@ describe("Route document and helper unit test", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -1199,7 +1152,8 @@ describe("Route document and helper unit test", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -1240,7 +1194,8 @@ describe("Route document and helper unit test", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -1293,7 +1248,8 @@ describe("Route document and helper unit test", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -1332,7 +1288,8 @@ describe("Route document and helper unit test", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -1360,7 +1317,8 @@ describe("Route document and helper unit test", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
