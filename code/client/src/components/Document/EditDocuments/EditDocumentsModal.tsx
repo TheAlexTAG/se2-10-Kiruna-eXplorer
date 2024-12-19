@@ -328,6 +328,7 @@ export default function EditDocumentModal({
       issuanceDate: currentDocument.issuanceDate || "",
       type: currentDocument.type || "",
     });
+    setScale(currentDocument.scale);
     setLatitude(currentDocument.latitude);
     setLongitude(currentDocument.longitude);
     setZoneID(currentDocument.zoneID);
