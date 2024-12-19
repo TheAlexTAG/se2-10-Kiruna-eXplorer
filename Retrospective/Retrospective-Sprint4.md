@@ -57,8 +57,8 @@ sections:
 ## QUALITY MEASURES 
 
 - Unit Testing:
-  - Total hours estimated
-  - Total hours spent
+  - Total hours estimated `3h30m` //ricordarsi spiegare
+  - Total hours spent `4h`
   - Nr of automated unit test cases 
   - Coverage
 - E2E testing:
