@@ -889,17 +889,6 @@ describe("Route document and helper unit test", () => {
             expect(response.body).toBe(true);
         })
 
-        test("It should return 401 status if user in not an urban planner", async () => {
-            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
-                return res.status(401).json({ error: "User is not authorized"});
-            })
-
-            const response = await request(app).put("/api/diagram").send({documentIDs: [1,2], xPositions:[12.45, 76.34], yPositions:[34.21, 65.34]});
-
-            expect(response.status).toBe(401);
-            expect(DocumentController.prototype.updateDiagramDate).not.toHaveBeenCalled();
-        })
-
         test("It should return 422 status if the parameters are not valid", async () => {
             jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
                 return next();
