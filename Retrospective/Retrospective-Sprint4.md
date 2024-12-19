@@ -12,9 +12,9 @@ sections:
 
 ### Macro statistics
 
-- Number of stories committed vs done 
-- Total points committed vs done 
-- Nr of hours planned vs spent (as a team)
+- Number of stories committed vs done `4/4`
+- Total points committed vs done `10/10`
+- Nr of hours planned vs spent (as a team) `112h/113h`
 
 **Remember**  a story is done ONLY if it fits the Definition of Done:
  
@@ -29,8 +29,11 @@ sections:
 
 | Story  | # Tasks | Points | Hours est. | Hours actual |
 |--------|---------|--------|------------|--------------|
-| _#0_   |         |    -   |            |              |
-| n      |         |        |            |              |
+| _#0_   |    47   |    -   |  79h25m    |       79h    |
+| _#11_  |    3    |        |    2h30m   |     2h30m    |
+| _#17_  |    3    |        |    3h30m   |     3h45m    |
+| _#12_  |   10    |        |   17h30m   |    18h30m    |
+| _#13_  |    7    |        |    9h30m   |     9h       |
    
 
 > place technical tasks corresponding to story `#0` and leave out story points (not applicable in this case)
@@ -39,16 +42,16 @@ sections:
 
 |            | Mean | StDev |
 |------------|------|-------|
-| Estimation |      |       | 
-| Actual     |      |       |
+| Estimation |1h36m | 1h38m | 
+| Actual     |1h37m | 1h40m |
 
 - Total estimation error ratio: sum of total hours spent / sum of total hours effort - 1
 
-    $$\frac{\sum_i spent_{task_i}}{\sum_i estimation_{task_i}} - 1$$
+    $$\frac{\sum_i spent_{task_i}}{\sum_i estimation_{task_i}} - 1 = 0.0089285714 $$
     
 - Absolute relative task estimation error: sum( abs( spent-task-i / estimation-task-i - 1))/n
 
-    $$\frac{1}{n}\sum_i^n \left| \frac{spent_{task_i}}{estimation_task_i}-1 \right| $$
+    $$\frac{1}{n}\sum_i^n \left| \frac{spent_{task_i}}{estimation_task_i}-1 \right| = 0,093333333 $$
 
   
 ## QUALITY MEASURES 
