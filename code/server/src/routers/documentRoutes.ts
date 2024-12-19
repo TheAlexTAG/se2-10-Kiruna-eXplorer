@@ -265,7 +265,6 @@ class DocumentRoutes {
         .catch((err: any) => res.status(err.code? err.code : 500).json({error: err.message})))
 
         this.app.put("/api/diagram",
-            this.utilities.isUrbanPlanner,
             body("documentIDs").isArray()
             .bail()
             .custom((value) => value.every((id: number) => Number.isInteger(id) && id > 0)),

@@ -308,12 +308,14 @@ export const DocumentList = ({ userInfo }: UserProps) => {
                 <td>{document.issuanceDate ? document.issuanceDate : "-"}</td>
                 <td>{document.connections ? document.connections : "-"}</td>
                 <td>{document.language ? document.language : "-"}</td>
-                {userInfo?.role === "Urban Planner" && (
-                  <td>
-                    <DropdownButton
-                      variant="link-black"
-                      title={<i className="bi bi-three-dots-vertical"></i>}
-                    >
+                <td>
+                <DropdownButton
+                  variant="link-black"
+                  title={<i className="bi bi-three-dots-vertical"></i>}
+                >
+                  {/* Opzioni disponibili solo per Urban Planner */}
+                  {userInfo?.role === "Urban Planner" && (
+                    <>
                       <Dropdown.Item>
                         <LinkingDocumentsModal
                           currentDocument={document}
@@ -338,41 +340,45 @@ export const DocumentList = ({ userInfo }: UserProps) => {
                           onClick={() => handleSelectDiv(document)}
                           className="p-2"
                         >
-                          <i className="bi bi-file-earmark-arrow-up-fill"></i>{" "}
-                          Upload Files
+                          <i className="bi bi-file-earmark-arrow-up-fill"></i> Upload Files
                         </div>
                       </Dropdown.Item>
                       <Dropdown.Divider />
-                      <Dropdown.Item>
-                        <button
-                          style={{ color: "#2d6efd" }}
-                          className="p-2 reset-button"
-                          onClick={() => {
-                            navigate("/diagram", {
-                              state: { selectedDocument: document },
-                            });
-                          }}
-                        >
-                          <i className="bi bi-diagram-3"></i> Open in Diagram
-                        </button>
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Item>
-                        <button
-                          style={{ color: "#2d6efd" }}
-                          className="p-2 reset-button"
-                          onClick={() => {
-                            navigate("/map", {
-                              state: { selectedDocument: document },
-                            });
-                          }}
-                        >
-                          <i className="bi bi-geo-alt"></i> Open in Map
-                        </button>
-                      </Dropdown.Item>
-                    </DropdownButton>
-                  </td>
-                )}
+                    </>
+                  )}
+
+                  {/* Opzione Open in Diagram (sempre visibile) */}
+                  <Dropdown.Item>
+                    <button
+                      style={{ color: "#2d6efd" }}
+                      className="p-2 reset-button"
+                      onClick={() => {
+                        navigate("/diagram", {
+                          state: { selectedDocument: document },
+                        });
+                      }}
+                    >
+                      <i className="bi bi-diagram-3"></i> Open in Diagram
+                    </button>
+                  </Dropdown.Item>
+                  <Dropdown.Divider />
+
+                  {/* Opzione Open in Map (sempre visibile) */}
+                  <Dropdown.Item>
+                    <button
+                      style={{ color: "#2d6efd" }}
+                      className="p-2 reset-button"
+                      onClick={() => {
+                        navigate("/map", {
+                          state: { selectedDocument: document },
+                        });
+                      }}
+                    >
+                      <i className="bi bi-geo-alt"></i> Open in Map
+                    </button>
+                  </Dropdown.Item>
+                </DropdownButton>
+              </td>
               </tr>
             ))}
           </tbody>
