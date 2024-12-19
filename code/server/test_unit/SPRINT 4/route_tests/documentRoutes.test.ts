@@ -875,9 +875,6 @@ describe("Route document and helper unit test", () => {
     describe("PUT /api/diagram", () => {
 
         test("It should update the position in diagram of the specified document", async () => {
-            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
-                return next();
-            })
             jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
                 return next();
             })
@@ -890,9 +887,6 @@ describe("Route document and helper unit test", () => {
         })
 
         test("It should return 422 status if the parameters are not valid", async () => {
-            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
-                return next();
-            })
             jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
                 return res.status(422);
             })
@@ -904,9 +898,6 @@ describe("Route document and helper unit test", () => {
         })
 
         test("It should return 500 status if the controller method returns an error", async () => {
-            jest.spyOn(Utilities.prototype, "isUrbanPlanner").mockImplementation((req, res, next) => {
-                return next();
-            })
             jest.spyOn(ErrorHandler.prototype, "validateRequest").mockImplementation((req, res, next) => {
                 return next();
             })
