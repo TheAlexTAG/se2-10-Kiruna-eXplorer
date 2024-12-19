@@ -30,10 +30,10 @@ sections:
 | Story  | # Tasks | Points | Hours est. | Hours actual |
 |--------|---------|--------|------------|--------------|
 | _#0_   |    47   |    -   |  79h25m    |       79h    |
-| _#11_  |    3    |        |    2h30m   |     2h30m    |
-| _#17_  |    3    |        |    3h30m   |     3h45m    |
-| _#12_  |   10    |        |   17h30m   |    18h30m    |
-| _#13_  |    7    |        |    9h30m   |     9h       |
+| _#11_  |    3    |   1    |    2h30m   |     2h30m    |
+| _#17_  |    3    |   1    |    3h30m   |     3h45m    |
+| _#12_  |   10    |   5    |   17h30m   |    18h30m    |
+| _#13_  |    7    |   3    |    9h30m   |     9h       |
    
 
 > place technical tasks corresponding to story `#0` and leave out story points (not applicable in this case)
@@ -57,7 +57,7 @@ sections:
 ## QUALITY MEASURES 
 
 - Unit Testing:
-  - Total hours estimated `3h30m` //ricordarsi spiegare
+  - Total hours estimated `3h30m`
   - Total hours spent `4h`
   - Nr of automated unit test cases 
     - `205 tests`
