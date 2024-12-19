@@ -216,7 +216,7 @@ export default function EditDocumentModal({
     if (
       zoneID == null &&
       customArea == null &&
-      (editableDocument.latitude == null || editableDocument.longitude == null)
+      (latitude == null || longitude == null)
     ) {
       setErrorMessage(
         "Please provide valid coordinates if no zone or custom area is selected."
