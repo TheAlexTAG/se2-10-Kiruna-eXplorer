@@ -1,6 +1,6 @@
 import { describe, test, expect, beforeAll, afterEach, jest, afterAll } from "@jest/globals"
 import request from 'supertest'
-import { app } from "../../../index"
+import { app, server } from "../../../index"
 import { DocumentController } from "../../../src/controllers/documentController"
 import { DocumentRoutesHelper, upload } from "../../../src/routers/documentRoutes"
 import { Document, DocumentData, DocumentGeoData } from "../../../src/components/document"
@@ -11,7 +11,6 @@ import {ErrorHandler} from "../../../src/helper"
 import { InternalServerError } from "../../../src/errors/link_docError"
 import { Response} from 'express';
 import { closeDbPool } from "../../../src/db/db";
-import { server } from "../../../index";
 
 const wellknown = require('wellknown');
 const path = require('path');

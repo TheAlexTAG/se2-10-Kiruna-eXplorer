@@ -2,11 +2,10 @@ import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@je
 import request from 'supertest';
 import { LinkDocumentController } from '../../../src/controllers/link_docController';
 import { Utilities } from '../../../src/utilities';
-import { app } from "../../../index"
+import { app, server } from "../../../index"
 import { DocumentsError, InternalServerError, LinkError } from '../../../src/errors/link_docError';
 import { LinkDocument, Relationship } from "../../../src/components/link_doc";
 import { closeDbPool } from "../../../src/db/db";
-import { server } from "../../../index";
 
 jest.mock('../../../src/controllers/link_docController'); 
 jest.mock('../../../src/utilities');
