@@ -281,7 +281,6 @@ class DocumentController {
     }
 
     async updateDiagramDate(documentIDs: number[], nodeXs: number [], nodeYs: number[]): Promise<boolean> {
-        console.log(documentIDs, nodeXs, nodeYs);
         const response = await this.dao.updateDiagram(documentIDs, nodeXs, nodeYs);
         return response;
     }
