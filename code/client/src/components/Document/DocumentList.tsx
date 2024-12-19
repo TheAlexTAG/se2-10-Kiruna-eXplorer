@@ -148,10 +148,10 @@ export const DocumentList = ({ userInfo }: UserProps) => {
   const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (event: any) => {
-    const allowedExtensions = ["pdf", "doc", "docx", "txt"]; 
+    const allowedExtensions = ["pdf", "doc", "docx", "txt"];
     const selectedFiles = Array.from(event.target.files);
     const invalidFiles = selectedFiles.filter((file: any) => {
-      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      const fileExtension = file.name.split(".").pop()?.toLowerCase();
       return !allowedExtensions.includes(fileExtension);
     });
 
@@ -231,7 +231,7 @@ export const DocumentList = ({ userInfo }: UserProps) => {
             <InputGroup className="search-bar" data-bs-theme="dark">
               <Form.Control
                 type="text"
-                placeholder="Search by title..."
+                placeholder="Search ..."
                 value={searchTerm}
                 onChange={handleSearch}
               />
@@ -309,76 +309,78 @@ export const DocumentList = ({ userInfo }: UserProps) => {
                 <td>{document.connections ? document.connections : "-"}</td>
                 <td>{document.language ? document.language : "-"}</td>
                 <td>
-                <DropdownButton
-                  variant="link-black"
-                  title={<i className="bi bi-three-dots-vertical"></i>}
-                >
-                  {/* Opzioni disponibili solo per Urban Planner */}
-                  {userInfo?.role === "Urban Planner" && (
-                    <>
-                      <Dropdown.Item>
-                        <LinkingDocumentsModal
-                          currentDocument={document}
-                          updateTable={fetchDocuments}
-                          setSuccessMessage={setSuccessMessage}
-                        />
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Item>
-                        <div
-                          className="p-2"
-                          onClick={() => handleEditClick(document)}
-                          style={{ color: "green" }}
-                        >
-                          <i className="bi bi-pencil-square"></i> Edit Document
-                        </div>
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                      <Dropdown.Item>
-                        <div
-                          style={{ color: "#2d6efd" }}
-                          onClick={() => handleSelectDiv(document)}
-                          className="p-2"
-                        >
-                          <i className="bi bi-file-earmark-arrow-up-fill"></i> Upload Files
-                        </div>
-                      </Dropdown.Item>
-                      <Dropdown.Divider />
-                    </>
-                  )}
+                  <DropdownButton
+                    variant="link-black"
+                    title={<i className="bi bi-three-dots-vertical"></i>}
+                  >
+                    {/* Opzioni disponibili solo per Urban Planner */}
+                    {userInfo?.role === "Urban Planner" && (
+                      <>
+                        <Dropdown.Item>
+                          <LinkingDocumentsModal
+                            currentDocument={document}
+                            updateTable={fetchDocuments}
+                            setSuccessMessage={setSuccessMessage}
+                          />
+                        </Dropdown.Item>
+                        <Dropdown.Divider />
+                        <Dropdown.Item>
+                          <div
+                            className="p-2"
+                            onClick={() => handleEditClick(document)}
+                            style={{ color: "green" }}
+                          >
+                            <i className="bi bi-pencil-square"></i> Edit
+                            Document
+                          </div>
+                        </Dropdown.Item>
+                        <Dropdown.Divider />
+                        <Dropdown.Item>
+                          <div
+                            style={{ color: "#2d6efd" }}
+                            onClick={() => handleSelectDiv(document)}
+                            className="p-2"
+                          >
+                            <i className="bi bi-file-earmark-arrow-up-fill"></i>{" "}
+                            Upload Files
+                          </div>
+                        </Dropdown.Item>
+                        <Dropdown.Divider />
+                      </>
+                    )}
 
-                  {/* Opzione Open in Diagram (sempre visibile) */}
-                  <Dropdown.Item>
-                    <button
-                      style={{ color: "#2d6efd" }}
-                      className="p-2 reset-button"
-                      onClick={() => {
-                        navigate("/diagram", {
-                          state: { selectedDocument: document },
-                        });
-                      }}
-                    >
-                      <i className="bi bi-diagram-3"></i> Open in Diagram
-                    </button>
-                  </Dropdown.Item>
-                  <Dropdown.Divider />
+                    {/* Opzione Open in Diagram (sempre visibile) */}
+                    <Dropdown.Item>
+                      <button
+                        style={{ color: "#2d6efd" }}
+                        className="p-2 reset-button"
+                        onClick={() => {
+                          navigate("/diagram", {
+                            state: { selectedDocument: document },
+                          });
+                        }}
+                      >
+                        <i className="bi bi-diagram-3"></i> Open in Diagram
+                      </button>
+                    </Dropdown.Item>
+                    <Dropdown.Divider />
 
-                  {/* Opzione Open in Map (sempre visibile) */}
-                  <Dropdown.Item>
-                    <button
-                      style={{ color: "#2d6efd" }}
-                      className="p-2 reset-button"
-                      onClick={() => {
-                        navigate("/map", {
-                          state: { selectedDocument: document },
-                        });
-                      }}
-                    >
-                      <i className="bi bi-geo-alt"></i> Open in Map
-                    </button>
-                  </Dropdown.Item>
-                </DropdownButton>
-              </td>
+                    {/* Opzione Open in Map (sempre visibile) */}
+                    <Dropdown.Item>
+                      <button
+                        style={{ color: "#2d6efd" }}
+                        className="p-2 reset-button"
+                        onClick={() => {
+                          navigate("/map", {
+                            state: { selectedDocument: document },
+                          });
+                        }}
+                      >
+                        <i className="bi bi-geo-alt"></i> Open in Map
+                      </button>
+                    </Dropdown.Item>
+                  </DropdownButton>
+                </td>
               </tr>
             ))}
           </tbody>
