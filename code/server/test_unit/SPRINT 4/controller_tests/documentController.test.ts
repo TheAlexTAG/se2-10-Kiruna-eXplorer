@@ -1,7 +1,7 @@
-import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
+import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@jest/globals";
 import {DocumentDAO} from "../../../src/dao/documentDAO";
 import {DocumentController, DocumentControllerHelper} from "../../../src/controllers/documentController";
-import {CoordinatesOutOfBoundsError, WrongGeoreferenceError, InvalidPageNumberError, InvalidNewDateCoordinatesError} from "../../../src/errors/documentErrors"
+import {CoordinatesOutOfBoundsError, WrongGeoreferenceError, InvalidPageNumberError} from "../../../src/errors/documentErrors"
 import * as turf from "@turf/turf"
 import { Feature, GeoJsonProperties, Geometry, Point } from "geojson"
 import { ZoneDAO } from "../../../src/dao/zoneDAO";
@@ -9,7 +9,9 @@ import { Kiruna } from "../../../src/utilities";
 import { InsertZoneError } from "../../../src/errors/zoneError";
 import wellknown from "wellknown"
 import { Zone } from "../../../src/components/zone";
-import { Document, DocumentData, DocumentGeoData } from "../../../src/components/document";
+import { Document, DocumentData, DocumentGeoData, DocumentEditData } from "../../../src/components/document";
+import { closeDbPool } from "../../../src/db/db";
+import { server } from "../../../index";
 
 jest.mock("../../../src/dao/documentDAO")
 jest.mock("../../../src/dao/zoneDAO")
@@ -27,6 +29,11 @@ describe("Controller document and helper unit tests", () => {
     afterEach(() => {
         jest.resetAllMocks();
     });
+
+    afterAll(async () => {
+        server.close();
+        await closeDbPool();
+    })
 
     describe("checkCoordinatesValidity", () => {
 
@@ -197,7 +204,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -218,7 +226,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -269,7 +278,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -308,7 +318,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -348,7 +359,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -370,7 +382,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -390,7 +403,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -437,7 +451,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -451,21 +466,20 @@ describe("Controller document and helper unit tests", () => {
     describe("updateDocument", () => {
 
         test("It should update a document that is assigned to Kiruna general area", async () => {
-            const documentData : DocumentData = {
+            const documentData : DocumentEditData = {
                 documentID: 1,
-                title: "Documento 1",
+                title: null,
                 description: "Descrizione 1",
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
             };
             const documentGeoData: DocumentGeoData = {zoneID: 0, coordinates: null, latitude: null, longitude: null};
-            const date: Date = new Date(2023, 0, 2);
-            jest.spyOn(DocumentDAO.prototype,"getParsedDate").mockResolvedValue(date);
             jest.spyOn(DocumentDAO.prototype,"updateDocument").mockResolvedValue(true);
 
             const result = await controller.updateDocument(documentData, documentGeoData);
@@ -474,14 +488,15 @@ describe("Controller document and helper unit tests", () => {
         });
 
         test("It should update a document that defines a new custom zone", async () => {
-            const documentData : DocumentData = {
+            const documentData : DocumentEditData = {
                 documentID: 1,
-                title: "Documento 1",
+                title: null,
                 description: "Descrizione 1",
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -511,8 +526,6 @@ describe("Controller document and helper unit tests", () => {
                 properties: {}
             };
             const coordString: string= "POLYGON ((67.86 20.225, 67.86 20.23, 67.855 20.235, 67.85 20.23, 67.85 20.22, 67.855 20.215, 67.86 20.225))";
-            const date: Date = new Date(2023, 0, 2);
-            jest.spyOn(DocumentDAO.prototype,"getParsedDate").mockResolvedValue(date);
             jest.spyOn(turf,"geometry").mockReturnValue(geo);
             jest.spyOn(wellknown,"stringify").mockReturnValue(coordString);
             jest.spyOn(ZoneDAO,"zoneExistsCoord").mockResolvedValue(false);
@@ -527,14 +540,15 @@ describe("Controller document and helper unit tests", () => {
         });
 
         test("It should return InsertZoneError if the document defines a not new zone", async () => {
-            const documentData : DocumentData = {
+            const documentData : DocumentEditData = {
                 documentID: 1,
-                title: "Documento 1",
+                title: null,
                 description: "Descrizione 1",
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -556,8 +570,6 @@ describe("Controller document and helper unit tests", () => {
                 ]
             };
             const coordString: string= "POLYGON ((67.86 20.225, 67.86 20.23, 67.855 20.235, 67.85 20.23, 67.85 20.22, 67.855 20.215, 67.86 20.225))";
-            const date: Date = new Date(2023, 0, 2);
-            jest.spyOn(DocumentDAO.prototype,"getParsedDate").mockResolvedValue(date);
             jest.spyOn(turf,"geometry").mockReturnValue(geo);
             jest.spyOn(wellknown,"stringify").mockReturnValue(coordString);
             jest.spyOn(ZoneDAO,"zoneExistsCoord").mockResolvedValue(true);
@@ -568,14 +580,15 @@ describe("Controller document and helper unit tests", () => {
         });
 
         test("It should return CoordinatesOutOfBoundsError if the document defines a new invalid zone", async () => {
-            const documentData : DocumentData = {
+            const documentData : DocumentEditData = {
                 documentID: 1,
-                title: "Documento 1",
+                title: null,
                 description: "Descrizione 1",
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -597,8 +610,6 @@ describe("Controller document and helper unit tests", () => {
                 ]
             };
             const coordString: string= "POLYGON ((67.86 20.225, 67.86 20.23, 67.855 20.235, 67.85 20.23, 67.85 20.22, 67.855 20.215, 67.86 20.225))";
-            const date: Date = new Date(2023, 0, 2);
-            jest.spyOn(DocumentDAO.prototype,"getParsedDate").mockResolvedValue(date);
             jest.spyOn(turf,"geometry").mockReturnValue(geo);
             jest.spyOn(wellknown,"stringify").mockReturnValue(coordString);
             jest.spyOn(ZoneDAO,"zoneExistsCoord").mockResolvedValue(false);
@@ -610,21 +621,20 @@ describe("Controller document and helper unit tests", () => {
         });
 
         test("It should update a document that has specific coordinates", async () => {
-            const documentData : DocumentData = {
+            const documentData : DocumentEditData = {
                 documentID: 1,
-                title: "Documento 1",
+                title: null,
                 description: "Descrizione 1",
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
             };
             const documentGeoData: DocumentGeoData = {zoneID: null, coordinates: null, latitude: 67.85, longitude: 20.22};
-            const date: Date = new Date(2023, 0, 2);
-            jest.spyOn(DocumentDAO.prototype,"getParsedDate").mockResolvedValue(date);
             jest.spyOn(DocumentControllerHelper.prototype,"checkCoordinatesValidity").mockResolvedValue(true);
             jest.spyOn(DocumentDAO.prototype,"updateDocument").mockResolvedValue(true);
 
@@ -634,21 +644,20 @@ describe("Controller document and helper unit tests", () => {
         });
 
         test("It should return CoordinatesOutOfBoundsError if the document has invalid specific coordinates", async () => {
-            const documentData : DocumentData = {
+            const documentData : DocumentEditData = {
                 documentID: 1,
-                title: "Documento 1",
+                title: null,
                 description: "Descrizione 1",
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
             };
             const documentGeoData: DocumentGeoData = {zoneID: null, coordinates: null, latitude: 100, longitude: 20.22};
-            const date: Date = new Date(2023, 0, 2);
-            jest.spyOn(DocumentDAO.prototype,"getParsedDate").mockResolvedValue(date);
             jest.spyOn(DocumentControllerHelper.prototype,"checkCoordinatesValidity").mockResolvedValue(false);
 
             await expect(controller.updateDocument(documentData, documentGeoData)).rejects.toThrow(CoordinatesOutOfBoundsError);
@@ -656,14 +665,15 @@ describe("Controller document and helper unit tests", () => {
         });
         
         test("It should update a document that is refered to an existing zone", async () => {
-            const documentData : DocumentData = {
+            const documentData : DocumentEditData = {
                 documentID: 1,
-                title: "Documento 1",
+                title: null,
                 description: "Descrizione 1",
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -692,8 +702,6 @@ describe("Controller document and helper unit tests", () => {
                 properties: {}
             };
             const zone: Zone = new Zone(1, geometry);
-            const date: Date = new Date(2023, 0, 2);
-            jest.spyOn(DocumentDAO.prototype,"getParsedDate").mockResolvedValue(date);
             jest.spyOn(ZoneDAO.prototype,"getZone").mockResolvedValue(zone);
             jest.spyOn(turf,"centroid").mockReturnValue(centroid);
             jest.spyOn(DocumentDAO.prototype,"updateDocument").mockResolvedValue(true);
@@ -705,41 +713,39 @@ describe("Controller document and helper unit tests", () => {
         });
 
         test("It should return WrongGeoreferenceError if parameters are not consistent", async () => {
-            const documentData : DocumentData = {
+            const documentData : DocumentEditData = {
                 documentID: 1,
-                title: "Documento 1",
+                title: null,
                 description: "Descrizione 1",
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
             };
             const documentGeoData: DocumentGeoData = {zoneID: 2, coordinates: null, latitude: 88.76, longitude: null};
-            const date: Date = new Date(2023, 0, 2);
-            jest.spyOn(DocumentDAO.prototype,"getParsedDate").mockResolvedValue(date);
             await expect(controller.updateDocument(documentData, documentGeoData)).rejects.toThrow(WrongGeoreferenceError);
             expect(DocumentDAO.prototype.updateDocument).not.toHaveBeenCalled();
         });
 
         test("It should return WrongGeoreferenceError if parameters are not consistent", async () => {
-            const documentData : DocumentData = {
+            const documentData : DocumentEditData = {
                 documentID: 1,
-                title: "Documento 1",
+                title: null,
                 description: "Descrizione 1",
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
             };
             const documentGeoData: DocumentGeoData = {zoneID: null, coordinates: null, latitude: null, longitude: null};
-            const date: Date = new Date(2023, 0, 2);
-            jest.spyOn(DocumentDAO.prototype,"getParsedDate").mockResolvedValue(date);
             jest.spyOn(DocumentDAO.prototype,"updateDocument").mockResolvedValue(true);
             
             const result = await controller.updateDocument(documentData, documentGeoData);
@@ -758,7 +764,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -790,7 +797,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -802,7 +810,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 2",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -836,7 +845,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -848,7 +858,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 2",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -895,7 +906,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -907,7 +919,8 @@ describe("Controller document and helper unit tests", () => {
                 stakeholders: "Stakeholders 2",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -941,148 +954,17 @@ describe("Controller document and helper unit tests", () => {
         });
     })
 
-    describe("updateDiagramDate", () => {
+    describe("updateDiagram", () => {
 
-        test("It should update the parseDate of the document having a month as issuanceDate", async () => {
-            const documentData : DocumentData = {
-                documentID: 1,
-                title: "Documento 1",
-                description: "Descrizione 1",
-                stakeholders: "Stakeholders 1",
-                scale: "1:100",
-                issuanceDate: "01/2023",
-                parsedDate: new Date(2023, 0, 1),
-                type: "Report",
-                language: "it",
-                pages: "5"
-            };
-            
-            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
-            const document: Document = new Document(documentData, documentGeoData, 0, [], [], []);
-            jest.spyOn(DocumentDAO.prototype,"getDocumentByID").mockResolvedValue(document);
-            jest.spyOn(DocumentDAO.prototype, 'updateDiagramDate').mockResolvedValue(true);
+        test("It should update the position in diagram of the document", async () => {
+            jest.spyOn(DocumentDAO.prototype, 'updateDiagram').mockResolvedValue(true);
 
-            const result = await controller.updateDiagramDate(1, '2023-01-12');
+            const result = await controller.updateDiagramDate([1], [34.89], [12.98]);
 
             expect(result).toEqual(true);
-            expect(DocumentDAO.prototype.updateDiagramDate).toHaveBeenCalled();
+            expect(DocumentDAO.prototype.updateDiagram).toHaveBeenCalled();
         });
 
-        test("It should update the parseDate of the document having a year as issuanceDate", async () => {
-            const documentData : DocumentData = {
-                documentID: 1,
-                title: "Documento 1",
-                description: "Descrizione 1",
-                stakeholders: "Stakeholders 1",
-                scale: "1:100",
-                issuanceDate: "2023",
-                parsedDate: new Date(2023, 0, 1),
-                type: "Report",
-                language: "it",
-                pages: "5"
-            };
-            
-            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
-            const document: Document = new Document(documentData, documentGeoData, 0, [], [], []);
-            jest.spyOn(DocumentDAO.prototype,"getDocumentByID").mockResolvedValue(document);
-            jest.spyOn(DocumentDAO.prototype, 'updateDiagramDate').mockResolvedValue(true);
-
-            const result = await controller.updateDiagramDate(1, '2023-01-12');
-
-            expect(result).toEqual(true);
-            expect(DocumentDAO.prototype.updateDiagramDate).toHaveBeenCalled();
-        });
-
-        test("It should return InvalidNewDateCoordinatesError having a not matching issuanceDate", async () => {
-            const documentData : DocumentData = {
-                documentID: 1,
-                title: "Documento 1",
-                description: "Descrizione 1",
-                stakeholders: "Stakeholders 1",
-                scale: "1:100",
-                issuanceDate: "abc",
-                parsedDate: new Date(2023, 0, 1),
-                type: "Report",
-                language: "it",
-                pages: "5"
-            };
-            
-            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
-            const document: Document = new Document(documentData, documentGeoData, 0, [], [], []);
-            jest.spyOn(DocumentDAO.prototype,"getDocumentByID").mockResolvedValue(document);
-            jest.spyOn(DocumentDAO.prototype, 'updateDiagramDate').mockResolvedValue(true);
-
-            await expect(controller.updateDiagramDate(1,'2023-01-12')).rejects.toThrow(InvalidNewDateCoordinatesError);
-            expect(DocumentDAO.prototype.updateDiagramDate).not.toHaveBeenCalled();
-        });
-
-        test("It should return InvalidNewDateCoordinatesError if the parseDate is empty", async () => {
-            const documentData : DocumentData = {
-                documentID: 1,
-                title: "Documento 1",
-                description: "Descrizione 1",
-                stakeholders: "Stakeholders 1",
-                scale: "1:100",
-                issuanceDate: "01/2023",
-                parsedDate: new Date(2023, 0, 1),
-                type: "Report",
-                language: "it",
-                pages: "5"
-            };
-            
-            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
-            const document: Document = new Document(documentData, documentGeoData, 0, [], [], []);
-            jest.spyOn(DocumentDAO.prototype,"getDocumentByID").mockResolvedValue(document);
-            jest.spyOn(DocumentDAO.prototype, 'updateDiagramDate').mockResolvedValue(true);
-
-            await expect(controller.updateDiagramDate(1, '')).rejects.toThrow(InvalidNewDateCoordinatesError);
-            expect(DocumentDAO.prototype.updateDiagramDate).not.toHaveBeenCalled();
-        });
-
-        test("It should return InvalidNewDateCoordinatesError if the parseDate is not in a valid format", async () => {
-            const documentData : DocumentData = {
-                documentID: 1,
-                title: "Documento 1",
-                description: "Descrizione 1",
-                stakeholders: "Stakeholders 1",
-                scale: "1:100",
-                issuanceDate: "01/2023",
-                parsedDate: new Date(2023, 0, 1),
-                type: "Report",
-                language: "it",
-                pages: "5"
-            };
-            
-            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
-            const document: Document = new Document(documentData, documentGeoData, 0, [], [], []);
-            jest.spyOn(DocumentDAO.prototype,"getDocumentByID").mockResolvedValue(document);
-            jest.spyOn(DocumentDAO.prototype, 'updateDiagramDate').mockResolvedValue(true);
-
-            await expect(controller.updateDiagramDate(1, '02/01/2023')).rejects.toThrow(InvalidNewDateCoordinatesError);
-            expect(DocumentDAO.prototype.updateDiagramDate).not.toHaveBeenCalled();
-        });
-
-        test("It should return InvalidNewDateCoordinatesError if the parseDate is not in a valid", async () => {
-            const documentData : DocumentData = {
-                documentID: 1,
-                title: "Documento 1",
-                description: "Descrizione 1",
-                stakeholders: "Stakeholders 1",
-                scale: "1:100",
-                issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
-                type: "Report",
-                language: "it",
-                pages: "5"
-            };
-            const documentGeoData: DocumentGeoData = {zoneID: 1, coordinates: null, latitude: null, longitude: null};
-            const document: Document = new Document(documentData, documentGeoData, 0, [], [], []);
-            jest.spyOn(DocumentDAO.prototype,"getDocumentByID").mockResolvedValue(document);
-            jest.spyOn(DocumentDAO.prototype, 'updateDiagramDate').mockResolvedValue(true);
-
-            await expect(controller.updateDiagramDate(1, '2023-01-02')).rejects.toThrow(InvalidNewDateCoordinatesError);
-            expect(DocumentDAO.prototype.updateDiagramDate).not.toHaveBeenCalled();
-        });
     })
 
     describe("deleteAllDocuments", () => {

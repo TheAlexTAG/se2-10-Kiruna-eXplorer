@@ -1,12 +1,13 @@
-import { describe, test, expect, afterEach, jest } from "@jest/globals"
+import { describe, test, expect, afterEach, jest, afterAll, beforeAll } from "@jest/globals"
 import request from 'supertest'
-import { app } from "../../../index"
+import { app, server} from "../../../index"
 import { ZoneController } from "../../../src/controllers/zoneController"
 import { Zone } from "../../../src/components/zone"
 import { ZoneError } from "../../../src/errors/zoneError"
 import { InternalServerError } from "../../../src/errors/link_docError"
 import { Utilities } from "../../../src/utilities"
 import { Geometry } from "geojson"
+import { closeDbPool } from "../../../src/db/db";
 
 jest.mock("../../../src/controllers/zoneController")
 jest.mock("../../../src/utilities")
@@ -16,6 +17,16 @@ describe("Route zone unit tests", () => {
     afterEach(() => {
         jest.resetAllMocks();
     });
+
+    beforeAll(async () => {
+      server.close();
+      await closeDbPool();
+    })
+
+    afterAll(async () => {
+      server.close();
+      await closeDbPool();
+    })
 
     describe("GET /api/zones", () => {
 

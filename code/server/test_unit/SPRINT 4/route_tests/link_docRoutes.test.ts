@@ -1,17 +1,20 @@
-import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
+import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@jest/globals";
 import request from 'supertest';
 import { LinkDocumentController } from '../../../src/controllers/link_docController';
 import { Utilities } from '../../../src/utilities';
-import { app } from "../../../index"
+import { app, server } from "../../../index"
 import { DocumentsError, InternalServerError, LinkError } from '../../../src/errors/link_docError';
 import { LinkDocument, Relationship } from "../../../src/components/link_doc";
+import { closeDbPool } from "../../../src/db/db";
 
 jest.mock('../../../src/controllers/link_docController'); 
 jest.mock('../../../src/utilities');
 
 describe('LinkDocumentRoutes', () => {
 
-    beforeAll(() => {
+    beforeAll(async () => {
+        server.close();
+        await closeDbPool();
         jest.mock('express-validator', () => ({
             validationResult: jest.fn(),
         }));
@@ -20,6 +23,11 @@ describe('LinkDocumentRoutes', () => {
     afterEach(() => {
         jest.resetAllMocks();
     });
+
+    afterAll(async () => {
+        server.close();
+        await closeDbPool();
+    })
 
     describe("POST api/link", () => {
 

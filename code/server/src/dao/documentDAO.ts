@@ -466,9 +466,7 @@ class DocumentDAO {
             await conn.beginTransaction();
             const sql = `UPDATE document SET nodeX = ?, nodeY = ? WHERE documentID = ?`;
             const paramsArray = documentIDs.map((docID, index) => [nodeXs[index], nodeYs[index], docID]);
-            console.log(paramsArray);
             for (const params of paramsArray) {
-                console.log(params)
                 const result = await conn.query(sql, params); 
                 if (result.affectedRows === 0) throw new Error("Failed to update the document date coordinates");
             }

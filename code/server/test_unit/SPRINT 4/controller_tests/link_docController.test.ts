@@ -1,8 +1,10 @@
-import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
+import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@jest/globals";
 import { LinkDocumentController } from '../../../src/controllers/link_docController';
 import { LinkDocumentDAO } from '../../../src/dao/link_docDAO';
 import { LinkDocument, Relationship } from '../../../src/components/link_doc';
 import { DocumentsError, LinkError, LinkNotFoundError } from '../../../src/errors/link_docError';
+import { closeDbPool } from "../../../src/db/db";
+import { server } from "../../../index";
 
 jest.mock('../../../src/dao/link_docDAO');
 
@@ -17,6 +19,11 @@ describe('LinkDocumentController', () => {
     afterEach(() => {
         jest.resetAllMocks();
     });
+
+    afterAll(async () => {
+        server.close();
+        await closeDbPool();
+    })
 
     describe('createLink', () => {
         test('It should create a link between documents successfully with firstDoc<secondDoc', async () => {

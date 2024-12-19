@@ -1,9 +1,10 @@
 import { DocumentDAO, DocumentDaoHelper } from '../../../src/dao/documentDAO';
-import db from '../../../src/db/db';
 import { DocumentNotFoundError } from '../../../src/errors/documentErrors';
 import { Document, DocumentData, DocumentGeoData } from '../../../src/components/document';
-import { describe, test, expect, jest, beforeAll, afterEach} from "@jest/globals";
+import { describe, test, expect, jest, beforeAll, afterEach, afterAll} from "@jest/globals";
 import { InternalServerError } from '../../../src/errors/link_docError';
+import { closeDbPool, db } from "../../../src/db/db";
+import { server } from "../../../index";
 
 const wellknown = require('wellknown');
 
@@ -29,6 +30,11 @@ describe('DocumentDAO', () => {
     afterEach(() => {
     jest.resetAllMocks();
     });
+
+    afterAll(async () => {
+        server.close();
+        await closeDbPool();
+    })
 
     describe("insertZone", () => {
 
@@ -92,6 +98,7 @@ describe('DocumentDAO', () => {
             await expect(DocumentDAO.documentExists(2)).rejects.toThrow(InternalServerError);
         })
     })
+    
 
     describe("createDocumentNode", () => {
 
@@ -103,7 +110,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -126,7 +134,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -154,7 +163,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -176,7 +186,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -201,7 +212,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -224,7 +236,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -252,7 +265,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -273,7 +287,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -294,7 +309,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "01/01/2023",
-                parsedDate: new Date(2023, 0, 1),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -318,7 +334,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders",
                 scale: "1:100",
                 issuanceDate: "2024-11-26",
-                parsedDate: new Date("2024-11-26T01:00:00.000Z"),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "10"
@@ -326,7 +343,7 @@ describe('DocumentDAO', () => {
             const documentGeoData: DocumentGeoData = {zoneID: null, coordinates: null, latitude: 68.33, longitude: 20.31};
             const document = new Document(documentData, documentGeoData, 0, [], [], []);
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
-            jest.spyOn(connMock, 'query').mockResolvedValue([{documentID:1, title:'Title', description: 'Description',zoneID: null,latitude: 68.33, longitude:20.31, stakeholders:'Stakeholders', scale:'1:100', issuanceDate:'2024-11-26', parsedDate:'2024-11-26',type: 'Report',language: 'it', pages:'10',connections: 0, attachments:[], resources:[], link:[]}]);
+            jest.spyOn(connMock, 'query').mockResolvedValue([{documentID:1, title:'Title', description: 'Description',zoneID: null,latitude: 68.33, longitude:20.31, stakeholders:'Stakeholders', scale:'1:100', issuanceDate:'2024-11-26', nodeX: null, nodeY: null, type: 'Report',language: 'it', pages:'10',connections: 0, attachments:[], resources:[], link:[]}]);
             jest.spyOn(connMock, 'release');
 
             const result = await dao.getDocumentByID(1);
@@ -368,7 +385,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders",
                 scale: "1:100",
                 issuanceDate: "2024-11-26",
-                parsedDate: new Date("2024-11-26T01:00:00.000Z"),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -380,7 +398,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders",
                 scale: "1:100",
                 issuanceDate: "2024-11-26",
-                parsedDate: new Date("2024-11-26T01:00:00.000Z"),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -390,8 +409,8 @@ describe('DocumentDAO', () => {
             const document2: Document = new Document(documentData2, documentGeoData, 0, [], [], []);
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'query').mockResolvedValue([
-                {documentID:1, title:'Documento', description: 'Descrizione',zoneID: 1,latitude:null, longitude:null, stakeholders:'Stakeholders', scale:'1:100', issuanceDate:'2024-11-26', parsedDate:'2024-11-26', type: 'Report',language: 'it', pages:'5',connections: 0, attachment:[], resource:[], link:[]},
-                {documentID:2, title:'Documento', description: 'Descrizione',zoneID: 1,latitude:null, longitude:null, stakeholders:'Stakeholders', scale:'1:100', issuanceDate:'2024-11-26', parsedDate:'2024-11-26', type: 'Report',language: 'it', pages:'5',connections: 0, attachment:[], resource:[], link:[]}]);
+                {documentID:1, title:'Documento', description: 'Descrizione',zoneID: 1,latitude:null, longitude:null, stakeholders:'Stakeholders', scale:'1:100', issuanceDate:'2024-11-26', nodeX: null, nodeY:null, type: 'Report',language: 'it', pages:'5',connections: 0, attachment:[], resource:[], link:[]},
+                {documentID:2, title:'Documento', description: 'Descrizione',zoneID: 1,latitude:null, longitude:null, stakeholders:'Stakeholders', scale:'1:100', issuanceDate:'2024-11-26', nodeX: null, nodeY:null, type: 'Report',language: 'it', pages:'5',connections: 0, attachment:[], resource:[], link:[]}]);
             jest.spyOn(connMock, 'release');
 
             const result = await dao.getDocsWithFilters({
@@ -416,7 +435,8 @@ describe('DocumentDAO', () => {
                 stakeholders: "Stakeholders 1",
                 scale: "1:100",
                 issuanceDate: "2024-11-26",
-                parsedDate: new Date("2024-11-26T01:00:00.000Z"),
+                nodeX: null,
+                nodeY: null,
                 type: "Report",
                 language: "it",
                 pages: "5"
@@ -425,7 +445,7 @@ describe('DocumentDAO', () => {
             const document1: Document = new Document(documentData1, documentGeoData, 0, [], [], []);
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
             jest.spyOn(connMock, 'query').mockResolvedValue([
-                {documentID:1, title:'Documento 1', description: 'Descrizione 1',zoneID: null,latitude:null, longitude:null, stakeholders:'Stakeholders 1', scale:'1:100', issuanceDate:'2024-11-26', parsedDate:'2024-11-26', type: 'Report',language: 'it', pages:'5',connections: 0, attachment:[], resource:[], link:[]}]);
+                {documentID:1, title:'Documento 1', description: 'Descrizione 1',zoneID: null,latitude:null, longitude:null, stakeholders:'Stakeholders 1', scale:'1:100', issuanceDate:'2024-11-26', nodeX: null, nodeY:null, type: 'Report',language: 'it', pages:'5',connections: 0, attachment:[], resource:[], link:[]}]);
             jest.spyOn(connMock, 'release');
 
             const result = await dao.getDocsWithFilters({zoneID: '0'});
@@ -469,22 +489,26 @@ describe('DocumentDAO', () => {
         });
     })
 
-    describe('updateDiagramDate', () => {
-        test('It should update the parseDate of a document', async () => {
+    describe('updateDiagram', () => {
+        test('It should update the position in diagram of a document', async () => {
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
+            jest.spyOn(connMock, 'beginTransaction');
             jest.spyOn(connMock, 'query').mockResolvedValue({affectedRows: 1});
+            jest.spyOn(connMock, 'commit');
             jest.spyOn(connMock, 'release');
 
-            const result = await dao.updateDiagramDate(1, '2023-12-03');
+            const result = await dao.updateDiagram([1], [11.45], [24.78]);
             expect(result).toBe(true);
         });
 
         test('It should return InternalServerError if no document has been updated', async () => {
             jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
+            jest.spyOn(connMock, 'beginTransaction');
             jest.spyOn(connMock, 'query').mockResolvedValue({affectedRows: 0});
             jest.spyOn(connMock, 'release');
+            jest.spyOn(connMock, 'rollback');
 
-            await expect(dao.updateDiagramDate(1, '2023-12-03')).rejects.toThrow(InternalServerError);
+            await expect(dao.updateDiagram([1], [11.45], [24.78])).rejects.toThrow(InternalServerError);
         });
     })
 
@@ -548,25 +572,6 @@ describe('DocumentDAO', () => {
 
             await expect(dao.addResource(1, ['file.txt'], ['resources/1-fileURLToPath.txt'])).rejects.toThrow(InternalServerError);
             expect(connMock.rollback).toHaveBeenCalled();
-        });
-    })
-
-    describe('getParsedDate', () => {
-        test('It should return the parsedate of a document', async () => {
-            jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
-            jest.spyOn(connMock, 'query').mockResolvedValue([{parsedDate: '2023-10-22T00:00:00.000Z'}]);
-            jest.spyOn(connMock, 'release');
-
-            const result = await dao.getParsedDate(1);
-            expect(result).toEqual(new Date('2023-10-22T02:00:00.000Z'));
-        });
-
-        test('It should return InternalServerError if db call fails', async () => {
-            jest.spyOn(db, 'getConnection').mockResolvedValue(connMock);
-            jest.spyOn(connMock, 'query').mockRejectedValue(new Error);
-            jest.spyOn(connMock, 'release');
-
-            await expect(dao.getParsedDate(1)).rejects.toThrow(InternalServerError);
         });
     })
 

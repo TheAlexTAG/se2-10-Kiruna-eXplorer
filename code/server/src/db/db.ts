@@ -34,4 +34,4 @@ async function closeDbPool(): Promise<void> {
 }
 
 export default db;
-export {testConnection, closeDbPool};
+export {testConnection, closeDbPool, db};
