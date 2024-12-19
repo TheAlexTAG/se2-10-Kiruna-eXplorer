@@ -31,7 +31,9 @@ services:
     command: npm run dev
 
   mariadb:
-    image: mariadb:latest
+    build:
+      context: ./code/server/src/db 
+      dockerfile: Dockerfile  
     container_name: mariadb
     restart: always
     env_file:
