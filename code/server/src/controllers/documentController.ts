@@ -202,7 +202,6 @@ class DocumentController {
     }
 
     async createNode(documentData: DocumentData, documentGeoData: DocumentGeoData): Promise<number> {
-
         if(this.helper.isAssignedToKiruna(documentGeoData)) 
             return await this.helper.nodeAssignedToKiruna(documentData, documentGeoData, this.dao, Modality.CREATE);
 
@@ -219,7 +218,7 @@ class DocumentController {
     }
 
     async updateDocument(documentData: DocumentEditData, documentGeoData: DocumentGeoData): Promise<boolean> {
-
+        console.log(documentData);
         if(this.helper.isAssignedToKiruna(documentGeoData)) 
             return await this.helper.nodeAssignedToKiruna(documentData, documentGeoData, this.dao, Modality.UPDATE);
 

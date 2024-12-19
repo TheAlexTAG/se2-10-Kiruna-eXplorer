@@ -163,7 +163,7 @@ class DocumentDAO {
             }
 
             const sql = `INSERT INTO document(documentID, title, description, zoneID, latitude, longitude, stakeholders, scale, issuanceDate, type, language, pages)
-            VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            VALUES(null, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
             const params = [
                 documentData.title,
                 documentData.description,
@@ -184,6 +184,7 @@ class DocumentDAO {
             
             return Number(result.insertId);
         } catch (err: any) {
+            console.error(err);
             if(documentGeoData.coordinates) await conn?.rollback();
             throw new InternalServerError();
         } finally {

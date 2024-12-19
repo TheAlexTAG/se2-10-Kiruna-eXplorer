@@ -155,7 +155,7 @@ class DocumentRoutes {
             body("latitude").optional({nullable:true}).isFloat(), //send only if the georeference is a point, otherwise null
             body("longitude").optional({nullable:true}).isFloat(), //send only if the georeference is a point, otherwise null
             body("stakeholders").optional().isString().notEmpty(),
-            body("scale").optional()
+            body("scale").optional({nullable:true})
             .custom((value: string) => {
                 if(!this.utilities.isValidScale(value))
                     throw new Error("Scale must be in the format '1:{number with thousand separator ,}' (e.g., '1:1,000') or one of 'Blueprints/effects', 'Concept', 'Text'");
