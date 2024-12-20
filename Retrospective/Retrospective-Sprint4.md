@@ -90,7 +90,7 @@ sections:
 <br>The errors in the planning estimates arise from the difficulty of accurately estimating technical debt due to the large number and variety of SonarCloud issues, and from estimating implementative tasks as if they were independent of the existing codebase, which is now significant.
 
 - What lessons did you learn (both positive and negative) in this sprint?
-<br>In this sprint, I learned the importance of effective communication, collaboration, and planning. A well-structured plan helps manage time, ensures clarity on responsibilities, and allows us to tackle complex issues more efficiently.
+<br>In this sprint, we learned the importance of effective communication, collaboration, and planning. A well-structured plan helps manage time, ensures clarity on responsibilities, and allows us to tackle complex issues more efficiently.
 
 - Which improvement goals set in the previous retrospective were you able to achieve? 
 <br>We were able to achieve the improvement goal of finding our balance as a group. By getting to know each other better on a personal level, we improved our teamwork and communication, allowing us to collaborate more effectively.
@@ -99,8 +99,8 @@ sections:
 <br>We weren't able to finish two days before the demo as we had hoped, but we've made progress. We completed the work the day before, although we still had to make some last-minute adjustments.
 
 - Improvement goals for the next sprint and how to achieve them (technical tasks, team coordination, etc.)
-<br>Improve modularity by adding features without making significant changes to the existing structure.
-Ensure all work is completed two days before the demo to allow time for final adjustments and testing.
+  -Improve modularity by adding features without making significant changes to the existing structure.
+  -Ensure all work is completed two days before the demo to allow time for final adjustments and testing.
 
 - One thing you are proud of as a Team!!
-<br>I'm proud of my team for completing almost all the stories and achieving a great result. Moreover, we accomplished this without any conflicts, working together smoothly and harmoniously and maintaining a positive spirit throughout the sprint.
+<br>We are proud of having completed almost all the stories and having achieved a great result. Moreover, we accomplished this without any conflicts, working together smoothly and harmoniously and maintaining a positive spirit throughout the sprint.
