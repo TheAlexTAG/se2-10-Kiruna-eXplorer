@@ -127,7 +127,15 @@
   transition: opacity 0.3s ease;
   font-size: 12px;
   z-index: 1001;
-  white-space: nowrap;
+  white-space: normal; /* Allows wrapping */
+  word-wrap: break-word; /* Ensures long words are wrapped */
+  max-width: 200px; /* Limits the tooltip width */
+  overflow-wrap: anywhere; /* Breaks long words even in unsupported browsers */
+}
+
+.tooltip:hover {
+  visibility: visible;
+  opacity: 1;
 }
 
 .map-toggle-btn:hover .tooltip {
@@ -191,6 +199,9 @@
   margin: 0 !important;
   visibility: visible !important;
   opacity: 1 !important;
+  overflow: hidden;
+  word-wrap: break-word; /* Ensures wrapping of long text */
+  max-width: 300px; /* Limit popup width */
 }
 
 .leaflet-popup-content {

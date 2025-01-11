@@ -214,7 +214,7 @@ const MapComponent: React.FC<MapComponentProps> = ({
     try {
       const data = await API.getDocuments();
       const kirunaDocs = data.filter((doc: KirunaDocument) => doc.zoneID === 0);
-
+      console.log("hello");
       setKirunaDocuments(kirunaDocs);
       const validDocs = data.filter(
         (doc: Document) => doc.latitude && doc.longitude
